@@ -144,9 +144,6 @@ function GameShell({ session }: { session: ActivitySession }) {
       }
     }
 
-    refreshPlayers();
-    refreshEvents();
-
     const channel = supabase
       .channel(`mafia-match-${matchId}`)
       .on(
@@ -171,7 +168,13 @@ function GameShell({ session }: { session: ActivitySession }) {
           setEvents((current) => [row, ...current].slice(0, 20));
         },
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          refreshMatch();
+          refreshPlayers();
+          refreshEvents();
+        }
+      });
 
     return () => {
       cancelled = true;
