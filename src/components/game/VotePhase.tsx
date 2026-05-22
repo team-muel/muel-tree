@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
 import { submitAction } from "@/lib/game/api";
+import { getGameSupabase } from "@/lib/game/client";
 
 type VotePhaseProps = {
   match: MatchSummary;
@@ -15,6 +16,49 @@ export function VotePhase({ match, players, myPlayer, gameJwt }: VotePhaseProps)
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    if (!match.id || !gameJwt || !myPlayer?.userId) return;
+
+    let cancelled = false;
+    const supabase = getGameSupabase(gameJwt);
+
+    async function restoreVote() {
+      const { data: phaseData, error: phaseError } = await supabase
+        .schema("mafia")
+        .from("match_phases")
+        .select("id")
+        .eq("match_id", match.id)
+        .is("ended_at", null)
+        .order("phase_number", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (cancelled || phaseError || !phaseData) return;
+
+      const phaseId = phaseData.id;
+
+      const { data: actionData, error: actionError } = await supabase
+        .schema("mafia")
+        .from("match_actions")
+        .select("*")
+        .eq("phase_id", phaseId)
+        .eq("actor_user_id", myPlayer?.userId)
+        .eq("action_type", "vote")
+        .maybeSingle();
+
+      if (cancelled || actionError || !actionData) return;
+
+      setSelectedTarget(actionData.target_user_id);
+      setSubmitted(true);
+    }
+
+    restoreVote();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [match.id, gameJwt, myPlayer?.userId]);
 
   const isDead = myPlayer && !myPlayer.alive;
 
