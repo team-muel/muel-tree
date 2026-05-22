@@ -42,13 +42,13 @@ export const services = [
     label: "Game",
     href: "#gomdori",
     route: null,
-    status: "planned",
-    statusLabel: "기획 중",
-    operatingModel: "Discord Activity + Toss",
-    description: "커뮤니티 멤버가 함께 시작하는 추리 게임 경험입니다. 결제와 보상 구조는 사업자 등록 이후 붙입니다.",
+    status: "beta",
+    statusLabel: "베타",
+    operatingModel: "Discord Activity + Supabase",
+    description: "커뮤니티 멤버가 Discord 음성 채널에 모여 함께 시작하는 비대칭 추리 게임입니다. 천사와 악마, 누가 거짓말을 하고 있을까요.",
     sectionClassName: "bg-[#0a0a0a] text-white",
-    primaryAction: { label: "준비 중", href: null },
-    note: "Muel과 Weave가 안정화된 뒤 별도 Activity로 확장합니다.",
+    primaryAction: { label: "Discord에서 열기", href: null },
+    note: "Discord 음성 채널에 입장한 뒤 Activity에서 Gomdori를 실행하세요.",
   },
   {
     slug: "weave",
@@ -110,6 +110,7 @@ export const teamUpdates = [
 
 export const footerLinks = [
   { label: "Muel", href: "#muel" },
+  { label: "Gomdori", href: "#gomdori" },
   { label: "Weave", href: "/weave" },
   { label: "Server", href: "#server" },
 ];

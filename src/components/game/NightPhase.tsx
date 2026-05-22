@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
-import { submitAction } from "@/lib/game/api";
+import { submitAction, sendChat } from "@/lib/game/api";
+import { getGameSupabase } from "@/lib/game/client";
 
 type NightPhaseProps = {
   match: MatchSummary;
@@ -11,11 +12,62 @@ type NightPhaseProps = {
   gameJwt: string;
 };
 
+type ChatRow = { id: string; sender_user_id: string; message: string; created_at?: string; };
+
 export function NightPhase({ match, players, myPlayer, gameJwt }: NightPhaseProps) {
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [investigationResult, setInvestigationResult] = useState<string | null>(null);
+
+  const [chatMessage, setChatMessage] = useState("");
+  const [chats, setChats] = useState<ChatRow[]>([]);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const role = myPlayer?.role;
+
+  useEffect(() => {
+    if ((role !== "demon" && role !== "helper") || !match.id || !gameJwt) return;
+
+    let cancelled = false;
+    const supabase = getGameSupabase(gameJwt);
+
+    supabase.schema("mafia").from("match_chats")
+      .select("*")
+      .eq("match_id", match.id)
+      .order("created_at", { ascending: true })
+      .then(({ data }) => {
+        if (!cancelled && data) setChats(data as ChatRow[]);
+      });
+
+    const channel = supabase.channel(`night-chat-${match.id}`)
+      .on("postgres_changes", { event: "INSERT", schema: "mafia", table: "match_chats", filter: `match_id=eq.${match.id}` }, (payload) => {
+        setChats(prev => [...prev, payload.new as ChatRow]);
+      })
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
+  }, [match.id, role, gameJwt]);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chats]);
+
+  const handleSendChat = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatMessage.trim() || isSubmitting) return;
+    const msg = chatMessage;
+    setChatMessage("");
+    try {
+      await sendChat(match.id, msg, gameJwt);
+    } catch {
+      alert("채팅 전송 실패");
+      setChatMessage(msg);
+    }
+  };
 
   if (!myPlayer || !myPlayer.alive) {
     return (
@@ -28,8 +80,6 @@ export function NightPhase({ match, players, myPlayer, gameJwt }: NightPhaseProp
       </div>
     );
   }
-
-  const role = myPlayer.role;
 
   const handleAction = async (actionType: string) => {
     if (!selectedTarget) return;
@@ -165,21 +215,44 @@ export function NightPhase({ match, players, myPlayer, gameJwt }: NightPhaseProp
           )}
         </div>
         
-        {/* Placeholder for Chat */}
         <div className="w-80 rounded-lg border border-red-500/10 bg-black/40 flex flex-col hidden lg:flex">
           <div className="p-4 border-b border-white/5 font-medium text-red-200/80 text-sm">
             악마의 속삭임 (채팅)
           </div>
-          <div className="flex-1 p-4 flex items-center justify-center text-white/20 text-sm">
-            (채팅 연동 준비 중)
+          <div className="flex-1 p-4 flex flex-col gap-3 overflow-y-auto">
+            {chats.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center text-white/20 text-sm">
+                대화를 시작하세요
+              </div>
+            ) : (
+              chats.map(chat => {
+                const isMe = chat.sender_user_id === myPlayer?.userId;
+                const sender = players.find(p => p.userId === chat.sender_user_id)?.displayName || "알 수 없음";
+                return (
+                  <div key={chat.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+                    {!isMe && <div className="text-[10px] text-white/40 mb-1 pl-1">{sender}</div>}
+                    <div className={`px-3 py-2 rounded-lg text-sm max-w-[85%] break-words ${
+                      isMe ? "bg-red-500/20 text-red-100 rounded-tr-sm" : "bg-white/10 text-white rounded-tl-sm"
+                    }`}>
+                      {chat.message}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+            <div ref={chatEndRef} />
           </div>
           <div className="p-3 border-t border-white/5">
-            <input 
-              type="text" 
-              disabled 
-              placeholder="메시지 입력..." 
-              className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none"
-            />
+            <form onSubmit={handleSendChat} className="flex gap-2">
+              <input
+                type="text"
+                value={chatMessage}
+                onChange={(e) => setChatMessage(e.target.value)}
+                placeholder="메시지 입력..."
+                className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500/50"
+              />
+              <button type="submit" disabled={!chatMessage.trim()} className="px-3 rounded bg-red-500/20 text-red-300 disabled:opacity-50 text-sm font-medium whitespace-nowrap">전송</button>
+            </form>
           </div>
         </div>
       </div>

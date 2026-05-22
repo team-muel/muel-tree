@@ -137,3 +137,15 @@ export async function submitAction(
     { gameJwt },
   );
 }
+
+export async function sendChat(
+  matchId: string,
+  message: string,
+  gameJwt: string,
+): Promise<{ success: boolean }> {
+  return postJson<{ matchId: string; message: string }, { success: boolean }>(
+    "match-chat",
+    { matchId, message },
+    { gameJwt },
+  );
+}

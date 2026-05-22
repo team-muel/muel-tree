@@ -61,7 +61,26 @@ export async function initDiscord(
   }
 
   const sdk = new DiscordSDK(clientId);
-  await sdk.ready();
+
+  // sdk.ready() resolves when Discord client sends the HANDSHAKE_REPLY.
+  // Without a timeout it hangs forever if the Activity URL mapping is
+  // misconfigured or the Discord client never responds — keeping the
+  // "불러오는 중..." overlay stuck. Fail fast instead.
+  await Promise.race([
+    sdk.ready(),
+    new Promise<never>((_, reject) =>
+      setTimeout(
+        () =>
+          reject(
+            new Error(
+              "Discord SDK 연결 시간 초과 (15초). " +
+                "Developer Portal → Activity → URL Mappings 설정을 확인하세요.",
+            ),
+          ),
+        15_000,
+      ),
+    ),
+  ]);
 
   let user: DiscordUser | null = null;
   let accessToken: string | null = null;
