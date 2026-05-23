@@ -9,18 +9,20 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ai-sdk/google": "^3.0.79",
     "@discord/embedded-app-sdk": "^2.4.1",
-    "@google/generative-ai": "^0.24.1",
     "@react-three/drei": "^9.122.0",
     "@react-three/fiber": "^8.18.0",
     "@supabase/supabase-js": "^2.105.1",
     "@tosspayments/payment-sdk": "^1.9.2",
     "@types/three": "^0.184.0",
+    "ai": "^6.0.191",
     "next": "14.2.35",
     "react": "^18",
     "react-dom": "^18",
     "standardwebhooks": "^1.0.0",
-    "three": "^0.184.0"
+    "three": "^0.184.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^20",

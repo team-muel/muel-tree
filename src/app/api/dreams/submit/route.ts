@@ -1,77 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { forbiddenOrigin, isAllowedOrigin, requireDiscordUser } from "@/lib/request-security";
 import { logServiceEvent, normalizeActivityContext } from "@/lib/service-events";
 import { createServiceSupabaseClient, upsertDiscordMuelProfile } from "@/lib/muel-profile";
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-
-const EXTRACT_PROMPT = `Analyze the following dream text. Return only one valid JSON object with no explanation, prose, or code block.
-
-{
-  "emotions": ["emotion1", "emotion2"],
-  "keywords": ["keyword1", "keyword2", "keyword3"],
-  "main_tag": "tag"
-}
-
-- emotions: 2 to 4 felt emotions, preferably concise Korean words when the dream text is Korean.
-- keywords: 3 to 6 core concepts, symbols, people, places, or actions.
-- main_tag: one concise representative tag.
-
-Dream text:
-{CONTENT}`;
-
-interface ExtractResult {
-  emotions: string[];
-  keywords: string[];
-  main_tag: string;
-}
+import { extractWeaveDream, embedWeaveDream, type WeaveExtraction } from "@/lib/weave-extraction";
 
 interface SimilarDream {
   id: string;
   similarity: number;
-}
-
-async function extractWithGemini(content: string): Promise<ExtractResult> {
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-  const result = await model.generateContent({
-    contents: [
-      {
-        role: "user",
-        parts: [{ text: EXTRACT_PROMPT.replace("{CONTENT}", content) }],
-      },
-    ],
-    generationConfig: {
-      temperature: 0.3,
-      maxOutputTokens: 512,
-      // @ts-expect-error: thinkingConfig is not in the installed TS defs yet.
-      thinkingConfig: { thinkingBudget: 0 },
-    },
-  });
-
-  const raw = result.response.text();
-  const match = raw.match(/\{[\s\S]*\}/);
-  if (!match) {
-    throw new Error(`Could not find a JSON object in Gemini output: ${raw.slice(0, 200)}`);
-  }
-
-  const parsed = JSON.parse(match[0]) as ExtractResult;
-
-  return {
-    emotions: Array.isArray(parsed.emotions) ? parsed.emotions.slice(0, 4) : [],
-    keywords: Array.isArray(parsed.keywords) ? parsed.keywords.slice(0, 6) : [],
-    main_tag: typeof parsed.main_tag === "string" ? parsed.main_tag : "",
-  };
-}
-
-async function embedDream(content: string): Promise<number[]> {
-  const embeddingModel = genAI.getGenerativeModel({
-    model: "gemini-embedding-001",
-  });
-  const embeddingResult = await embeddingModel.embedContent(content);
-  // Explicitly coerce each value with Number() to handle Float32Array at runtime
-  return Array.from(embeddingResult.embedding.values, Number);
 }
 
 export async function POST(req: NextRequest) {
@@ -129,10 +64,10 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  let extracted: ExtractResult;
+  let extracted: WeaveExtraction;
   try {
-    extracted = await extractWithGemini(content);
-  } catch {
+    extracted = await extractWeaveDream(content);
+  } catch (extractError) {
     await logServiceEvent({
       serviceSlug: "weave",
       eventType: "failed",
@@ -141,7 +76,10 @@ export async function POST(req: NextRequest) {
       context,
       profileId,
       status: "error",
-      metadata: { reason: "ai_extraction_failed" },
+      metadata: {
+        reason: "ai_extraction_failed",
+        detail: extractError instanceof Error ? extractError.message.slice(0, 200) : String(extractError).slice(0, 200),
+      },
     });
     return NextResponse.json(
       { error: "AI extraction failed" },
@@ -151,8 +89,8 @@ export async function POST(req: NextRequest) {
 
   let embedding: number[];
   try {
-    embedding = await embedDream(content);
-  } catch {
+    embedding = await embedWeaveDream(content);
+  } catch (embeddingError) {
     await logServiceEvent({
       serviceSlug: "weave",
       eventType: "failed",
@@ -161,7 +99,10 @@ export async function POST(req: NextRequest) {
       context,
       profileId,
       status: "error",
-      metadata: { reason: "embedding_failed" },
+      metadata: {
+        reason: "embedding_failed",
+        detail: embeddingError instanceof Error ? embeddingError.message.slice(0, 200) : String(embeddingError).slice(0, 200),
+      },
     });
     return NextResponse.json(
       { error: "embedding generation failed" },

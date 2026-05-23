@@ -54,6 +54,7 @@ export type MatchSummary = {
   contextType: string;
   contextId: string | null;
   maxPlayers: number;
+  winner: string | null;
   createdAt: string;
   startedAt: string | null;
   endedAt: string | null;

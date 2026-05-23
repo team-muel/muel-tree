@@ -8,9 +8,13 @@ type VerdictPhaseProps = {
 };
 
 export function VerdictPhase({ players, events }: VerdictPhaseProps) {
-  // Find the verdict event
-  const verdictEvent = events.find((e) => e.event_type === "verdict");
-  const executedUserId = verdictEvent?.payload?.executed_user_id as string | null | undefined;
+  // phase-advance emits "player_eliminated" with cause "vote" when someone is executed.
+  // A separate "verdict" event (if added later) takes precedence.
+  const verdictEvent =
+    events.find((e) => e.event_type === "verdict") ??
+    events.find((e) => e.event_type === "player_eliminated" && e.payload?.cause === "vote");
+  const executedUserId = (verdictEvent?.payload?.executed_user_id ??
+    verdictEvent?.payload?.user_id) as string | null | undefined;
   
   const executedPlayer = executedUserId ? players.find(p => p.userId === executedUserId) : null;
 

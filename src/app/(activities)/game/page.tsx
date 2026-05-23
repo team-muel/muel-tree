@@ -131,7 +131,18 @@ function GameShell({ session }: { session: ActivitySession }) {
       }
     }
 
-    refreshPlayers();
+    async function refreshEvents() {
+      const { data, error } = await supabase
+        .schema("mafia")
+        .from("match_events")
+        .select("*")
+        .eq("match_id", matchId)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (!cancelled && !error) {
+        setEvents(data ?? []);
+      }
+    }
 
     const channel = supabase
       .channel(`mafia-match-${matchId}`)
@@ -154,10 +165,16 @@ function GameShell({ session }: { session: ActivitySession }) {
         { event: "INSERT", schema: "mafia", table: "match_events", filter: `match_id=eq.${matchId}` },
         (payload) => {
           const row = payload.new as { id: string; event_type: string; created_at: string; payload: Record<string, unknown> };
-          setEvents((current) => [row, ...current].slice(0, 6));
+          setEvents((current) => [row, ...current].slice(0, 20));
         },
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          refreshMatch();
+          refreshPlayers();
+          refreshEvents();
+        }
+      });
 
     return () => {
       cancelled = true;
@@ -202,6 +219,17 @@ function GameShell({ session }: { session: ActivitySession }) {
         <StatusBlock
           title="게임 인증 실패"
           detail="게임 서버 인증 토큰이 없습니다. Activity를 다시 열어주세요."
+        />
+      </GameFrame>
+    );
+  }
+
+  if (match.status === "night_resolve") {
+    return (
+      <GameFrame>
+        <StatusBlock
+          title="밤의 결과를 정리 중..."
+          detail="잠시 후 아침이 밝습니다."
         />
       </GameFrame>
     );
@@ -299,6 +327,7 @@ function mapMatchRow(row: Record<string, unknown>): MatchSummary {
     contextType: String(row.context_type),
     contextId: typeof row.context_id === "string" ? row.context_id : null,
     maxPlayers: Number(row.max_players),
+    winner: typeof row.winner === "string" ? row.winner : null,
     createdAt: String(row.created_at),
     startedAt: typeof row.started_at === "string" ? row.started_at : null,
     endedAt: typeof row.ended_at === "string" ? row.ended_at : null,

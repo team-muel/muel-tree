@@ -53,6 +53,55 @@ export function NightPhase({ match, players, myPlayer, gameJwt }: NightPhaseProp
   }, [match.id, role, gameJwt]);
 
   useEffect(() => {
+    if (!match.id || !gameJwt || !myPlayer?.userId) return;
+
+    let cancelled = false;
+    const supabase = getGameSupabase(gameJwt);
+
+    async function restoreAction() {
+      const { data: phaseData, error: phaseError } = await supabase
+        .schema("mafia")
+        .from("match_phases")
+        .select("id")
+        .eq("match_id", match.id)
+        .is("ended_at", null)
+        .order("phase_number", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (cancelled || phaseError || !phaseData) return;
+
+      const phaseId = phaseData.id;
+
+      const { data: actionData, error: actionError } = await supabase
+        .schema("mafia")
+        .from("match_actions")
+        .select("*")
+        .eq("phase_id", phaseId)
+        .eq("actor_user_id", myPlayer?.userId)
+        .maybeSingle();
+
+      if (cancelled || actionError || !actionData) return;
+
+      setSelectedTarget(actionData.target_user_id);
+      setSubmitted(true);
+
+      if (role === "police" && actionData.result) {
+        const resultObj = actionData.result as { investigationResult?: string } | null;
+        if (resultObj?.investigationResult) {
+          setInvestigationResult(resultObj.investigationResult);
+        }
+      }
+    }
+
+    restoreAction();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [match.id, gameJwt, myPlayer?.userId, role]);
+
+  useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chats]);
 

@@ -9,10 +9,10 @@ type ResultPhaseProps = {
 };
 
 export function ResultPhase({ match, players, events }: ResultPhaseProps) {
-  void match;
-  // Find the game_ended event
+  // Primary source: match.winner from Realtime (set by phase-advance on DB).
+  // Fallback: game_ended event payload (if phase-advance emits it in the future).
   const endEvent = events.find((e) => e.event_type === "game_ended");
-  const winner = endEvent?.payload?.winner as string | undefined;
+  const winner = match.winner ?? (endEvent?.payload?.winner as string | undefined);
 
   const isAngelWin = winner === "angels";
 
