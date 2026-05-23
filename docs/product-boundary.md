@@ -33,3 +33,7 @@ Future miniapps should follow the same factory model: common Muel infrastructure
 Deployment operations live in `docs/deployment-operations.md`. The short
 version: this repository owns the Vercel web app and Activity routes; the
 always-on Discord Gateway process stays in `muel-bot`.
+
+AI runtime boundaries live in `docs/ai-runtime-boundary.md`. The short version:
+`muel-tree` may own route-local Activity extraction and Gemini operation
+facades, but the primary Muel AI execution policy belongs in `muel-bot`.
