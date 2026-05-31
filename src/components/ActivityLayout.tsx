@@ -57,6 +57,9 @@ export function ActivityLayout({ activity, children }: Props) {
           }).catch(() => {});
         }
         if (session?.user) setDiscordUser(session.user);
+        if (session && !session.accessToken && session.authError) {
+          setInitError(session.authError);
+        }
       })
       .catch((e) => {
         setInitError(e instanceof Error ? e.message : "Discord 연결 실패");
