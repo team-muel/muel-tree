@@ -186,10 +186,7 @@ function GameShell({ session }: { session: ActivitySession }) {
   if (!session.hasDiscordAuth) {
     return (
       <GameFrame>
-        <StatusBlock
-          title="Discord 인증 대기"
-          detail="Discord Activity 안에서 열리면 자동으로 게임 서버에 연결됩니다."
-        />
+        <OutsideActivityBlock />
       </GameFrame>
     );
   }
@@ -315,6 +312,63 @@ function StatusBlock({ title, detail }: { title: string; detail: string }) {
       <div className="text-sm text-white/35">Gomdori Mafia</div>
       <h1 className="mt-3 text-xl font-semibold text-white">{title}</h1>
       <p className="mt-3 text-sm leading-6 text-white/50">{detail}</p>
+    </div>
+  );
+}
+
+const GAME_PHASE_STEPS: Array<{ key: string; label: string; detail: string }> = [
+  { key: "lobby", label: "로비", detail: "참가자가 모여 매치를 시작" },
+  { key: "role_assign", label: "직업 배정", detail: "비밀리에 역할 전달" },
+  { key: "night", label: "밤", detail: "악마·조력자·의사·경찰 능력 행사" },
+  { key: "day", label: "아침", detail: "사건 공개와 토론" },
+  { key: "vote", label: "투표", detail: "처형 후보 지목" },
+  { key: "verdict", label: "판결", detail: "찬반으로 처형 확정" },
+  { key: "ended", label: "결과", detail: "승리 진영과 직업 공개" },
+];
+
+function OutsideActivityBlock() {
+  const inviteUrl = process.env.NEXT_PUBLIC_DISCORD_INVITE_URL;
+
+  return (
+    <div className="w-full max-w-lg rounded-lg border border-white/10 bg-white/[0.04] p-6 text-left">
+      <div className="text-center text-sm text-white/35">Gomdori Mafia</div>
+      <h1 className="mt-3 text-center text-xl font-semibold text-white">
+        Discord 안에서 시작합니다
+      </h1>
+      <p className="mt-3 text-center text-sm leading-6 text-white/55">
+        Gomdori 마피아는 Discord 음성 채널에 입장한 뒤 <span className="font-mono">/게임</span> 명령으로 열어주세요.
+        웹에서 직접 열어두면 채널 컨텍스트가 없어 게임 서버에 연결되지 않습니다.
+      </p>
+
+      {inviteUrl ? (
+        <div className="mt-5 flex justify-center">
+          <a
+            href={inviteUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex h-10 items-center rounded-full bg-white px-5 text-sm font-semibold text-ink hover:bg-white/85"
+          >
+            Discord 서버 참여 →
+          </a>
+        </div>
+      ) : null}
+
+      <div className="mt-6 border-t border-white/10 pt-5">
+        <div className="text-xs font-semibold uppercase tracking-widest text-white/35">
+          페이즈 흐름
+        </div>
+        <ol className="mt-3 space-y-2">
+          {GAME_PHASE_STEPS.map((step, index) => (
+            <li key={step.key} className="flex items-baseline gap-3 text-sm">
+              <span className="w-6 shrink-0 text-right font-mono text-white/35">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <span className="font-medium text-white/80">{step.label}</span>
+              <span className="text-white/40">— {step.detail}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
     </div>
   );
 }
