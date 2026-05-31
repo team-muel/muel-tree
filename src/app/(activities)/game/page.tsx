@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ActivityLayout, type ActivitySession } from "@/components/ActivityLayout";
 import { getActivity } from "@/config/activities";
+import { GOMDORI_RULES } from "@/config/gomdori-rules";
 import {
   authExchange,
   createMatch,
@@ -316,16 +317,6 @@ function StatusBlock({ title, detail }: { title: string; detail: string }) {
   );
 }
 
-const GAME_PHASE_STEPS: Array<{ key: string; label: string; detail: string }> = [
-  { key: "lobby", label: "로비", detail: "참가자가 모여 매치를 시작" },
-  { key: "role_assign", label: "직업 배정", detail: "비밀리에 역할 전달" },
-  { key: "night", label: "밤", detail: "악마·조력자·의사·경찰 능력 행사" },
-  { key: "day", label: "아침", detail: "사건 공개와 토론" },
-  { key: "vote", label: "투표", detail: "처형 후보 지목" },
-  { key: "verdict", label: "판결", detail: "찬반으로 처형 확정" },
-  { key: "ended", label: "결과", detail: "승리 진영과 직업 공개" },
-];
-
 function OutsideActivityBlock() {
   const inviteUrl = process.env.NEXT_PUBLIC_DISCORD_INVITE_URL;
 
@@ -358,7 +349,7 @@ function OutsideActivityBlock() {
           페이즈 흐름
         </div>
         <ol className="mt-3 space-y-2">
-          {GAME_PHASE_STEPS.map((step, index) => (
+          {GOMDORI_RULES.publicFlowSteps.map((step, index) => (
             <li key={step.key} className="flex items-baseline gap-3 text-sm">
               <span className="w-6 shrink-0 text-right font-mono text-white/35">
                 {String(index + 1).padStart(2, "0")}
