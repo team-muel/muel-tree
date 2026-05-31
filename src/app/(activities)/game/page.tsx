@@ -233,7 +233,7 @@ function GameShell({ session }: { session: ActivitySession }) {
   if (boot.status === "landing") {
     return (
       <GameFrame>
-        <LandingScreen existing={landingMatch} onCreate={createGame} onJoin={joinGame} />
+        <LandingScreen existing={landingMatch} participants={session.instanceParticipants} onCreate={createGame} onJoin={joinGame} />
       </GameFrame>
     );
   }
@@ -347,14 +347,19 @@ function GameFrame({ children }: { children: React.ReactNode }) {
 
 function LandingScreen({
   existing,
+  participants,
   onCreate,
   onJoin,
 }: {
   existing: MatchSummary | null;
+  participants: { id: string; username: string; global_name?: string | null; nickname?: string }[];
   onCreate: () => void;
   onJoin: () => void;
 }) {
   const joinable = existing != null && existing.status === "lobby";
+  const names = participants
+    .map((p) => p.nickname || p.global_name || p.username)
+    .filter((n): n is string => Boolean(n));
   return (
     <div className="w-full max-w-lg rounded-lg border border-white/10 bg-white/[0.04] p-8 text-center">
       <div className="text-sm text-white/35">Gomdori Mafia</div>
@@ -362,6 +367,12 @@ function LandingScreen({
       <p className="mt-3 text-sm leading-6 text-white/50">
         이 음성 채널에서 함께 플레이합니다. 방을 만들거나 이미 열린 방에 참가하세요.
       </p>
+      {names.length > 0 ? (
+        <div className="mt-4 rounded-md border border-white/10 bg-black/20 px-4 py-3 text-left">
+          <div className="text-xs text-white/35">이 Activity에 모인 사람 ({names.length})</div>
+          <div className="mt-1 text-sm text-white/70">{names.join(", ")}</div>
+        </div>
+      ) : null}
       <div className="mt-7 grid grid-cols-1 sm:grid-cols-2 gap-3">
         <button
           type="button"

@@ -25,6 +25,7 @@ export const MOCK_SESSION: ActivitySession = {
   },
   hasDiscordAuth: true,
   accessToken: "preview-token",
+  instanceParticipants: [],
   activityContext: {
     guildId: "preview-guild",
     channelId: "preview-channel",
