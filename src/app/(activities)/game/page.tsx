@@ -27,6 +27,7 @@ type BootState =
   | { status: "waiting" }
   | { status: "authenticating" }
   | { status: "joining" }
+  | { status: "landing" }
   | { status: "ready" }
   | { status: "error"; message: string };
 
@@ -43,10 +44,12 @@ function GameShell({ session }: { session: ActivitySession }) {
   const [gameJwt, setGameJwt] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [match, setMatch] = useState<MatchSummary | null>(null);
+  const [landingMatch, setLandingMatch] = useState<MatchSummary | null>(null);
   const [players, setPlayers] = useState<PlayerSummary[]>([]);
   const [events, setEvents] = useState<Array<{ id: string; event_type: string; created_at: string; payload?: Record<string, unknown> }>>([]);
 
   const channelId = session.activityContext.channelId;
+  const instanceId = session.activityContext.instanceId;
   const guildId = session.activityContext.guildId;
   const matchId = match?.id ?? null;
   const myPlayer = players.find((player) => player.userId === userId) ?? null;
@@ -74,18 +77,13 @@ function GameShell({ session }: { session: ActivitySession }) {
         setGameJwt(auth.gameJwt);
         setUserId(auth.userId);
 
-        setBoot({ status: "joining" });
-        const existing = await resolveMatch({ discordChannelId: channelId }, auth.gameJwt);
-        const resolved = existing
-          ? existing
-          : (await createMatch(
-              { discordChannelId: channelId, discordGuildId: guildId },
-              auth.gameJwt,
-            )).match;
-        const joined = await joinMatch(resolved.id, auth.gameJwt);
+        const existing = await resolveMatch(
+          { discordChannelId: channelId, instanceId },
+          auth.gameJwt,
+        );
         if (cancelled) return;
-        setMatch(joined.match);
-        setBoot({ status: "ready" });
+        setLandingMatch(existing);
+        setBoot({ status: "landing" });
       } catch (error) {
         if (cancelled) return;
         setBoot({
@@ -184,6 +182,38 @@ function GameShell({ session }: { session: ActivitySession }) {
     };
   }, [gameJwt, matchId]);
 
+  async function createGame() {
+    if (!gameJwt || !channelId) return;
+    setBoot({ status: "joining" });
+    try {
+      const created = await createMatch(
+        { discordChannelId: channelId, discordGuildId: guildId, instanceId },
+        gameJwt,
+      );
+      const joined = await joinMatch(created.match.id, gameJwt);
+      setMatch(joined.match);
+      setBoot({ status: "ready" });
+    } catch (error) {
+      setBoot({ status: "error", message: error instanceof Error ? error.message : "게임 생성에 실패했습니다." });
+    }
+  }
+
+  async function joinGame() {
+    if (!gameJwt || !landingMatch) return;
+    setBoot({ status: "joining" });
+    try {
+      if (landingMatch.status === "lobby") {
+        const joined = await joinMatch(landingMatch.id, gameJwt);
+        setMatch(joined.match);
+      } else {
+        setMatch(landingMatch);
+      }
+      setBoot({ status: "ready" });
+    } catch (error) {
+      setBoot({ status: "error", message: error instanceof Error ? error.message : "참가에 실패했습니다." });
+    }
+  }
+
   if (!session.hasDiscordAuth) {
     return (
       <GameFrame>
@@ -196,6 +226,14 @@ function GameShell({ session }: { session: ActivitySession }) {
     return (
       <GameFrame>
         <StatusBlock title="입장 실패" detail={boot.message} />
+      </GameFrame>
+    );
+  }
+
+  if (boot.status === "landing") {
+    return (
+      <GameFrame>
+        <LandingScreen existing={landingMatch} onCreate={createGame} onJoin={joinGame} />
       </GameFrame>
     );
   }
@@ -304,6 +342,44 @@ function GameFrame({ children }: { children: React.ReactNode }) {
     <main className="w-full min-h-full bg-[#11131a] text-white px-4 py-5 sm:px-6 flex items-center justify-center">
       {children}
     </main>
+  );
+}
+
+function LandingScreen({
+  existing,
+  onCreate,
+  onJoin,
+}: {
+  existing: MatchSummary | null;
+  onCreate: () => void;
+  onJoin: () => void;
+}) {
+  const joinable = existing != null && existing.status === "lobby";
+  return (
+    <div className="w-full max-w-lg rounded-lg border border-white/10 bg-white/[0.04] p-8 text-center">
+      <div className="text-sm text-white/35">Gomdori Mafia</div>
+      <h1 className="mt-3 text-2xl font-semibold text-white">천사와 악마의 추리</h1>
+      <p className="mt-3 text-sm leading-6 text-white/50">
+        이 음성 채널에서 함께 플레이합니다. 방을 만들거나 이미 열린 방에 참가하세요.
+      </p>
+      <div className="mt-7 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <button
+          type="button"
+          onClick={onCreate}
+          className="h-24 rounded-lg bg-emerald-300 text-base font-semibold text-slate-950 hover:bg-emerald-200"
+        >
+          게임 만들기
+        </button>
+        <button
+          type="button"
+          onClick={onJoin}
+          disabled={existing == null}
+          className="h-24 rounded-lg border border-white/15 bg-white/[0.06] text-base font-semibold text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:text-white/30 disabled:hover:bg-white/[0.06]"
+        >
+          {joinable ? "참가하기" : existing != null ? "진행 중인 게임 참가" : "열린 게임 없음"}
+        </button>
+      </div>
+    </div>
   );
 }
 
