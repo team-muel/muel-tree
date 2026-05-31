@@ -75,14 +75,14 @@ export type PlayerSummary = {
 };
 
 export async function resolveMatch(
-  input: { discordChannelId: string },
+  input: { discordChannelId?: string | null; instanceId?: string | null },
   gameJwt: string,
 ): Promise<MatchSummary | null> {
   return postJson<typeof input, MatchSummary | null>("match-resolve", input, { gameJwt });
 }
 
 export async function createMatch(
-  input: { discordChannelId: string; discordGuildId?: string | null },
+  input: { discordChannelId: string; discordGuildId?: string | null; instanceId?: string | null },
   gameJwt: string,
 ): Promise<{ match: MatchSummary; created: boolean }> {
   return postJson<typeof input, { match: MatchSummary; created: boolean }>(
