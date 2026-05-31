@@ -1,33 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getActivityDiscordCredentials } from "@/config/activity-server";
 import { forbiddenOrigin, isAllowedOrigin } from "@/lib/request-security";
-
-/**
- * Per-Activity Discord OAuth credential lookup.
- *
- * Each Muel Activity is hosted by its own Discord application. The client
- * sends `activitySlug` in the request body so we can pick the matching
- * client_id / client_secret pair. Literal switch (not dynamic key access) so
- * NEXT_PUBLIC_* gets inlined at build time and server-only secrets never leak
- * to the bundle.
- */
-function getDiscordCredentials(
-  activitySlug: string,
-): { clientId: string; clientSecret: string } | null {
-  switch (activitySlug) {
-    case "weave":
-      return {
-        clientId: process.env.NEXT_PUBLIC_WEAVE_DISCORD_CLIENT_ID ?? "",
-        clientSecret: process.env.WEAVE_DISCORD_CLIENT_SECRET ?? "",
-      };
-    case "gomdori-mafia":
-      return {
-        clientId: process.env.NEXT_PUBLIC_GOMDORI_DISCORD_CLIENT_ID ?? "",
-        clientSecret: process.env.GOMDORI_DISCORD_CLIENT_SECRET ?? "",
-      };
-    default:
-      return null;
-  }
-}
 
 export async function POST(req: NextRequest) {
   if (!isAllowedOrigin(req)) {
@@ -46,7 +19,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const creds = getDiscordCredentials(activitySlug);
+  const creds = getActivityDiscordCredentials(activitySlug);
   if (!creds) {
     return NextResponse.json(
       { error: `unknown activity "${activitySlug}"` },
