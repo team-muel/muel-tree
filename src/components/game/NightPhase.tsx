@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
 import { submitAction, sendChat } from "@/lib/game/api";
 import { getGameSupabase } from "@/lib/game/client";
+import { GOMDORI_RULES } from "@/config/gomdori-rules";
+import { PHASE_TONES, SURFACE } from "@/config/design-tokens";
 
 type NightPhaseProps = {
   match: MatchSummary;
@@ -16,6 +18,7 @@ type ChatRow = { id: string; sender_user_id: string; message: string; created_at
 
 export function NightPhase({ match, players, myPlayer, gameJwt }: NightPhaseProps) {
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
+  const [isFirstNight, setIsFirstNight] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [investigationResult, setInvestigationResult] = useState<string | null>(null);
@@ -25,6 +28,33 @@ export function NightPhase({ match, players, myPlayer, gameJwt }: NightPhaseProp
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const role = myPlayer?.role;
+
+  useEffect(() => {
+    if (!match.id || !gameJwt) return;
+
+    let cancelled = false;
+    const supabase = getGameSupabase(gameJwt);
+
+    supabase
+      .schema("mafia")
+      .from("match_phases")
+      .select("phase_number")
+      .eq("match_id", match.id)
+      .eq("phase_type", "night")
+      .is("ended_at", null)
+      .order("phase_number", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled && data) {
+          setIsFirstNight(data.phase_number === 1 && GOMDORI_RULES.firstNight.skipsAbilities);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [match.id, gameJwt]);
 
   useEffect(() => {
     if ((role !== "demon" && role !== "helper") || !match.id || !gameJwt) return;
@@ -117,6 +147,18 @@ export function NightPhase({ match, players, myPlayer, gameJwt }: NightPhaseProp
       setChatMessage(msg);
     }
   };
+
+  if (isFirstNight) {
+    return (
+      <div className={`flex h-full w-full items-center justify-center p-5 ${PHASE_TONES.night.bg}`}>
+        <div className={SURFACE.statusBlock}>
+          <h2 className={`text-sm font-medium tracking-widest uppercase ${PHASE_TONES.night.accent}`}>밤</h2>
+          <h1 className="mt-6 text-2xl font-semibold text-white">{GOMDORI_RULES.firstNight.silentMessage}</h1>
+          <p className="mt-4 text-sm text-white/40">첫 밤에는 능력을 사용할 수 없습니다. 아침을 기다리세요.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!myPlayer || !myPlayer.alive) {
     return (
