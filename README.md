@@ -27,7 +27,7 @@
 
 Each Discord Activity is a route in this repo served as an iframe inside Discord. Common logic (Discord SDK init, auth, error handling, service event logging) lives in `src/components/ActivityLayout.tsx`. Activity metadata is centralized in `src/config/activities.ts`.
 
-To add a new Activity: register it in `activities.ts`, create a route folder (e.g. `src/app/game/page.tsx`), wrap content in `<ActivityLayout>`, and register the route in the corresponding Discord Application's URL mapping.
+To add a new Activity: register it in `src/config/activities.ts`, add the matching server-only secret key in `src/config/activity-server.ts`, create a route folder (e.g. `src/app/game/page.tsx`), wrap content in `<ActivityLayout>`, add the `NEXT_PUBLIC_*_DISCORD_CLIENT_ID` and `*_DISCORD_CLIENT_SECRET` env vars, and register the route in the corresponding Discord Application's URL mapping.
 
 ## Data Layer
 

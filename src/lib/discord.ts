@@ -1,4 +1,5 @@
 import { DiscordSDK } from "@discord/embedded-app-sdk";
+import { getActivity } from "@/config/activities";
 import { appFetch } from "@/lib/app-fetch";
 
 export type DiscordUser = {
@@ -26,23 +27,8 @@ export function isInsideDiscord(): boolean {
   return p.includes("frame_id") || p.includes("instance_id");
 }
 
-/**
- * Per-Activity Discord client_id lookup.
- *
- * Each Muel Activity is hosted by its own Discord application, so OAuth must
- * use the matching client_id. We use a literal switch (not dynamic
- * process.env[key] access) so Next.js can statically inline NEXT_PUBLIC_*
- * values at build time.
- */
 function getDiscordClientId(activitySlug: string): string | undefined {
-  switch (activitySlug) {
-    case "weave":
-      return process.env.NEXT_PUBLIC_WEAVE_DISCORD_CLIENT_ID;
-    case "gomdori-mafia":
-      return process.env.NEXT_PUBLIC_GOMDORI_DISCORD_CLIENT_ID;
-    default:
-      return undefined;
-  }
+  return getActivity(activitySlug)?.discordClientId;
 }
 
 export async function initDiscord(
