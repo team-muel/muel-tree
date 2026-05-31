@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { OpenActivityLink } from "@/components/OpenActivityLink";
 import { Nav } from "@/components/Nav";
 import { footerLinks, services, teamUpdates } from "@/config/services";
 
@@ -63,12 +64,12 @@ export default function Home() {
             </p>
             <div className="mt-10 flex flex-wrap justify-center gap-3">
               {service.primaryAction.href ? (
-                <Link
+                <OpenActivityLink
                   href={service.primaryAction.href}
                   className={`inline-flex h-12 items-center gap-2 rounded-full px-6 text-sm font-semibold transition ${primaryClass}`}
                 >
                   {service.primaryAction.label} -&gt;
-                </Link>
+                </OpenActivityLink>
               ) : (
                 <span
                   className={`inline-flex h-12 items-center rounded-full px-6 text-sm font-semibold ${disabledClass}`}
