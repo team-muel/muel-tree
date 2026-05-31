@@ -13,6 +13,7 @@ export type DiscordSession = {
   sdk: DiscordSDK;
   user: DiscordUser | null;
   accessToken: string | null;
+  authError: string | null;
   context: {
     guildId: string | null;
     channelId: string | null;
@@ -135,6 +136,7 @@ export async function initDiscord(
 
   let user: DiscordUser | null = null;
   let accessToken: string | null = null;
+  let authError: string | null = null;
   const params = new URLSearchParams(window.location.search);
   const context = {
     guildId: params.get("guild_id"),
@@ -155,8 +157,15 @@ export async function initDiscord(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code, activitySlug }),
     });
+    if (!res.ok) {
+      const detail = await res.text().catch(() => "");
+      throw new Error(`token exchange failed (${res.status}): ${detail.slice(0, 200)}`);
+    }
     const { access_token } = await res.json();
-    accessToken = typeof access_token === "string" ? access_token : null;
+    if (typeof access_token !== "string") {
+      throw new Error("token exchange returned no access_token");
+    }
+    accessToken = access_token;
 
     const auth = await sdk.commands.authenticate({ access_token });
     user = {
@@ -164,11 +173,12 @@ export async function initDiscord(
       username: auth.user.username,
       avatar: auth.user.avatar ?? null,
     };
-  } catch {
-    // auth failed — run in anonymous mode
+  } catch (err) {
+    authError = err instanceof Error ? err.message : String(err);
+    console.error("[gomdori] Discord auth failed:", authError);
   }
 
-  const session = { sdk, user, accessToken, context };
+  const session = { sdk, user, accessToken, context, authError };
   sessions.set(activitySlug, session);
   return session;
 }
