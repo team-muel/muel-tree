@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { appFetch } from "@/lib/app-fetch";
-import { initDiscord, type DiscordUser } from "@/lib/discord";
+import { initDiscord, subscribeInstanceParticipants, getInstanceParticipants, type DiscordUser, type InstanceParticipant } from "@/lib/discord";
 import type { MuelActivity } from "@/config/activities";
 
 export type ActivitySession = {
@@ -10,6 +10,7 @@ export type ActivitySession = {
   hasDiscordAuth: boolean;
   accessToken: string | null;
   activityContext: Record<string, string | null>;
+  instanceParticipants: InstanceParticipant[];
 };
 
 type Props = {
@@ -24,6 +25,8 @@ export function ActivityLayout({ activity, children }: Props) {
   const activityContext = useRef<Record<string, string | null>>({});
   const [ready, setReady] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
+  const [instanceParticipants, setInstanceParticipants] = useState<InstanceParticipant[]>([]);
+  const unsubParticipants = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     initDiscord(activity.slug)
@@ -32,6 +35,13 @@ export function ActivityLayout({ activity, children }: Props) {
           accessToken.current = session.accessToken;
           setHasDiscordAuth(true);
           activityContext.current = session.context;
+          getInstanceParticipants(activity.slug)
+            .then(setInstanceParticipants)
+            .catch(() => {});
+          unsubParticipants.current = subscribeInstanceParticipants(
+            activity.slug,
+            setInstanceParticipants,
+          );
           appFetch("/api/service-events", {
             method: "POST",
             headers: {
@@ -52,6 +62,10 @@ export function ActivityLayout({ activity, children }: Props) {
         setInitError(e instanceof Error ? e.message : "Discord 연결 실패");
       })
       .finally(() => setReady(true));
+
+    return () => {
+      unsubParticipants.current?.();
+    };
   }, [activity.slug, activity.serviceSlug, activity.route]);
 
   const session: ActivitySession = {
@@ -59,6 +73,7 @@ export function ActivityLayout({ activity, children }: Props) {
     hasDiscordAuth,
     accessToken: accessToken.current,
     activityContext: activityContext.current,
+    instanceParticipants,
   };
 
   return (

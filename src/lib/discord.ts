@@ -1,4 +1,4 @@
-import { DiscordSDK, patchUrlMappings } from "@discord/embedded-app-sdk";
+import { DiscordSDK, patchUrlMappings, Events } from "@discord/embedded-app-sdk";
 import { getActivity } from "@/config/activities";
 import { appFetch } from "@/lib/app-fetch";
 
@@ -20,6 +20,55 @@ export type DiscordSession = {
 };
 
 const sessions = new Map<string, DiscordSession>();
+
+export type InstanceParticipant = {
+  id: string;
+  username: string;
+  global_name?: string | null;
+  nickname?: string;
+};
+
+type SdkParticipants = {
+  commands: { getInstanceConnectedParticipants: () => Promise<unknown> };
+  subscribe: (event: string, handler: (data: unknown) => void) => void;
+  unsubscribe: (event: string, handler: (data: unknown) => void) => void;
+};
+
+function participantsFrom(res: unknown): InstanceParticipant[] {
+  const list = (res as { participants?: unknown } | null)?.participants;
+  return Array.isArray(list) ? (list as InstanceParticipant[]) : [];
+}
+
+// Discord Activity instance roster (everyone who launched the Activity in this
+// voice channel), independent of who has joined the match yet.
+export async function getInstanceParticipants(activitySlug: string): Promise<InstanceParticipant[]> {
+  const s = sessions.get(activitySlug);
+  if (!s) return [];
+  const sdk = s.sdk as unknown as SdkParticipants;
+  try {
+    return participantsFrom(await sdk.commands.getInstanceConnectedParticipants());
+  } catch {
+    return [];
+  }
+}
+
+export function subscribeInstanceParticipants(
+  activitySlug: string,
+  cb: (participants: InstanceParticipant[]) => void,
+): () => void {
+  const s = sessions.get(activitySlug);
+  if (!s) return () => {};
+  const sdk = s.sdk as unknown as SdkParticipants;
+  const handler = (data: unknown) => cb(participantsFrom(data));
+  sdk.subscribe(Events.ACTIVITY_INSTANCE_PARTICIPANTS_UPDATE, handler);
+  return () => {
+    try {
+      sdk.unsubscribe(Events.ACTIVITY_INSTANCE_PARTICIPANTS_UPDATE, handler);
+    } catch {
+      // ignore
+    }
+  };
+}
 
 export function isInsideDiscord(): boolean {
   if (typeof window === "undefined") return false;
