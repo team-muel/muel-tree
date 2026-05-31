@@ -80,6 +80,20 @@ function getDiscordClientId(activitySlug: string): string | undefined {
   return getActivity(activitySlug)?.discordClientId;
 }
 
+function describeError(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  if (err && typeof err === "object") {
+    const o = err as { message?: unknown; code?: unknown };
+    const parts: string[] = [];
+    if (o.code !== undefined) parts.push(`code=${String(o.code)}`);
+    if (typeof o.message === "string") parts.push(o.message);
+    if (parts.length) return parts.join(" ");
+    try { return JSON.stringify(err); } catch { return String(err); }
+  }
+  return String(err);
+}
+
 export async function initDiscord(
   activitySlug: string,
 ): Promise<DiscordSession | null> {
@@ -143,6 +157,7 @@ export async function initDiscord(
     channelId: params.get("channel_id"),
     instanceId: params.get("instance_id"),
   };
+  let step = "authorize";
   try {
     const { code } = await sdk.commands.authorize({
       client_id: clientId,
@@ -152,6 +167,7 @@ export async function initDiscord(
       scope: ["identify"],
     });
 
+    step = "token-exchange";
     const res = await appFetch("/api/discord/token", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -167,6 +183,7 @@ export async function initDiscord(
     }
     accessToken = access_token;
 
+    step = "authenticate";
     const auth = await sdk.commands.authenticate({ access_token });
     user = {
       id: auth.user.id,
@@ -174,8 +191,8 @@ export async function initDiscord(
       avatar: auth.user.avatar ?? null,
     };
   } catch (err) {
-    authError = err instanceof Error ? err.message : String(err);
-    console.error("[gomdori] Discord auth failed:", authError);
+    authError = `[${step}] ${describeError(err)}`;
+    console.error("[gomdori] Discord auth failed at", step, err);
   }
 
   const session = { sdk, user, accessToken, context, authError };
