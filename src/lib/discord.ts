@@ -1,6 +1,7 @@
 import { DiscordSDK, patchUrlMappings, Events } from "@discord/embedded-app-sdk";
 import { getActivity } from "@/config/activities";
 import { appFetch } from "@/lib/app-fetch";
+import { isInsideDiscord as launchIsInsideDiscord, restoreLaunchParamsToUrl } from "./discord-launch";
 
 export type DiscordUser = {
   id: string;
@@ -71,9 +72,7 @@ export function subscribeInstanceParticipants(
 }
 
 export function isInsideDiscord(): boolean {
-  if (typeof window === "undefined") return false;
-  const p = window.location.search;
-  return p.includes("frame_id") || p.includes("instance_id");
+  return launchIsInsideDiscord();
 }
 
 function getDiscordClientId(activitySlug: string): string | undefined {
@@ -83,6 +82,7 @@ function getDiscordClientId(activitySlug: string): string | undefined {
 export async function initDiscord(
   activitySlug: string,
 ): Promise<DiscordSession | null> {
+  restoreLaunchParamsToUrl();
   if (!isInsideDiscord()) return null;
   const cached = sessions.get(activitySlug);
   if (cached) return cached;
