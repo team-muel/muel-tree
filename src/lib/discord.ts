@@ -1,4 +1,4 @@
-import { DiscordSDK } from "@discord/embedded-app-sdk";
+import { DiscordSDK, patchUrlMappings } from "@discord/embedded-app-sdk";
 import { getActivity } from "@/config/activities";
 import { appFetch } from "@/lib/app-fetch";
 
@@ -47,6 +47,22 @@ export async function initDiscord(
   }
 
   const sdk = new DiscordSDK(clientId);
+
+  // Gomdori는 클라이언트에서 Supabase(REST·Realtime·Edge Function)를 직접 호출한다.
+  // Discord Activity iframe 의 CSP 가 *.supabase.co 직접 호출을 막으므로 Discord
+  // 프록시로 우회시킨다. Developer Portal 에 URL Mapping (prefix "/supabase" →
+  // target = NEXT_PUBLIC_SUPABASE_URL 의 host) 이 함께 등록돼 있어야 한다.
+  // same-origin API 라우트만 쓰는 다른 Activity(weave)는 영향 없음.
+  if (activitySlug === "gomdori-mafia") {
+    try {
+      const supabaseHost = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").host;
+      if (supabaseHost) {
+        patchUrlMappings([{ prefix: "/supabase", target: supabaseHost }]);
+      }
+    } catch {
+      // NEXT_PUBLIC_SUPABASE_URL 미설정 — 프록시 매핑 생략.
+    }
+  }
 
   // sdk.ready() resolves when Discord client sends the HANDSHAKE_REPLY.
   // Without a timeout it hangs forever if the Activity URL mapping is
