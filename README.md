@@ -4,16 +4,19 @@
 
 ## Landing Terms
 
-- **Muel** — Bot
-- **Gomdori** — Game, operated as a `Discord <-> Toss` experience
-- **Weave (일기)** — App, operated as a `Discord <-> Toss` experience. Discord command: `/일기`, Activity route: `/weave`
+- **Muel** — community AI assistant (Discord bot).
+- **Weave** — 여러분이 가꾸어 나가는 지식의 나무. 커뮤니티 멤버가 함께 잇고
+  적어 만드는 특수한 나무위키. Muel이 보조하는 *내부 도구*. (Activity route:
+  `/weave`. 별도 슬래시 명령 X — 노출 의도가 *제품*이 아니라 *멤버의 도구*.)
+- **Gomdori** — 커뮤니티 멤버끼리 함께 노는 비대칭 추리 시간. Discord
+  Activity (route: `/game`). *제품* 이 아닌 *함께 노는 도구*.
 - **Server** — Discord (live, invite: https://discord.gg/NdBHcbXpjh)
 - **Team** — updates and public-facing notices
 
 ## Current Routes
 
 - `/` — Muel landing page
-- `/weave` — 일기 Activity (Discord command `/일기`)
+- `/weave` — Weave 지식의 나무 (Activity route, 멤버 내부 도구)
 - `/force` — force-layout test surface
 - `/payment/success`, `/payment/fail` — Toss Payments return pages
 - `/api/dreams` — public graph data (content excluded, tag/keywords/emotions only)
