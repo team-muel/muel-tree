@@ -78,7 +78,9 @@ function WeaveContent({ session }: { session: ActivitySession }) {
   const [myDreamsLoading, setMyDreamsLoading] = useState(false);
 
   const fetchDreams = useCallback(() => {
-    appFetch("/api/dreams")
+    appFetch("/api/dreams", {
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+    })
       .then((r) => r.json())
       .then(({ nodes: n, edges: e, error: err }) => {
         if (err) {
@@ -91,7 +93,7 @@ function WeaveContent({ session }: { session: ActivitySession }) {
       })
       .catch((e) => setError(toErrorMessage(e)))
       .finally(() => setLoading(false));
-  }, []);
+  }, [accessToken]);
 
   useEffect(() => {
     fetchDreams();
@@ -213,7 +215,7 @@ function WeaveContent({ session }: { session: ActivitySession }) {
       {loading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none">
           <div className="text-4xl animate-pulse">🧵</div>
-          <p className="text-white/30 text-sm mt-3">꿈을 불러오는 중...</p>
+          <p className="text-white/30 text-sm mt-3">Weave를 불러오는 중...</p>
         </div>
       )}
 
@@ -231,6 +233,11 @@ function WeaveContent({ session }: { session: ActivitySession }) {
           <p className="text-white/80 text-sm leading-relaxed">
             {selectedNode.label}
           </p>
+          {selectedNode.metaLabel && (
+            <p className="text-white/35 text-[11px] mt-1">
+              {selectedNode.metaLabel}
+            </p>
+          )}
           {selectedNode.emotion && (
             <p className="text-white/40 text-xs mt-1">
               {selectedNode.emotion}
@@ -247,6 +254,17 @@ function WeaveContent({ session }: { session: ActivitySession }) {
                 </span>
               ))}
             </div>
+          )}
+          {selectedNode.href && (
+            <a
+              href={selectedNode.href}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="mt-3 inline-flex text-[11px] text-white/45 underline decoration-white/20 underline-offset-2 hover:text-white/70"
+            >
+              원문 열기
+            </a>
           )}
           <p className="text-white/20 text-[10px] mt-3">눌러서 닫기</p>
         </div>

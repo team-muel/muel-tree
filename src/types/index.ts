@@ -14,6 +14,10 @@ export interface WeaveNode {
   // ADR-002: 멀티소스 지식 노드 종류 (dream | research_report | community_video |
   // community_post | subscription_signal | user_memo | auto_memo).
   sourceKind?: string
+  sourceLabel?: string
+  metaLabel?: string
+  visibility?: "public" | "community" | "private"
+  href?: string
 }
 
 export interface WeaveEdge {
