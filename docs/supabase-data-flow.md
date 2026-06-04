@@ -29,7 +29,7 @@ Observed fields from the app:
 
 Current writes happen in `/api/dreams/submit` with the Supabase service role key.
 
-Current reads happen in `/api/dreams` with the Supabase anon key. The public API excludes `content` — graph nodes show `main_tag · keywords` only.
+Dream reads happen in `/api/dreams` with the Supabase anon key. The public dream payload excludes `content` — graph nodes show `main_tag · keywords` only.
 
 ### `dream_connections`
 
@@ -40,6 +40,39 @@ Observed fields from the app:
 - `dream_a`
 - `dream_b`
 - `similarity`
+
+### `weave_nodes`
+
+ADR-002 multi-source knowledge nodes produced primarily by `muel-bot` and consumed by `muel-tree`.
+
+Observed fields from the app:
+
+- `id`
+- `source_kind`
+- `owner_user_id`
+- `visibility`
+- `title`
+- `body`
+- `tags`
+- `source_ref`
+- `created_at`
+
+Current graph reads happen in `/api/dreams` with the Supabase service role key:
+
+- `visibility='community'` nodes are visible to everyone.
+- `visibility='private'` nodes are visible only when a Discord bearer token resolves to `owner_user_id`.
+- The API returns compact graph metadata, not raw `source_ref` or embeddings.
+
+### `weave_node_embeddings`
+
+Used by `/api/dreams` to compute lightweight similarity edges among visible `weave_nodes`.
+
+Observed fields from the app:
+
+- `node_id`
+- `embedding`
+- `embedding_model`
+- `created_at`
 
 ### `muel_profiles`
 
@@ -108,6 +141,7 @@ Discord Activity
   -> /weave
   -> /api/discord/token
   -> Discord OAuth token
+  -> /api/dreams (public + authenticated private graph read)
   -> /api/dreams/submit
   -> Supabase muel_profiles / muel_profile_identities
   -> Gemini extraction and embedding
@@ -116,6 +150,14 @@ Discord Activity
   -> Supabase dream_connections
   -> Supabase service_events
   -> Weave graph update
+```
+
+```text
+Muel Bot
+  -> research / subscription / memo event
+  -> insert_weave_node RPC
+  -> weave_nodes + optional weave_node_embeddings
+  -> /api/dreams graph read in muel-tree
 ```
 
 ## Planned Flow
