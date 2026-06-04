@@ -166,6 +166,7 @@ function WeaveContent({ session }: { session: ActivitySession }) {
         radius: emotionRadius(extracted?.emotions),
         emotion: extracted?.emotions?.[0],
         keywords: kw,
+        sourceKind: "dream",
       };
 
       setNodes((prev) => [...prev, newNode]);
@@ -321,7 +322,7 @@ function WeaveContent({ session }: { session: ActivitySession }) {
 
       <div className="absolute bottom-36 left-1/2 -translate-x-1/2 text-center pointer-events-none select-none">
         <p className="text-white/20 text-xs">
-          {nodes.length > 0 ? `${nodes.length}개의 꿈이 연결됨` : ""}
+          {nodes.length > 0 ? `${nodes.length}개의 노드가 연결됨` : ""}
         </p>
         <p className="text-white/10 text-[10px] mt-1 md:hidden">
           터치로 회전 · 핀치로 줌
