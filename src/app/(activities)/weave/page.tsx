@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { WeaveEdge, WeaveNode } from "@/types";
 import { appFetch, toErrorMessage } from "@/lib/app-fetch";
 import { DonateButton } from "@/components/DonateButton";
@@ -58,6 +58,7 @@ function randomSpawn(radius = 8) {
 }
 
 type MyDream = { id: string; content: string; main_tag: string; emotions: string[]; keywords: string[]; created_at: string };
+type ScopeFilter = "all" | "shared" | "mine";
 
 function WeaveContent({ session }: { session: ActivitySession }) {
   const { discordUser, hasDiscordAuth, accessToken, activityContext } = session;
@@ -76,6 +77,7 @@ function WeaveContent({ session }: { session: ActivitySession }) {
   const [myDreams, setMyDreams] = useState<MyDream[]>([]);
   const [showMyDreams, setShowMyDreams] = useState(false);
   const [myDreamsLoading, setMyDreamsLoading] = useState(false);
+  const [scopeFilter, setScopeFilter] = useState<ScopeFilter>("all");
 
   const fetchDreams = useCallback(() => {
     appFetch("/api/dreams", {
@@ -169,6 +171,8 @@ function WeaveContent({ session }: { session: ActivitySession }) {
         emotion: extracted?.emotions?.[0],
         keywords: kw,
         sourceKind: "dream",
+        sourceLabel: "꿈",
+        visibility: "public",
       };
 
       setNodes((prev) => [...prev, newNode]);
@@ -203,11 +207,52 @@ function WeaveContent({ session }: { session: ActivitySession }) {
     [submit]
   );
 
+  const sharedNodeCount = useMemo(
+    () => nodes.filter((node) => node.visibility !== "private").length,
+    [nodes]
+  );
+  const privateNodeCount = useMemo(
+    () => nodes.filter((node) => node.visibility === "private").length,
+    [nodes]
+  );
+
+  const visibleNodes = useMemo(() => {
+    if (scopeFilter === "shared") {
+      return nodes.filter((node) => node.visibility !== "private");
+    }
+    if (scopeFilter === "mine") {
+      return nodes.filter((node) => node.visibility === "private");
+    }
+    return nodes;
+  }, [nodes, scopeFilter]);
+
+  const visibleNodeIds = useMemo(
+    () => new Set(visibleNodes.map((node) => node.id)),
+    [visibleNodes]
+  );
+
+  const visibleEdges = useMemo(
+    () => edges.filter((edge) => visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target)),
+    [edges, visibleNodeIds]
+  );
+
+  useEffect(() => {
+    if (scopeFilter === "mine" && privateNodeCount === 0) {
+      setScopeFilter("all");
+    }
+  }, [privateNodeCount, scopeFilter]);
+
+  useEffect(() => {
+    if (selectedNode && !visibleNodeIds.has(selectedNode.id)) {
+      setSelectedNode(null);
+    }
+  }, [selectedNode, visibleNodeIds]);
+
   return (
     <>
       <WeaveCanvas
-        nodes={nodes}
-        edges={edges}
+        nodes={visibleNodes}
+        edges={visibleEdges}
         newNodeIds={newNodeIds}
         onNodeClick={setSelectedNode}
       />
@@ -225,9 +270,36 @@ function WeaveContent({ session }: { session: ActivitySession }) {
         </div>
       )}
 
+      {nodes.length > 0 && (
+        <div className="absolute top-4 left-4 z-20 flex items-center gap-1 rounded-full border border-white/10 bg-black/40 p-1 backdrop-blur-sm">
+          {([
+            ["all", "전체", nodes.length],
+            ["shared", "공개", sharedNodeCount],
+            ["mine", "나만", privateNodeCount],
+          ] as const).map(([value, label, count]) => {
+            const disabled = value === "mine" && (!hasDiscordAuth || count === 0);
+            return (
+              <button
+                key={value}
+                type="button"
+                disabled={disabled}
+                onClick={() => setScopeFilter(value)}
+                className={`min-w-12 rounded-full px-2.5 py-1 text-[11px] transition-colors ${
+                  scopeFilter === value
+                    ? "bg-white/12 text-white/80"
+                    : "text-white/35 hover:bg-white/5 hover:text-white/60"
+                } disabled:cursor-not-allowed disabled:opacity-30`}
+              >
+                {label} {count}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {selectedNode && (
         <div
-          className="absolute top-4 left-4 md:top-6 md:left-6 z-20 max-w-[calc(100vw-2rem)] md:max-w-xs bg-black/60 backdrop-blur-md border border-white/10 rounded-xl p-3 md:p-4 cursor-pointer"
+          className="absolute top-16 left-4 md:top-20 md:left-6 z-20 max-w-[calc(100vw-2rem)] md:max-w-xs bg-black/60 backdrop-blur-md border border-white/10 rounded-xl p-3 md:p-4 cursor-pointer"
           onClick={() => setSelectedNode(null)}
         >
           <p className="text-white/80 text-sm leading-relaxed">
@@ -340,7 +412,7 @@ function WeaveContent({ session }: { session: ActivitySession }) {
 
       <div className="absolute bottom-36 left-1/2 -translate-x-1/2 text-center pointer-events-none select-none">
         <p className="text-white/20 text-xs">
-          {nodes.length > 0 ? `${nodes.length}개의 노드가 연결됨` : ""}
+          {visibleNodes.length > 0 ? `${visibleNodes.length}개의 노드가 연결됨` : ""}
         </p>
         <p className="text-white/10 text-[10px] mt-1 md:hidden">
           터치로 회전 · 핀치로 줌
