@@ -79,6 +79,7 @@ function WeaveContent({ session }: { session: ActivitySession }) {
   const [myDreamsLoading, setMyDreamsLoading] = useState(false);
   const [scopeFilter, setScopeFilter] = useState<ScopeFilter>("all");
   const [exporting, setExporting] = useState(false);
+  const [viewMode, setViewMode] = useState<"graph" | "list">("graph");
 
   const fetchDreams = useCallback(() => {
     appFetch("/api/dreams", {
@@ -323,6 +324,60 @@ function WeaveContent({ session }: { session: ActivitySession }) {
         onNodeClick={setSelectedNode}
       />
 
+      {viewMode === "list" && (
+        <div className="absolute inset-0 z-10 overflow-y-auto bg-[#070712]/95 backdrop-blur-sm">
+          <div className="mx-auto max-w-2xl px-4 pt-20 pb-44">
+            {visibleNodes.length === 0 ? (
+              <p className="mt-24 text-center text-sm text-white/30">표시할 노드가 없어요.</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {visibleNodes.map((node) => (
+                  <div
+                    key={node.id}
+                    className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3 transition-colors hover:bg-white/[0.06]"
+                  >
+                    <div className="flex items-start gap-2">
+                      <span
+                        className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: node.color ?? "#818cf8" }}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm leading-relaxed text-white/85">{node.label}</p>
+                        {node.metaLabel && (
+                          <p className="mt-0.5 text-[11px] text-white/35">{node.metaLabel}</p>
+                        )}
+                        {node.keywords && node.keywords.length > 0 && (
+                          <div className="mt-1.5 flex flex-wrap gap-1">
+                            {node.keywords.map((k) => (
+                              <span
+                                key={k}
+                                className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] text-white/30"
+                              >
+                                {k}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {node.href && (
+                          <a
+                            href={node.href}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-2 inline-flex text-[11px] text-white/45 underline decoration-white/20 underline-offset-2 hover:text-white/70"
+                          >
+                            원문 열기
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {loading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none">
           <div className="text-4xl animate-pulse">🧵</div>
@@ -360,6 +415,25 @@ function WeaveContent({ session }: { session: ActivitySession }) {
               </button>
             );
           })}
+        </div>
+      )}
+
+      {nodes.length > 0 && (
+        <div className="absolute top-4 left-1/2 z-20 -translate-x-1/2 flex items-center gap-1 rounded-full border border-white/10 bg-black/40 p-1 backdrop-blur-sm">
+          {([["graph", "그래프"], ["list", "목록"]] as const).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setViewMode(value)}
+              className={`min-w-12 rounded-full px-3 py-1 text-[11px] transition-colors ${
+                viewMode === value
+                  ? "bg-white/12 text-white/80"
+                  : "text-white/35 hover:bg-white/5 hover:text-white/60"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       )}
 
