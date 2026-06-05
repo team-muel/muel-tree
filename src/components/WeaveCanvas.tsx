@@ -236,6 +236,8 @@ export default function WeaveCanvas({
   return (
     <Canvas
       camera={{ position: [0, 0, 100], fov: 60 }}
+      // preserveDrawingBuffer 는 export(toDataURL) 가 마지막 프레임을 읽게 하려고 필수.
+      gl={{ preserveDrawingBuffer: true }}
       style={{ width: '100%', height: '100vh', background: 'linear-gradient(135deg, #070712 0%, #0d0a1e 50%, #070712 100%)' }}
     >
       <ambientLight intensity={0.15} />

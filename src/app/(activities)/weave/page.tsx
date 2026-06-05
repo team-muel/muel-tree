@@ -78,6 +78,7 @@ function WeaveContent({ session }: { session: ActivitySession }) {
   const [showMyDreams, setShowMyDreams] = useState(false);
   const [myDreamsLoading, setMyDreamsLoading] = useState(false);
   const [scopeFilter, setScopeFilter] = useState<ScopeFilter>("all");
+  const [exporting, setExporting] = useState(false);
 
   const fetchDreams = useCallback(() => {
     appFetch("/api/dreams", {
@@ -236,6 +237,71 @@ function WeaveContent({ session }: { session: ActivitySession }) {
     [edges, visibleNodeIds]
   );
 
+  // ADR-002 / dreamweave 차용: 본인 지식 그래프를 PNG/PDF 로 내보내기 ("내 나무 가져가기").
+  // R3F WebGL 캔버스를 toDataURL 로 캡처(Canvas gl.preserveDrawingBuffer=true 필요) →
+  // 2D 캔버스에 한글 헤더와 합성 → PNG 다운로드 또는 jsPDF 임베드. jsPDF 텍스트 레이어를
+  // 쓰지 않으므로 한글 폰트 문제를 피한다. 현재 보이는 그래프(필터 반영)를 그대로 캡처.
+  const exportTree = useCallback(
+    async (format: "png" | "pdf") => {
+      if (exporting) return;
+      const source = document.querySelector("canvas") as HTMLCanvasElement | null;
+      if (!source) return;
+      setExporting(true);
+      try {
+        const snapshot = source.toDataURL("image/png");
+        const img = document.createElement("img");
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = () => reject(new Error("snapshot load failed"));
+          img.src = snapshot;
+        });
+
+        const headerH = 78;
+        const out = document.createElement("canvas");
+        out.width = img.width || 1280;
+        out.height = (img.height || 720) + headerH;
+        const ctx = out.getContext("2d");
+        if (!ctx) return;
+        ctx.fillStyle = "#070712";
+        ctx.fillRect(0, 0, out.width, out.height);
+        ctx.drawImage(img, 0, headerH);
+
+        const title = scopeFilter === "mine" ? "내 지식의 나무" : "Muel Weave";
+        const dateStr = new Date().toLocaleDateString("ko-KR");
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "600 30px sans-serif";
+        ctx.fillText(title, 28, 46);
+        ctx.fillStyle = "#9ca3af";
+        ctx.font = "16px sans-serif";
+        ctx.fillText(`${visibleNodes.length}개 노드 · ${dateStr} · Muel`, 28, 67);
+
+        const composite = out.toDataURL("image/png");
+        const stamp = new Date().toISOString().slice(0, 10);
+
+        if (format === "png") {
+          const a = document.createElement("a");
+          a.href = composite;
+          a.download = `weave-${stamp}.png`;
+          a.click();
+        } else {
+          const { jsPDF } = await import("jspdf");
+          const pdf = new jsPDF({
+            orientation: out.width >= out.height ? "landscape" : "portrait",
+            unit: "px",
+            format: [out.width, out.height],
+          });
+          pdf.addImage(composite, "PNG", 0, 0, out.width, out.height);
+          pdf.save(`weave-${stamp}.pdf`);
+        }
+      } catch {
+        // best-effort export; 실패해도 조용히 통과
+      } finally {
+        setExporting(false);
+      }
+    },
+    [exporting, scopeFilter, visibleNodes.length]
+  );
+
   useEffect(() => {
     if (scopeFilter === "mine" && privateNodeCount === 0) {
       setScopeFilter("all");
@@ -353,6 +419,27 @@ function WeaveContent({ session }: { session: ActivitySession }) {
             >
               내 기록
             </button>
+          )}
+          {hasDiscordAuth && nodes.length > 0 && (
+            <div className="flex items-center gap-1 rounded-full border border-white/10 bg-black/40 p-1 backdrop-blur-sm">
+              <span className="px-1 text-[10px] text-white/30">내보내기</span>
+              <button
+                type="button"
+                onClick={() => exportTree("png")}
+                disabled={exporting}
+                className="rounded-full px-2 py-0.5 text-[11px] text-white/45 transition-colors hover:bg-white/10 hover:text-white/70 disabled:cursor-not-allowed disabled:opacity-30"
+              >
+                {exporting ? "..." : "PNG"}
+              </button>
+              <button
+                type="button"
+                onClick={() => exportTree("pdf")}
+                disabled={exporting}
+                className="rounded-full px-2 py-0.5 text-[11px] text-white/45 transition-colors hover:bg-white/10 hover:text-white/70 disabled:cursor-not-allowed disabled:opacity-30"
+              >
+                {exporting ? "..." : "PDF"}
+              </button>
+            </div>
           )}
           <div className="flex items-center gap-2 bg-black/40 backdrop-blur-sm border border-white/10 rounded-full px-3 py-1.5">
             {discordUser.avatar && (
