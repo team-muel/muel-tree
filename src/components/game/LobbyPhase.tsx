@@ -29,6 +29,7 @@ function hostName(players: PlayerSummary[], hostUserId: string | null): string {
 export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: LobbyPhaseProps) {
   const [readyPending, setReadyPending] = useState(false);
   const [startPending, setStartPending] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
 
   const channelId = session.activityContext.channelId;
   const userName = session.discordUser?.username ?? "-";
@@ -81,11 +82,12 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: Lobby
               disabled={!gameJwt || !myPlayer || startPending || !allReady || players.length > 12}
               onClick={async () => {
                 if (!gameJwt || !myPlayer || !match.id) return;
+                setStartError(null);
                 setStartPending(true);
                 try {
                   await startMatch(match.id, gameJwt);
                 } catch (err) {
-                  alert(err instanceof Error ? err.message : "시작 실패");
+                  setStartError(err instanceof Error ? err.message : "시작 실패");
                   setStartPending(false);
                 }
               }}
@@ -100,6 +102,9 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: Lobby
                     : "게임 시작"}
             </button>
           )}
+          {startError ? (
+            <p role="alert" className="mb-3 text-sm text-red-300">{startError}</p>
+          ) : null}
 
           <div className="mb-3 text-sm font-medium text-white/75">참가자</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -119,7 +124,7 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: Lobby
                       {player.isHost ? "방장" : "참가자"} · {player.ready ? "준비 완료" : "대기"}
                     </div>
                   </div>
-                  <div className="h-2 w-2 rounded-full bg-emerald-300" />
+                  <div aria-hidden="true" className={`h-2 w-2 rounded-full ${player.ready ? "bg-emerald-300" : "bg-white/20"}`} />
                 </div>
               ))
             )}
