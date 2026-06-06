@@ -72,11 +72,13 @@ function WeaveContent({ session }: { session: ActivitySession }) {
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitOk, setSubmitOk] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const newNodeTimer = useRef<ReturnType<typeof setTimeout>>();
   const [myDreams, setMyDreams] = useState<MyDream[]>([]);
   const [showMyDreams, setShowMyDreams] = useState(false);
   const [myDreamsLoading, setMyDreamsLoading] = useState(false);
+  const [myDreamsError, setMyDreamsError] = useState<string | null>(null);
   const [scopeFilter, setScopeFilter] = useState<ScopeFilter>("all");
   const [exporting, setExporting] = useState(false);
   const [viewMode, setViewMode] = useState<"graph" | "list">("graph");
@@ -108,14 +110,16 @@ function WeaveContent({ session }: { session: ActivitySession }) {
   const fetchMyDreams = useCallback(async () => {
     if (!accessToken) return;
     setMyDreamsLoading(true);
+    setMyDreamsError(null);
     try {
       const res = await appFetch("/api/dreams/me", {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       const data = await res.json();
       if (res.ok) setMyDreams(data.dreams ?? []);
+      else setMyDreamsError("내 기록을 불러오지 못했어요.");
     } catch {
-      // silently fail
+      setMyDreamsError("내 기록을 불러오지 못했어요.");
     } finally {
       setMyDreamsLoading(false);
     }
@@ -135,6 +139,7 @@ function WeaveContent({ session }: { session: ActivitySession }) {
 
     setSubmitting(true);
     setSubmitError(null);
+    setSubmitOk(false);
 
     try {
       const res = await appFetch("/api/dreams/submit", {
@@ -181,6 +186,7 @@ function WeaveContent({ session }: { session: ActivitySession }) {
       setNodes((prev) => [...prev, newNode]);
       setNewNodeIds((prev) => new Set(prev).add(dream.id));
       setText("");
+      setSubmitOk(true);
       if (showMyDreams) fetchMyDreams();
 
       clearTimeout(newNodeTimer.current);
@@ -190,6 +196,7 @@ function WeaveContent({ session }: { session: ActivitySession }) {
           next.delete(dream.id);
           return next;
         });
+        setSubmitOk(false);
       }, 2500);
     } catch (e) {
       setSubmitError(
@@ -303,6 +310,10 @@ function WeaveContent({ session }: { session: ActivitySession }) {
     },
     [exporting, scopeFilter, visibleNodes.length]
   );
+
+  useEffect(() => {
+    return () => clearTimeout(newNodeTimer.current);
+  }, []);
 
   useEffect(() => {
     if (scopeFilter === "mine" && myNodeCount === 0) {
@@ -540,6 +551,8 @@ function WeaveContent({ session }: { session: ActivitySession }) {
           <div className="overflow-y-auto flex-1">
             {myDreamsLoading ? (
               <p className="text-white/30 text-xs text-center py-8">불러오는 중...</p>
+            ) : myDreamsError ? (
+              <p role="alert" className="text-red-300/80 text-xs text-center py-8">{myDreamsError}</p>
             ) : myDreams.length === 0 ? (
               <p className="text-white/30 text-xs text-center py-8">아직 기록된 꿈이 없어요</p>
             ) : (
@@ -574,7 +587,11 @@ function WeaveContent({ session }: { session: ActivitySession }) {
 
       <div className="absolute bottom-36 left-1/2 -translate-x-1/2 text-center pointer-events-none select-none">
         <p className="text-white/20 text-xs">
-          {visibleNodes.length > 0 ? `${visibleNodes.length}개의 노드가 연결됨` : ""}
+          {visibleNodes.length > 0
+            ? `${visibleNodes.length}개의 노드가 연결됨`
+            : nodes.length === 0
+              ? "아직 기록이 없어요. 아래에 꿈을 적어보세요."
+              : "이 필터에 표시할 노드가 없어요."}
         </p>
         <p className="text-white/10 text-[10px] mt-1 md:hidden">
           터치로 회전 · 핀치로 줌
@@ -601,7 +618,7 @@ function WeaveContent({ session }: { session: ActivitySession }) {
           />
           <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p className="min-h-[1rem] w-full text-xs text-red-400/80 sm:flex-1">
-              {submitError ?? ""}
+              {submitError ? <span className="text-red-400/80">{submitError}</span> : submitOk ? <span className="text-emerald-300/80">저장됨</span> : ""}
             </p>
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end sm:gap-3">
               <span className="text-white/15 text-xs">
