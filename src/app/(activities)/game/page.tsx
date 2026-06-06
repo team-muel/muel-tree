@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActivityLayout, type ActivitySession } from "@/components/ActivityLayout";
 import { getActivity } from "@/config/activities";
 import { GOMDORI_RULES } from "@/config/gomdori-rules";
+import { PHASE_TONES } from "@/config/design-tokens";
 import {
   authExchange,
   createMatch,
@@ -306,7 +307,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "night_resolve") {
     return (
-      <GameFrame>
+      <GameFrame status="night_resolve">
         <StatusBlock
           title="밤의 결과를 정리 중..."
           detail="잠시 후 아침이 밝습니다."
@@ -317,7 +318,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "role_assign") {
     return (
-      <GameFrame phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.roleAssign.label}>
+      <GameFrame status="role_assign" phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.roleAssign.label}>
         <RoleAssignPhase players={players} myPlayer={myPlayer} events={events} />
       </GameFrame>
     );
@@ -325,7 +326,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "night_suspect") {
     return (
-      <GameFrame phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.nightSuspect.label}>
+      <GameFrame status="night_suspect" phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.nightSuspect.label}>
         <SuspicionPhase match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} />
       </GameFrame>
     );
@@ -333,7 +334,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "night") {
     return (
-      <GameFrame phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.night.label}>
+      <GameFrame status="night" phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.night.label}>
         <NightPhase match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} events={events} />
       </GameFrame>
     );
@@ -341,7 +342,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "lobby") {
     return (
-      <GameFrame>
+      <GameFrame status="lobby">
         <LobbyPhase session={session} match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} />
       </GameFrame>
     );
@@ -349,7 +350,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "day") {
     return (
-      <GameFrame phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.day.label}>
+      <GameFrame status="day" phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.day.label}>
         <DayPhase match={match} players={players} events={events} myPlayer={myPlayer} />
       </GameFrame>
     );
@@ -357,7 +358,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "vote") {
     return (
-      <GameFrame phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.vote.label}>
+      <GameFrame status="vote" phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.vote.label}>
         <VotePhase match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} />
       </GameFrame>
     );
@@ -365,7 +366,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "verdict") {
     return (
-      <GameFrame phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.verdict.label}>
+      <GameFrame status="verdict" phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.verdict.label}>
         <VerdictPhase players={players} events={events} />
       </GameFrame>
     );
@@ -373,7 +374,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "ended") {
     return (
-      <GameFrame>
+      <GameFrame status="ended">
         <ResultPhase match={match} players={players} events={events} />
       </GameFrame>
     );
@@ -389,23 +390,70 @@ function GameShell({ session }: { session: ActivitySession }) {
   );
 }
 
+const PHASE_LABEL: Record<string, string> = {
+  role_assign: "직업 배정",
+  night_suspect: "의심",
+  night: "밤",
+  night_resolve: "밤 정리",
+  day: "아침",
+  vote: "투표",
+  verdict: "판결",
+  ended: "결과",
+};
+
 function GameFrame({
   children,
+  status,
   phaseEndsAt,
   timerLabel,
 }: {
   children: React.ReactNode;
+  status?: string;
   phaseEndsAt?: string | null;
   timerLabel?: string;
 }) {
+  const tone = status ? PHASE_TONES[status as keyof typeof PHASE_TONES] : undefined;
+  const bg = tone?.bg ?? "bg-[#11131a]";
+  const [announce, setAnnounce] = useState<string | null>(null);
+  const prevStatus = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!status || status === prevStatus.current) return;
+    const isFirst = prevStatus.current === undefined;
+    prevStatus.current = status;
+    const label = PHASE_LABEL[status];
+    if (!label || isFirst) return;
+    const reduce =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) return;
+    setAnnounce(label);
+    const t = setTimeout(() => setAnnounce(null), 900);
+    return () => clearTimeout(t);
+  }, [status]);
+
   return (
-    <main className="relative w-full min-h-full bg-[#11131a] text-white px-4 py-5 sm:px-6 flex items-center justify-center">
+    <main
+      className={`relative flex min-h-full w-full items-center justify-center px-4 py-5 text-white transition-colors duration-700 sm:px-6 ${bg}`}
+    >
       {phaseEndsAt ? (
         <div className="absolute left-1/2 top-3 z-10 -translate-x-1/2">
           <PhaseTimer expectedEndedAt={phaseEndsAt} label={timerLabel} />
         </div>
       ) : null}
-      {children}
+      <div
+        key={status ?? "static"}
+        className="flex w-full items-center justify-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500"
+      >
+        {children}
+      </div>
+      {announce ? (
+        <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-black/70 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-300">
+          <span className="text-5xl font-bold tracking-[0.3em] text-white/90 motion-safe:animate-in motion-safe:zoom-in-95 motion-safe:duration-500">
+            {announce}
+          </span>
+        </div>
+      ) : null}
     </main>
   );
 }
