@@ -75,6 +75,7 @@ function WeaveContent({ session }: { session: ActivitySession }) {
   const [submitOk, setSubmitOk] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const newNodeTimer = useRef<ReturnType<typeof setTimeout>>();
+  const pendingIds = useRef<Set<string>>(new Set());
   const [myDreams, setMyDreams] = useState<MyDream[]>([]);
   const [showMyDreams, setShowMyDreams] = useState(false);
   const [myDreamsLoading, setMyDreamsLoading] = useState(false);
@@ -92,7 +93,18 @@ function WeaveContent({ session }: { session: ActivitySession }) {
         if (err) {
           setError(err);
         } else {
-          setNodes(n ?? []);
+          setNodes((prev) => {
+            const prevById = new Map(prev.map((node) => [node.id, node]));
+            return ((n ?? []) as WeaveNode[]).map((srv) => {
+              const old = prevById.get(srv.id);
+              if (!old) return srv;
+              if (pendingIds.current.has(srv.id)) {
+                pendingIds.current.delete(srv.id);
+                return srv;
+              }
+              return { ...srv, x: old.x, y: old.y, z: old.z, vx: 0, vy: 0, vz: 0 };
+            });
+          });
           setEdges(e ?? []);
           setError(null);
         }
@@ -185,9 +197,11 @@ function WeaveContent({ session }: { session: ActivitySession }) {
 
       setNodes((prev) => [...prev, newNode]);
       setNewNodeIds((prev) => new Set(prev).add(dream.id));
+      pendingIds.current.add(dream.id);
       setText("");
       setSubmitOk(true);
       if (showMyDreams) fetchMyDreams();
+      fetchDreams();
 
       clearTimeout(newNodeTimer.current);
       newNodeTimer.current = setTimeout(() => {
@@ -205,7 +219,7 @@ function WeaveContent({ session }: { session: ActivitySession }) {
     } finally {
       setSubmitting(false);
     }
-  }, [text, submitting, accessToken, activityContext, showMyDreams, fetchMyDreams]);
+  }, [text, submitting, accessToken, activityContext, showMyDreams, fetchMyDreams, fetchDreams]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
