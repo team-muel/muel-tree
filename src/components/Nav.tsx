@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { navigationItems } from "@/config/services";
 
 export function Nav() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <>
@@ -22,7 +24,8 @@ export function Nav() {
               <Link
                 key={item.label}
                 href={item.href}
-                className="text-sm font-semibold text-ink/55 transition hover:text-ink"
+                aria-current={item.href === pathname ? "page" : undefined}
+                className={`text-sm font-semibold transition hover:text-ink ${item.href === pathname ? "text-ink" : "text-ink/55"}`}
               >
                 {item.label}
               </Link>
@@ -70,7 +73,8 @@ export function Nav() {
               key={item.label}
               href={item.href}
               onClick={() => setOpen(false)}
-              className="py-3 text-2xl font-bold text-ink transition hover:text-ink/40"
+              aria-current={item.href === pathname ? "page" : undefined}
+              className={`py-3 text-2xl font-bold text-ink transition hover:text-ink/40 ${item.href === pathname ? "underline underline-offset-4" : ""}`}
             >
               {item.label}
             </Link>
