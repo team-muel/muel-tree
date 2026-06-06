@@ -23,6 +23,7 @@ import { VotePhase } from "@/components/game/VotePhase";
 import { VerdictPhase } from "@/components/game/VerdictPhase";
 import { ResultPhase } from "@/components/game/ResultPhase";
 import { PhaseTimer } from "@/components/game/PhaseTimer";
+import { NightSky } from "@/components/game/ui/NightSky";
 import { SuspicionPhase } from "@/components/game/SuspicionPhase";
 import { StatusBlock } from "@/components/game/ui/StatusBlock";
 
@@ -441,9 +442,10 @@ function GameFrame({
           <PhaseTimer expectedEndedAt={phaseEndsAt} label={timerLabel} />
         </div>
       ) : null}
+      {status === "night" || status === "night_suspect" ? <NightSky /> : null}
       <div
         key={status ?? "static"}
-        className="flex w-full items-center justify-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500"
+        className="relative z-10 flex w-full items-center justify-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500"
       >
         {children}
       </div>
