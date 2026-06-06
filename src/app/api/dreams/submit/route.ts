@@ -27,6 +27,8 @@ export async function POST(req: NextRequest) {
   }
 
   const content = typeof body.content === "string" ? body.content.trim() : "";
+  const ALLOWED_VISIBILITY = new Set(["anonymous", "public", "private"]);
+  const visibility = ALLOWED_VISIBILITY.has(body.visibility ?? "") ? (body.visibility as string) : "anonymous";
   const context = normalizeActivityContext(body.context);
   const supabase = createServiceSupabaseClient();
   const profileId = await upsertDiscordMuelProfile(supabase, discordAuth.user);
@@ -118,7 +120,7 @@ export async function POST(req: NextRequest) {
       keywords: extracted.keywords,
       main_tag: extracted.main_tag,
       embedding: `[${embedding.join(',')}]`,
-      visibility: body.visibility ?? "anonymous",
+      visibility,
       service_slug: "weave",
       discord_user_id: discordAuth.user.id,
       discord_username: discordAuth.user.username,
