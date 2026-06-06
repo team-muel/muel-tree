@@ -1,11 +1,12 @@
 import type { ButtonHTMLAttributes } from "react";
 
-type Variant = "primary" | "danger" | "amber" | "ghost";
+type Variant = "primary" | "danger" | "amber" | "ghost" | "indigo";
 
 // 변형별 활성 색. 비활성은 공통(대비 확보 + 커서). focus-visible 링으로 키보드 접근성.
 const VARIANTS: Record<Variant, string> = {
   primary: "bg-emerald-300 text-slate-950 hover:bg-emerald-200",
   amber: "bg-amber-400 text-slate-950 hover:bg-amber-300",
+  indigo: "bg-indigo-400 text-slate-950 hover:bg-indigo-300",
   danger: "bg-red-400 text-slate-950 hover:bg-red-300",
   ghost: "border border-white/20 bg-transparent text-white/80 hover:bg-white/5",
 };

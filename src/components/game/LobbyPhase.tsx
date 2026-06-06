@@ -2,6 +2,7 @@
 
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
 import { kickPlayer, setReady, startMatch } from "@/lib/game/api";
+import { Button } from "@/components/game/ui/Button";
 import { useMemo, useState } from "react";
 import type { ActivitySession } from "@/components/ActivityLayout";
 
@@ -83,8 +84,9 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: Lobby
             </ul>
           ) : null}
           {!isHost ? (
-            <button
+            <Button
               type="button"
+              variant="primary"
               disabled={!gameJwt || !myPlayer || readyPending}
               onClick={async () => {
                 if (!gameJwt || !myPlayer || !match.id) return;
@@ -95,13 +97,14 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: Lobby
                   setReadyPending(false);
                 }
               }}
-              className="mb-5 h-11 w-full rounded-md bg-emerald-300 text-sm font-semibold text-slate-950 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/35"
+              className="mb-5 w-full"
             >
               {myPlayer?.ready ? "준비 해제" : "준비 완료"}
-            </button>
+            </Button>
           ) : (
-            <button
+            <Button
               type="button"
+              variant="amber"
               disabled={!gameJwt || !myPlayer || startPending || !canStart}
               onClick={async () => {
                 if (!gameJwt || !myPlayer || !match.id) return;
@@ -114,10 +117,10 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: Lobby
                   setStartPending(false);
                 }
               }}
-              className="mb-5 h-11 w-full rounded-md bg-amber-400 text-sm font-semibold text-slate-950 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/35"
+              className="mb-5 w-full"
             >
               {startPending ? "시작하는 중..." : "게임 시작"}
-            </button>
+            </Button>
           )}
           {startError ? (
             <p role="alert" className="mb-3 text-sm text-red-300">{startError}</p>

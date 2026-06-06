@@ -6,6 +6,7 @@ import { submitAction, sendChat } from "@/lib/game/api";
 import { getGameSupabase } from "@/lib/game/client";
 import { GOMDORI_RULES } from "@/config/gomdori-rules";
 import { PHASE_TONES, SURFACE } from "@/config/design-tokens";
+import { Button } from "@/components/game/ui/Button";
 
 type NightPhaseProps = {
   match: MatchSummary;
@@ -241,13 +242,14 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
           ))}
         </div>
         <div className="mt-8 flex justify-center">
-          <button
+          <Button
+            variant="primary"
             onClick={() => handleAction(actionType)}
             disabled={!selectedTarget || isSubmitting || submitted}
-            className="h-12 w-full max-w-xs rounded-md bg-emerald-300 text-sm font-semibold text-slate-950 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/35"
+            className="w-full max-w-xs"
           >
             {submitted ? "결정 완료" : isSubmitting ? "전송 중..." : buttonText}
-          </button>
+          </Button>
         </div>
         {actionError ? (
           <p role="alert" className="mt-4 text-center text-sm text-red-300">{actionError}</p>
@@ -375,6 +377,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
                 value={chatMessage}
                 onChange={(e) => setChatMessage(e.target.value)}
                 placeholder="메시지 입력..."
+                aria-label="악마 팀 채팅 메시지"
                 className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500/50"
               />
               <button type="submit" disabled={!chatMessage.trim()} className="px-3 rounded bg-red-500/20 text-red-300 disabled:opacity-50 text-sm font-medium whitespace-nowrap">전송</button>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
 import { submitAction } from "@/lib/game/api";
+import { Button } from "@/components/game/ui/Button";
 
 type SuspicionPhaseProps = {
   match: MatchSummary;
@@ -79,22 +80,24 @@ export function SuspicionPhase({ match, players, myPlayer, gameJwt }: SuspicionP
         </div>
 
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <button
+          <Button
             type="button"
+            variant="indigo"
             onClick={() => submit(selectedTarget)}
             disabled={!selectedTarget || isSubmitting || submitted}
-            className="h-12 w-full max-w-[200px] rounded-md bg-indigo-400 text-sm font-semibold text-slate-950 transition-colors disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/35"
+            className="w-full max-w-[200px]"
           >
             {submitted && selectedTarget ? "의심 완료" : isSubmitting ? "전송 중..." : "선택한 사람 의심"}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="ghost"
             onClick={() => submit(null)}
             disabled={isSubmitting || submitted}
-            className="h-12 w-full max-w-[200px] rounded-md border border-white/20 bg-transparent text-sm font-semibold text-white/70 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-30"
+            className="w-full max-w-[200px]"
           >
             {submitted && !selectedTarget ? "기권 완료" : "기권하기"}
-          </button>
+          </Button>
         </div>
 
         {error ? (
