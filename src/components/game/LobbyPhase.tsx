@@ -22,6 +22,18 @@ function Info({ label, value }: { label: string; value: string }) {
   );
 }
 
+function Requirement({ met, label }: { met: boolean; label: string }) {
+  return (
+    <li className="flex items-center gap-2">
+      <span aria-hidden="true" className={met ? "text-emerald-300" : "text-white/30"}>
+        {met ? "✓" : "○"}
+      </span>
+      <span className={met ? "text-white/80" : "text-white/45"}>{label}</span>
+      <span className="sr-only">{met ? "충족됨" : "미충족"}</span>
+    </li>
+  );
+}
+
 function hostName(players: PlayerSummary[], hostUserId: string | null): string {
   return players.find((player) => player.userId === hostUserId)?.displayName ?? "-";
 }
@@ -36,7 +48,10 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: Lobby
   const hostLabel = useMemo(() => hostName(players, match.hostUserId), [match.hostUserId, players]);
 
   const isHost = myPlayer?.isHost;
-  const allReady = players.length >= 5 && players.filter((p) => !p.isHost).every((p) => p.ready);
+  const enoughPlayers = players.length >= 5;
+  const notTooMany = players.length <= 12;
+  const everyoneReady = players.filter((p) => !p.isHost).every((p) => p.ready);
+  const canStart = enoughPlayers && notTooMany && everyoneReady;
 
   return (
     <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-[1.4fr_0.9fr] gap-5">
@@ -59,6 +74,13 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: Lobby
         </div>
 
         <div className="mt-6">
+          {isHost ? (
+            <ul className="mb-4 space-y-1.5 text-sm" aria-label="시작 조건">
+              <Requirement met={enoughPlayers} label={`5명 이상 (${players.length}/5)`} />
+              <Requirement met={notTooMany} label="12명 이하" />
+              <Requirement met={everyoneReady} label="참가자 전원 준비" />
+            </ul>
+          ) : null}
           {!isHost ? (
             <button
               type="button"
@@ -79,7 +101,7 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: Lobby
           ) : (
             <button
               type="button"
-              disabled={!gameJwt || !myPlayer || startPending || !allReady || players.length > 12}
+              disabled={!gameJwt || !myPlayer || startPending || !canStart}
               onClick={async () => {
                 if (!gameJwt || !myPlayer || !match.id) return;
                 setStartError(null);
@@ -93,13 +115,7 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: Lobby
               }}
               className="mb-5 h-11 w-full rounded-md bg-amber-400 text-sm font-semibold text-slate-950 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/35"
             >
-              {players.length < 5 
-                ? "5명 이상 모여야 시작할 수 있습니다"
-                : players.length > 12 
-                  ? "최대 12명까지만 가능합니다"
-                  : !allReady 
-                    ? "참가자 전원이 준비해야 합니다" 
-                    : "게임 시작"}
+              {startPending ? "시작하는 중..." : "게임 시작"}
             </button>
           )}
           {startError ? (
