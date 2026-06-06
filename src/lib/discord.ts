@@ -117,7 +117,7 @@ export async function initDiscord(
   // 프록시로 우회시킨다. Developer Portal 에 URL Mapping (prefix "/supabase" →
   // target = NEXT_PUBLIC_SUPABASE_URL 의 host) 이 함께 등록돼 있어야 한다.
   // same-origin API 라우트만 쓰는 다른 Activity(weave)는 영향 없음.
-  if (activitySlug === "gomdori-mafia") {
+  if (getActivity(activitySlug)?.needsSupabaseProxy) {
     try {
       const supabaseHost = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").host;
       if (supabaseHost) {
