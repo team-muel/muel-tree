@@ -18,7 +18,7 @@ export function ResultPhase({ match, players, events }: ResultPhaseProps) {
 
   return (
     <div className="flex flex-col h-full w-full max-w-5xl mx-auto p-5 overflow-y-auto">
-      <div className={`w-full rounded-lg border p-10 text-center shadow-2xl animate-in slide-in-from-top-4 duration-700 ${
+      <div className={`w-full rounded-lg border p-10 text-center shadow-2xl motion-safe:animate-in motion-safe:slide-in-from-top-4 motion-safe:duration-700 ${
         isAngelWin 
           ? "border-emerald-500/30 bg-emerald-950/40" 
           : "border-red-500/30 bg-red-950/40"
@@ -34,8 +34,8 @@ export function ResultPhase({ match, players, events }: ResultPhaseProps) {
         </p>
       </div>
 
-      <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-in fade-in duration-1000 delay-300 fill-mode-backwards">
-        {players.map((p) => {
+      <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {players.map((p, i) => {
           // If the player's role is still masked (because Realtime didn't update yet), we fallback to events or just rely on backend to unmask
           const role = p.role;
           const faction = p.faction;
@@ -43,12 +43,13 @@ export function ResultPhase({ match, players, events }: ResultPhaseProps) {
           
           return (
             <div 
-              key={p.userId} 
+              key={p.userId}
+              style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }} 
               className={`rounded-lg border p-5 flex flex-col items-center justify-center text-center ${
                 isDemonFaction
                   ? "border-red-900/30 bg-red-950/20"
                   : "border-emerald-900/30 bg-emerald-950/20"
-              } ${!p.alive ? "opacity-60" : ""}`}
+              } ${!p.alive ? "opacity-60" : ""} motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:fill-mode-backwards`}
             >
               <div className="text-lg font-bold text-white mb-1 truncate w-full">{p.displayName}</div>
               {!p.alive && <div className="text-[10px] text-white/40 uppercase tracking-widest mb-3">사망함</div>}
