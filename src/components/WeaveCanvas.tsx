@@ -2,17 +2,19 @@
 
 import { useRef, useState, useMemo } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { OrbitControls, Line } from '@react-three/drei'
+import { OrbitControls, Line, Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { WeaveNode, WeaveEdge } from '@/types'
 
 function Node({
   node,
   isNew,
+  showLabel,
   onClick,
 }: {
   node: WeaveNode
   isNew: boolean
+  showLabel: boolean
   onClick: () => void
 }) {
   const meshRef = useRef<THREE.Mesh>(null)
@@ -32,22 +34,47 @@ function Node({
   })
 
   return (
-    <mesh
-      ref={meshRef}
-      position={[node.x, node.y, node.z]}
-      onClick={(e) => { e.stopPropagation(); onClick() }}
-      onPointerOver={() => { setHovered(true); document.body.style.cursor = 'pointer' }}
-      onPointerOut={() => { setHovered(false); document.body.style.cursor = 'default' }}
-    >
-      <sphereGeometry args={[node.radius ?? 1.2, 20, 20]} />
-      <meshStandardMaterial
-        color={isNew ? '#e879f9' : color}
-        emissive={isNew ? '#c026d3' : color}
-        emissiveIntensity={isNew ? 2 : hovered ? 1.5 : 0.6}
-        transparent
-        opacity={0.92}
-      />
-    </mesh>
+    <group position={[node.x, node.y, node.z]}>
+      <mesh
+        ref={meshRef}
+        onClick={(e) => { e.stopPropagation(); onClick() }}
+        onPointerOver={() => { setHovered(true); document.body.style.cursor = 'pointer' }}
+        onPointerOut={() => { setHovered(false); document.body.style.cursor = 'default' }}
+      >
+        <sphereGeometry args={[node.radius ?? 1.2, 20, 20]} />
+        <meshStandardMaterial
+          color={isNew ? '#e879f9' : color}
+          emissive={isNew ? '#c026d3' : color}
+          emissiveIntensity={isNew ? 2 : hovered ? 1.5 : 0.6}
+          transparent
+          opacity={0.92}
+        />
+      </mesh>
+      {(showLabel || hovered || isNew) && node.label ? (
+        <Html
+          center
+          distanceFactor={22}
+          position={[0, (node.radius ?? 1.2) + 0.9, 0]}
+          style={{ pointerEvents: 'none', userSelect: 'none' }}
+          zIndexRange={[20, 0]}
+        >
+          <div
+            style={{
+              whiteSpace: 'nowrap',
+              fontSize: 12,
+              lineHeight: 1.2,
+              color: 'rgba(255,255,255,0.88)',
+              background: 'rgba(7,7,18,0.62)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              padding: '1px 6px',
+              borderRadius: 6,
+            }}
+          >
+            {node.label}
+          </div>
+        </Html>
+      ) : null}
+    </group>
   )
 }
 
@@ -253,13 +280,14 @@ export default function WeaveCanvas({
           key={node.id}
           node={node}
           isNew={newNodeIds.has(node.id)}
+          showLabel={nodes.length <= 80}
           onClick={() => onNodeClick(node)}
         />
       ))}
 
-      {edges.map((edge, i) => (
+      {edges.map((edge) => (
         <Edge
-          key={i}
+          key={`${edge.source}-${edge.target}`}
           edge={edge}
           nodes={nodes}
           isNew={newNodeIds.has(edge.source) || newNodeIds.has(edge.target)}
