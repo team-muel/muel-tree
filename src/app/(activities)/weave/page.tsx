@@ -145,6 +145,17 @@ function WeaveContent({ session }: { session: ActivitySession }) {
     });
   }, [myDreams.length, fetchMyDreams]);
 
+  const focusDream = useCallback(
+    (id: string) => {
+      const node = nodes.find((n) => n.id === id);
+      if (node) {
+        setSelectedNode(node);
+        setShowMyDreams(false);
+      }
+    },
+    [nodes]
+  );
+
   const submit = useCallback(async () => {
     const content = text.trim();
     if (!content || submitting) return;
@@ -571,7 +582,19 @@ function WeaveContent({ session }: { session: ActivitySession }) {
               <p className="text-white/30 text-xs text-center py-8">아직 기록된 꿈이 없어요</p>
             ) : (
               myDreams.map((d) => (
-                <div key={d.id} className="px-4 py-3 border-b border-white/[0.04] hover:bg-white/[0.03] transition">
+                <div
+                  key={d.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => focusDream(d.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      focusDream(d.id);
+                    }
+                  }}
+                  className="cursor-pointer px-4 py-3 border-b border-white/[0.04] hover:bg-white/[0.03] transition focus:bg-white/[0.05] focus:outline-none"
+                >
                   <div className="flex items-center gap-2 mb-1.5">
                     {d.main_tag && (
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
