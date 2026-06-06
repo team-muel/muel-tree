@@ -175,6 +175,7 @@ function WeaveContent({ session }: { session: ActivitySession }) {
         sourceKind: "dream",
         sourceLabel: "꿈",
         visibility: "public",
+        mine: true,
       };
 
       setNodes((prev) => [...prev, newNode]);
@@ -213,8 +214,8 @@ function WeaveContent({ session }: { session: ActivitySession }) {
     () => nodes.filter((node) => node.visibility !== "private").length,
     [nodes]
   );
-  const privateNodeCount = useMemo(
-    () => nodes.filter((node) => node.visibility === "private").length,
+  const myNodeCount = useMemo(
+    () => nodes.filter((node) => node.mine).length,
     [nodes]
   );
 
@@ -223,7 +224,7 @@ function WeaveContent({ session }: { session: ActivitySession }) {
       return nodes.filter((node) => node.visibility !== "private");
     }
     if (scopeFilter === "mine") {
-      return nodes.filter((node) => node.visibility === "private");
+      return nodes.filter((node) => node.mine);
     }
     return nodes;
   }, [nodes, scopeFilter]);
@@ -304,10 +305,10 @@ function WeaveContent({ session }: { session: ActivitySession }) {
   );
 
   useEffect(() => {
-    if (scopeFilter === "mine" && privateNodeCount === 0) {
+    if (scopeFilter === "mine" && myNodeCount === 0) {
       setScopeFilter("all");
     }
-  }, [privateNodeCount, scopeFilter]);
+  }, [myNodeCount, scopeFilter]);
 
   useEffect(() => {
     if (selectedNode && !visibleNodeIds.has(selectedNode.id)) {
@@ -396,7 +397,7 @@ function WeaveContent({ session }: { session: ActivitySession }) {
           {([
             ["all", "전체", nodes.length],
             ["shared", "공개", sharedNodeCount],
-            ["mine", "나만", privateNodeCount],
+            ["mine", "내 기록", myNodeCount],
           ] as const).map(([value, label, count]) => {
             const disabled = value === "mine" && (!hasDiscordAuth || count === 0);
             return (

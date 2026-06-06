@@ -17,6 +17,7 @@ export interface WeaveNode {
   sourceLabel?: string
   metaLabel?: string
   visibility?: "public" | "community" | "private"
+  mine?: boolean
   href?: string
 }
 
