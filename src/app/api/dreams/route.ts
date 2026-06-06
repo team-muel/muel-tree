@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getServerSupabase } from "@/lib/server-supabase";
+import { createServiceSupabaseClient } from "@/lib/muel-profile";
 import { requireDiscordUser } from "@/lib/request-security";
 import { applyForceLayout3D } from "@/lib/force3d";
 import type { WeaveNode as DreamNode, WeaveEdge as DreamEdge } from "@/types";
@@ -183,6 +184,23 @@ async function viewerDiscordUserId(req: NextRequest): Promise<string | null> {
   return auth.ok ? auth.user.id : null;
 }
 
+// 뷰어의 muel profile id (꿈 소유 판별용; /api/dreams/me 와 동일 경로).
+async function viewerProfileId(discordUserId: string | null): Promise<string | null> {
+  if (!discordUserId) return null;
+  try {
+    const svc = createServiceSupabaseClient();
+    const { data } = await svc
+      .from("muel_profile_identities")
+      .select("profile_id")
+      .eq("provider", "discord")
+      .eq("provider_user_id", discordUserId)
+      .maybeSingle();
+    return (data?.profile_id as string | undefined) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * ADR-002: visible weave_nodes 를 그래프 노드로 읽는다.
  * service role(서버 전용)로 읽으므로 weave_nodes 의 service_role RLS 를 유지한 채
@@ -239,6 +257,7 @@ async function loadVisibleWeaveGraph(viewerUserId: string | null): Promise<{ nod
         sourceLabel: style.label,
         metaLabel: meta,
         visibility,
+        mine: isPrivate,
         href: sourceHref(n.source_ref),
       };
     });
@@ -255,12 +274,13 @@ export async function GET(req: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
   const viewerUserId = await viewerDiscordUserId(req);
+  const profileId = await viewerProfileId(viewerUserId);
 
   const [{ data: dreams, error: dreamsErr }, { data: connections }, weaveGraph] =
     await Promise.all([
       supabase
         .from("dreams")
-        .select("id, emotions, keywords, main_tag, created_at")
+        .select("id, emotions, keywords, main_tag, created_at, muel_profile_id")
         .neq("visibility", "private")
         .order("created_at", { ascending: false })
         .limit(200),
@@ -297,6 +317,7 @@ export async function GET(req: NextRequest) {
       sourceLabel: "꿈",
       metaLabel: ["꿈", formatNodeDate(d.created_at)].filter(Boolean).join(" · "),
       visibility: "public",
+      mine: profileId != null && (d as { muel_profile_id?: string }).muel_profile_id === profileId,
     };
   });
 
