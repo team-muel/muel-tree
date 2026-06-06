@@ -22,9 +22,11 @@ export function NightPhase({ match, players, myPlayer, gameJwt }: NightPhaseProp
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [investigationResult, setInvestigationResult] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const [chatMessage, setChatMessage] = useState("");
   const [chats, setChats] = useState<ChatRow[]>([]);
+  const [chatError, setChatError] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const role = myPlayer?.role;
@@ -140,10 +142,11 @@ export function NightPhase({ match, players, myPlayer, gameJwt }: NightPhaseProp
     if (!chatMessage.trim() || isSubmitting) return;
     const msg = chatMessage;
     setChatMessage("");
+    setChatError(null);
     try {
       await sendChat(match.id, msg, gameJwt);
     } catch {
-      alert("채팅 전송 실패");
+      setChatError("채팅 전송 실패");
       setChatMessage(msg);
     }
   };
@@ -175,6 +178,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt }: NightPhaseProp
   const handleAction = async (actionType: string) => {
     if (!selectedTarget) return;
     setIsSubmitting(true);
+    setActionError(null);
     try {
       const res = await submitAction(match.id, actionType, selectedTarget, gameJwt);
       setSubmitted(true);
@@ -182,7 +186,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt }: NightPhaseProp
         setInvestigationResult(res.investigationResult);
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : "행동 실패");
+      setActionError(err instanceof Error ? err.message : "행동 실패");
     } finally {
       setIsSubmitting(false);
     }
@@ -220,6 +224,9 @@ export function NightPhase({ match, players, myPlayer, gameJwt }: NightPhaseProp
             {submitted ? "결정 완료" : isSubmitting ? "전송 중..." : buttonText}
           </button>
         </div>
+        {actionError ? (
+          <p role="alert" className="mt-4 text-center text-sm text-red-300">{actionError}</p>
+        ) : null}
       </div>
     );
   };
@@ -334,6 +341,9 @@ export function NightPhase({ match, players, myPlayer, gameJwt }: NightPhaseProp
             <div ref={chatEndRef} />
           </div>
           <div className="p-3 border-t border-white/5">
+            {chatError ? (
+              <p role="alert" className="mb-2 text-xs text-red-300">{chatError}</p>
+            ) : null}
             <form onSubmit={handleSendChat} className="flex gap-2">
               <input
                 type="text"

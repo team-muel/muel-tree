@@ -16,6 +16,7 @@ export function VotePhase({ match, players, myPlayer, gameJwt }: VotePhaseProps)
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [voteError, setVoteError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!match.id || !gameJwt || !myPlayer?.userId) return;
@@ -64,6 +65,7 @@ export function VotePhase({ match, players, myPlayer, gameJwt }: VotePhaseProps)
 
   const handleVote = async (targetId: string | null) => {
     setIsSubmitting(true);
+    setVoteError(null);
     try {
       await submitAction(match.id, "vote", targetId, gameJwt);
       setSubmitted(true);
@@ -71,7 +73,7 @@ export function VotePhase({ match, players, myPlayer, gameJwt }: VotePhaseProps)
         setSelectedTarget(targetId);
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : "투표 실패");
+      setVoteError(err instanceof Error ? err.message : "투표 실패");
     } finally {
       setIsSubmitting(false);
     }
@@ -132,6 +134,9 @@ export function VotePhase({ match, players, myPlayer, gameJwt }: VotePhaseProps)
             {submitted && !selectedTarget ? "기권 완료" : "기권하기"}
           </button>
         </div>
+        {voteError ? (
+          <p role="alert" className="mt-4 text-sm text-red-300">{voteError}</p>
+        ) : null}
       </div>
     </div>
   );
