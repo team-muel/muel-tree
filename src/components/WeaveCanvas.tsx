@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useMemo } from 'react'
+import { memo, useRef, useState, useMemo } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Line, Html } from '@react-three/drei'
 import * as THREE from 'three'
@@ -78,13 +78,14 @@ function Node({
   )
 }
 
-function Edge({ edge, nodes, isNew }: { edge: WeaveEdge; nodes: WeaveNode[]; isNew: boolean }) {
-  const src = nodes.find((n) => n.id === edge.source)
-  const tgt = nodes.find((n) => n.id === edge.target)
+const Edge = memo(function Edge({ edge, nodeById, isNew }: { edge: WeaveEdge; nodeById: Map<string, WeaveNode>; isNew: boolean }) {
+  const src = nodeById.get(edge.source)
+  const tgt = nodeById.get(edge.target)
   if (!src || !tgt) return null
 
   const sim = edge.similarity ?? 0
-  const opacity = isNew ? 0.9 : 0.15 + sim * 0.6
+  // 저유사 관계선이 배경에 묻히지 않도록 하한을 0.3 으로.
+  const opacity = isNew ? 0.9 : 0.3 + sim * 0.5
   const width = isNew ? 2.5 : 0.8 + sim * 2.5
   const color = isNew ? '#e879f9' : sim > 0.85 ? '#c4b5fd' : '#818cf8'
 
@@ -97,7 +98,7 @@ function Edge({ edge, nodes, isNew }: { edge: WeaveEdge; nodes: WeaveNode[]; isN
       opacity={opacity}
     />
   )
-}
+})
 
 function TwinkleStar({ position, delay }: { position: [number, number, number]; delay: number }) {
   const meshRef = useRef<THREE.Mesh>(null)
@@ -260,6 +261,8 @@ export default function WeaveCanvas({
   newNodeIds: Set<string>
   onNodeClick: (node: WeaveNode) => void
 }) {
+  const nodeById = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes])
+
   return (
     <Canvas
       camera={{ position: [0, 0, 100], fov: 60 }}
@@ -289,7 +292,7 @@ export default function WeaveCanvas({
         <Edge
           key={`${edge.source}-${edge.target}`}
           edge={edge}
-          nodes={nodes}
+          nodeById={nodeById}
           isNew={newNodeIds.has(edge.source) || newNodeIds.has(edge.target)}
         />
       ))}
