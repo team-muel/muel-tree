@@ -115,8 +115,19 @@ function WeaveContent({ session }: { session: ActivitySession }) {
 
   useEffect(() => {
     fetchDreams();
-    const timer = setInterval(fetchDreams, REFRESH_INTERVAL);
-    return () => clearInterval(timer);
+    const timer = setInterval(() => {
+      if (typeof document === "undefined" || document.visibilityState === "visible") {
+        fetchDreams();
+      }
+    }, REFRESH_INTERVAL);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") fetchDreams();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [fetchDreams]);
 
   const fetchMyDreams = useCallback(async () => {
@@ -417,7 +428,7 @@ function WeaveContent({ session }: { session: ActivitySession }) {
 
       {loading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none">
-          <div className="text-4xl animate-pulse">🧵</div>
+          <div className="text-4xl animate-pulse" role="img" aria-label="불러오는 중">🧵</div>
           <p className="text-white/30 text-sm mt-3">Weave를 불러오는 중...</p>
         </div>
       )}
@@ -429,7 +440,7 @@ function WeaveContent({ session }: { session: ActivitySession }) {
       )}
 
       {nodes.length > 0 && (
-        <div className="absolute top-4 left-4 z-20 flex items-center gap-1 rounded-full border border-white/10 bg-black/40 p-1 backdrop-blur-sm">
+        <div role="group" aria-label="범위 필터" className="absolute top-4 left-4 z-20 flex items-center gap-1 rounded-full border border-white/10 bg-black/40 p-1 backdrop-blur-sm">
           {([
             ["all", "전체", nodes.length],
             ["shared", "공개", sharedNodeCount],
@@ -441,6 +452,8 @@ function WeaveContent({ session }: { session: ActivitySession }) {
                 key={value}
                 type="button"
                 disabled={disabled}
+                aria-pressed={scopeFilter === value}
+                aria-label={`${label} ${count}`}
                 onClick={() => setScopeFilter(value)}
                 className={`min-w-12 rounded-full px-2.5 py-1 text-[11px] transition-colors ${
                   scopeFilter === value
@@ -523,7 +536,7 @@ function WeaveContent({ session }: { session: ActivitySession }) {
         <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
           {hasDiscordAuth && (
             <button
-              onClick={toggleMyDreams}
+              aria-label="내 꿈 기록" aria-expanded={showMyDreams} onClick={toggleMyDreams}
               className={`bg-black/40 backdrop-blur-sm border border-white/10 rounded-full px-3 py-1.5 text-xs transition-colors ${
                 showMyDreams ? "text-indigo-300 border-indigo-500/30" : "text-white/40 hover:text-white/60"
               }`}
@@ -663,6 +676,7 @@ function WeaveContent({ session }: { session: ActivitySession }) {
               </span>
               <button
                 onClick={submit}
+                aria-label="꿈 저장"
                 disabled={!text.trim() || submitting || !hasDiscordAuth}
                 className="w-full rounded-lg bg-indigo-500/70 px-4 py-1.5 text-xs text-white transition-colors hover:bg-indigo-400/70 disabled:cursor-not-allowed disabled:opacity-30 sm:w-auto"
               >
