@@ -126,6 +126,29 @@ export async function startMatch(
   );
 }
 
+export async function kickPlayer(
+  matchId: string,
+  targetUserId: string,
+  gameJwt: string,
+): Promise<{ success: boolean }> {
+  return postJson<{ matchId: string; targetUserId: string }, { success: boolean }>(
+    "match-kick",
+    { matchId, targetUserId },
+    { gameJwt },
+  );
+}
+
+export async function leaveMatch(
+  matchId: string,
+  gameJwt: string,
+): Promise<{ success: boolean }> {
+  return postJson<{ matchId: string }, { success: boolean }>(
+    "match-leave",
+    { matchId },
+    { gameJwt },
+  );
+}
+
 export async function submitAction(
   matchId: string,
   actionType: string,

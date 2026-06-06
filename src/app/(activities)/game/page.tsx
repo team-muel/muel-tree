@@ -8,6 +8,7 @@ import {
   authExchange,
   createMatch,
   joinMatch,
+  leaveMatch,
   resolveMatch,
   type MatchSummary,
   type PlayerSummary,
@@ -213,6 +214,16 @@ function GameShell({ session }: { session: ActivitySession }) {
       supabase.removeChannel(channel);
       clearGameSupabase();
     };
+  }, [gameJwt, matchId]);
+
+  // Activity 종료/이탈 시 로비 잔류 방지(best-effort). 백엔드가 로비일 때만 제거.
+  useEffect(() => {
+    if (!gameJwt || !matchId) return;
+    const leave = () => {
+      void leaveMatch(matchId, gameJwt).catch(() => {});
+    };
+    window.addEventListener("pagehide", leave);
+    return () => window.removeEventListener("pagehide", leave);
   }, [gameJwt, matchId]);
 
   async function createGame() {

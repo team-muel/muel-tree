@@ -1,7 +1,7 @@
 "use client";
 
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
-import { setReady, startMatch } from "@/lib/game/api";
+import { kickPlayer, setReady, startMatch } from "@/lib/game/api";
 import { useMemo, useState } from "react";
 import type { ActivitySession } from "@/components/ActivityLayout";
 
@@ -42,6 +42,7 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: Lobby
   const [readyPending, setReadyPending] = useState(false);
   const [startPending, setStartPending] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
+  const [kickPending, setKickPending] = useState<string | null>(null);
 
   const channelId = session.activityContext.channelId;
   const userName = session.discordUser?.username ?? "-";
@@ -140,7 +141,30 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: Lobby
                       {player.isHost ? "방장" : "참가자"} · {player.ready ? "준비 완료" : "대기"}
                     </div>
                   </div>
-                  <div aria-hidden="true" className={`h-2 w-2 rounded-full ${player.ready ? "bg-emerald-300" : "bg-white/20"}`} />
+                  <div className="flex items-center gap-2">
+                    <div aria-hidden="true" className={`h-2 w-2 rounded-full ${player.ready ? "bg-emerald-300" : "bg-white/20"}`} />
+                    {isHost && !player.isHost ? (
+                      <button
+                        type="button"
+                        disabled={!gameJwt || kickPending === player.userId}
+                        onClick={async () => {
+                          if (!gameJwt || !match.id) return;
+                          setStartError(null);
+                          setKickPending(player.userId);
+                          try {
+                            await kickPlayer(match.id, player.userId, gameJwt);
+                          } catch (err) {
+                            setStartError(err instanceof Error ? err.message : "강퇴 실패");
+                          } finally {
+                            setKickPending(null);
+                          }
+                        }}
+                        className="rounded border border-red-500/30 px-2 py-0.5 text-xs text-red-300 transition-colors hover:bg-red-500/10 disabled:opacity-40"
+                      >
+                        {kickPending === player.userId ? "..." : "강퇴"}
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
               ))
             )}
