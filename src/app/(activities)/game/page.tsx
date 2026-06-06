@@ -21,6 +21,7 @@ import { VotePhase } from "@/components/game/VotePhase";
 import { VerdictPhase } from "@/components/game/VerdictPhase";
 import { ResultPhase } from "@/components/game/ResultPhase";
 import { PhaseTimer } from "@/components/game/PhaseTimer";
+import { SuspicionPhase } from "@/components/game/SuspicionPhase";
 
 const GAME_ACTIVITY = getActivity("gomdori-mafia")!;
 
@@ -310,10 +311,18 @@ function GameShell({ session }: { session: ActivitySession }) {
     );
   }
 
+  if (match.status === "night_suspect") {
+    return (
+      <GameFrame phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.nightSuspect.label}>
+        <SuspicionPhase match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} />
+      </GameFrame>
+    );
+  }
+
   if (match.status === "night") {
     return (
       <GameFrame phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.night.label}>
-        <NightPhase match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} />
+        <NightPhase match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} events={events} />
       </GameFrame>
     );
   }
