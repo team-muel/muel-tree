@@ -17,6 +17,9 @@ const ROLE_COPY: Record<string, { label: string; detail: string }> = {
   police: { label: "경찰", detail: "밤마다 한 명을 조사해 악마인지 확인할 수 있습니다." },
   demon: { label: "악마", detail: "밤마다 한 명을 습격하고, 낮에는 정체를 숨기세요." },
   helper: { label: "조력자", detail: "악마팀을 돕되, 당신의 정체는 끝까지 감추세요." },
+  rainer: { label: "라이너", detail: "수호신 백호로 천사팀 카운트를 늘려 마을을 지킵니다. (밤 능동 능력 없음)" },
+  romaz: { label: "로마즈", detail: "밤마다 용의자를 지목해 다음 투표에서 그 대상의 투표·의심 무게를 키웁니다." },
+  gain: { label: "가인", detail: "악마를 살해·처형 1회로부터 보호하는 조력자. 정체를 감추세요." },
 };
 
 const FACTION_COPY = {

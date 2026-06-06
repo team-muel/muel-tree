@@ -1,6 +1,7 @@
 "use client";
 
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
+import { roleLabel } from "@/config/gomdori-roles";
 
 type ResultPhaseProps = {
   match: MatchSummary;
@@ -60,12 +61,7 @@ export function ResultPhase({ match, players, events }: ResultPhaseProps) {
                   ? "bg-red-500/20 text-red-300" 
                   : "bg-emerald-500/20 text-emerald-300"
               }`}>
-                {role === "citizen" && "시민"}
-                {role === "doctor" && "의사"}
-                {role === "police" && "경찰"}
-                {role === "demon" && "악마"}
-                {role === "helper" && "조력자"}
-                {!role && "알 수 없음"}
+                {roleLabel(role) || "알 수 없음"}
               </div>
             </div>
           );
