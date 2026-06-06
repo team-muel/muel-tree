@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { OpenActivityLink } from "@/components/OpenActivityLink";
+import { DiscordActivityRedirect } from "@/components/DiscordActivityRedirect";
 import { Nav } from "@/components/Nav";
 import { footerLinks, services, teamUpdates } from "@/config/services";
 
@@ -18,6 +19,7 @@ function Badge({ children, light }: { children: React.ReactNode; light?: boolean
 export default function Home() {
   return (
     <>
+      <DiscordActivityRedirect />
       <Nav />
 
       {services.map((service, index) => {
