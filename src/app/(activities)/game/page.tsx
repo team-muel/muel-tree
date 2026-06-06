@@ -20,6 +20,7 @@ import { DayPhase } from "@/components/game/DayPhase";
 import { VotePhase } from "@/components/game/VotePhase";
 import { VerdictPhase } from "@/components/game/VerdictPhase";
 import { ResultPhase } from "@/components/game/ResultPhase";
+import { PhaseTimer } from "@/components/game/PhaseTimer";
 
 const GAME_ACTIVITY = getActivity("gomdori-mafia")!;
 
@@ -47,12 +48,14 @@ function GameShell({ session }: { session: ActivitySession }) {
   const [landingMatch, setLandingMatch] = useState<MatchSummary | null>(null);
   const [players, setPlayers] = useState<PlayerSummary[]>([]);
   const [events, setEvents] = useState<Array<{ id: string; event_type: string; created_at: string; payload?: Record<string, unknown> }>>([]);
+  const [currentPhase, setCurrentPhase] = useState<{ phaseType: string; phaseNumber: number; expectedEndedAt: string | null; endedAt: string | null } | null>(null);
 
   const channelId = session.activityContext.channelId;
   const instanceId = session.activityContext.instanceId;
   const guildId = session.activityContext.guildId;
   const matchId = match?.id ?? null;
   const myPlayer = players.find((player) => player.userId === userId) ?? null;
+  const phaseEndsAt = currentPhase && !currentPhase.endedAt ? currentPhase.expectedEndedAt : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -143,6 +146,25 @@ function GameShell({ session }: { session: ActivitySession }) {
       }
     }
 
+    async function refreshPhase() {
+      const { data, error } = await supabase
+        .schema("mafia")
+        .from("match_phases")
+        .select("*")
+        .eq("match_id", matchId)
+        .order("phase_number", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!cancelled && !error && data) {
+        setCurrentPhase({
+          phaseType: String(data.phase_type),
+          phaseNumber: Number(data.phase_number),
+          expectedEndedAt: typeof data.expected_ended_at === "string" ? data.expected_ended_at : null,
+          endedAt: typeof data.ended_at === "string" ? data.ended_at : null,
+        });
+      }
+    }
+
     const channel = supabase
       .channel(`mafia-match-${matchId}`)
       .on(
@@ -150,6 +172,7 @@ function GameShell({ session }: { session: ActivitySession }) {
         { event: "*", schema: "mafia", table: "matches", filter: `id=eq.${matchId}` },
         () => {
           refreshMatch();
+          refreshPhase();
         },
       )
       .on(
@@ -167,11 +190,19 @@ function GameShell({ session }: { session: ActivitySession }) {
           setEvents((current) => [row, ...current].slice(0, 20));
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "mafia", table: "match_phases", filter: `match_id=eq.${matchId}` },
+        () => {
+          refreshPhase();
+        },
+      )
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
           refreshMatch();
           refreshPlayers();
           refreshEvents();
+          refreshPhase();
         }
       });
 
@@ -273,7 +304,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "role_assign") {
     return (
-      <GameFrame>
+      <GameFrame phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.roleAssign.label}>
         <RoleAssignPhase players={players} myPlayer={myPlayer} events={events} />
       </GameFrame>
     );
@@ -281,7 +312,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "night") {
     return (
-      <GameFrame>
+      <GameFrame phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.night.label}>
         <NightPhase match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} />
       </GameFrame>
     );
@@ -297,7 +328,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "day") {
     return (
-      <GameFrame>
+      <GameFrame phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.day.label}>
         <DayPhase match={match} players={players} events={events} myPlayer={myPlayer} />
       </GameFrame>
     );
@@ -305,7 +336,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "vote") {
     return (
-      <GameFrame>
+      <GameFrame phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.vote.label}>
         <VotePhase match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} />
       </GameFrame>
     );
@@ -313,7 +344,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "verdict") {
     return (
-      <GameFrame>
+      <GameFrame phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.verdict.label}>
         <VerdictPhase players={players} events={events} />
       </GameFrame>
     );
@@ -337,9 +368,22 @@ function GameShell({ session }: { session: ActivitySession }) {
   );
 }
 
-function GameFrame({ children }: { children: React.ReactNode }) {
+function GameFrame({
+  children,
+  phaseEndsAt,
+  timerLabel,
+}: {
+  children: React.ReactNode;
+  phaseEndsAt?: string | null;
+  timerLabel?: string;
+}) {
   return (
-    <main className="w-full min-h-full bg-[#11131a] text-white px-4 py-5 sm:px-6 flex items-center justify-center">
+    <main className="relative w-full min-h-full bg-[#11131a] text-white px-4 py-5 sm:px-6 flex items-center justify-center">
+      {phaseEndsAt ? (
+        <div className="absolute left-1/2 top-3 z-10 -translate-x-1/2">
+          <PhaseTimer expectedEndedAt={phaseEndsAt} label={timerLabel} />
+        </div>
+      ) : null}
       {children}
     </main>
   );
