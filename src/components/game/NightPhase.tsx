@@ -12,11 +12,19 @@ type NightPhaseProps = {
   players: PlayerSummary[];
   myPlayer: PlayerSummary | null;
   gameJwt: string;
+  events?: Array<{ id: string; event_type: string; created_at: string; payload?: Record<string, unknown> }>;
 };
 
 type ChatRow = { id: string; sender_user_id: string; message: string; created_at?: string; };
 
-export function NightPhase({ match, players, myPlayer, gameJwt }: NightPhaseProps) {
+export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightPhaseProps) {
+  // 의심 투표 결과(W1): events 는 최신순이라 첫 suspicion_revealed 가 이번 밤 것.
+  const suspicionEvent = (events ?? []).find((e) => e.event_type === "suspicion_revealed");
+  const suspectedUserId = (suspicionEvent?.payload?.user_id as string | null | undefined) ?? null;
+  const suspectedName = suspectedUserId
+    ? players.find((p) => p.userId === suspectedUserId)?.displayName ?? null
+    : null;
+  const iAmSuspected = !!suspectedUserId && suspectedUserId === myPlayer?.userId;
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
   const [isFirstNight, setIsFirstNight] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -175,6 +183,18 @@ export function NightPhase({ match, players, myPlayer, gameJwt }: NightPhaseProp
     );
   }
 
+  if (iAmSuspected) {
+    return (
+      <div className="flex h-full w-full items-center justify-center p-5">
+        <div className="w-full max-w-lg rounded-lg border border-red-500/20 bg-red-900/10 p-10 text-center">
+          <h2 className="text-sm font-medium uppercase tracking-widest text-red-300/70">밤</h2>
+          <h1 className="mt-6 text-2xl font-semibold text-red-100">가장 의심받았습니다</h1>
+          <p className="mt-4 text-sm text-white/50">이번 밤에는 능력을 사용할 수 없습니다. 아침을 기다리세요.</p>
+        </div>
+      </div>
+    );
+  }
+
   const handleAction = async (actionType: string) => {
     if (!selectedTarget) return;
     setIsSubmitting(true);
@@ -199,6 +219,11 @@ export function NightPhase({ match, players, myPlayer, gameJwt }: NightPhaseProp
   ) => {
     return (
       <div className="mt-8">
+        {suspectedName ? (
+          <div className="mb-4 rounded-md border border-amber-500/20 bg-amber-900/10 px-4 py-2 text-sm text-amber-200/80">
+            의심 지목: <span className="font-semibold">{suspectedName}</span> — 이번 밤 능력 불가
+          </div>
+        ) : null}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {targets.map((p) => (
             <button
