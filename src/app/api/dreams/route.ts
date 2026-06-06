@@ -76,7 +76,7 @@ type WeaveNodeRow = {
   title: string | null;
   body: string | null;
   tags: string[] | null;
-  visibility: "private" | "community" | string;
+  visibility: "private" | "community";
   source_ref: Record<string, unknown> | null;
   created_at: string;
 };
