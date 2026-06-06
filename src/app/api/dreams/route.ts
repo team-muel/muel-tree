@@ -5,6 +5,7 @@ import { createServiceSupabaseClient } from "@/lib/muel-profile";
 import { requireDiscordUser } from "@/lib/request-security";
 import { applyForceLayout3D } from "@/lib/force3d";
 import type { WeaveNode as DreamNode, WeaveEdge as DreamEdge } from "@/types";
+import { emotionRadius, tagColor } from "@/config/weave-tokens";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -12,26 +13,6 @@ export const revalidate = 0;
 const noStoreHeaders = {
   "Cache-Control": "no-store",
 };
-
-// main_tag 문자열을 결정론적으로 팔레트 색상으로 매핑
-const TAG_PALETTE = [
-  "#f472b6", "#a78bfa", "#60a5fa", "#34d399",
-  "#fbbf24", "#fb923c", "#f87171", "#38bdf8",
-  "#818cf8", "#6ee7b7", "#c4b5fd", "#e879f9",
-];
-
-function tagColor(tag?: string): string {
-  if (!tag) return "#818cf8";
-  let hash = 0;
-  for (const c of tag) hash = (hash * 31 + c.charCodeAt(0)) & 0xffff;
-  return TAG_PALETTE[hash % TAG_PALETTE.length];
-}
-
-// emotions.length(1–4)를 반지름 0.7–1.4로 선형 매핑
-function emotionRadius(emotions?: string[]): number {
-  const count = Math.min(Math.max(emotions?.length ?? 1, 1), 4);
-  return 0.7 + (count - 1) * 0.233; // 1→0.7, 2→0.933, 3→1.17, 4→1.4
-}
 
 function hashString(value: string): number {
   let hash = 0;

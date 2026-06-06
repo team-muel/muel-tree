@@ -8,6 +8,7 @@ import { appFetch, toErrorMessage } from "@/lib/app-fetch";
 import { DonateButton } from "@/components/DonateButton";
 import { ActivityLayout, type ActivitySession } from "@/components/ActivityLayout";
 import { getActivity } from "@/config/activities";
+import { emotionRadius, tagColor } from "@/config/weave-tokens";
 
 const WEAVE_ACTIVITY = getActivity("weave")!;
 const REFRESH_INTERVAL = 30_000;
@@ -17,24 +18,6 @@ function submitErrorMessage(status: number, fallback?: string): string {
   if (status === 403) return "허용된 경로에서만 저장할 수 있어요.";
   if (status === 400) return fallback ?? "내용을 조금 더 적어주세요.";
   return "지금은 저장하지 못했어요. 잠시 후 다시 시도해주세요.";
-}
-
-const TAG_PALETTE = [
-  "#f472b6", "#a78bfa", "#60a5fa", "#34d399",
-  "#fbbf24", "#fb923c", "#f87171", "#38bdf8",
-  "#818cf8", "#6ee7b7", "#c4b5fd", "#e879f9",
-];
-
-function tagColor(tag?: string): string {
-  if (!tag) return "#818cf8";
-  let hash = 0;
-  for (const c of tag) hash = (hash * 31 + c.charCodeAt(0)) & 0xffff;
-  return TAG_PALETTE[hash % TAG_PALETTE.length];
-}
-
-function emotionRadius(emotions?: string[]): number {
-  const count = Math.min(Math.max(emotions?.length ?? 1, 1), 4);
-  return 0.7 + (count - 1) * 0.233;
 }
 
 const WeaveCanvas = dynamic(() => import("@/components/WeaveCanvas"), {
