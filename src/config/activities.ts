@@ -5,6 +5,8 @@ export type MuelActivity = {
   serviceSlug: string;
   description: string;
   discordClientId?: string;
+  /** Discord CSP 우회를 위해 /supabase URL 매핑(patchUrlMappings)이 필요한 Activity. */
+  needsSupabaseProxy?: boolean;
 };
 
 export const activities: MuelActivity[] = [
@@ -23,6 +25,7 @@ export const activities: MuelActivity[] = [
     serviceSlug: "gomdori",
     description: "Gomdori 마피아 — 천사와 악마의 비대칭 추리 게임",
     discordClientId: process.env.NEXT_PUBLIC_GOMDORI_DISCORD_CLIENT_ID,
+    needsSupabaseProxy: true,
   },
 ];
 
