@@ -22,6 +22,7 @@ import { VerdictPhase } from "@/components/game/VerdictPhase";
 import { ResultPhase } from "@/components/game/ResultPhase";
 import { PhaseTimer } from "@/components/game/PhaseTimer";
 import { SuspicionPhase } from "@/components/game/SuspicionPhase";
+import { StatusBlock } from "@/components/game/ui/StatusBlock";
 
 const GAME_ACTIVITY = getActivity("gomdori-mafia")!;
 
@@ -443,16 +444,6 @@ function LandingScreen({
           {joinable ? "참가하기" : existing != null ? "진행 중인 게임 참가" : "열린 게임 없음"}
         </button>
       </div>
-    </div>
-  );
-}
-
-function StatusBlock({ title, detail }: { title: string; detail: string }) {
-  return (
-    <div className="w-full max-w-md rounded-lg border border-white/10 bg-white/[0.04] p-6 text-center">
-      <div className="text-sm text-white/35">Gomdori Mafia</div>
-      <h1 className="mt-3 text-xl font-semibold text-white">{title}</h1>
-      <p className="mt-3 text-sm leading-6 text-white/50">{detail}</p>
     </div>
   );
 }
