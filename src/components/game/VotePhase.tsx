@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
 import { submitAction } from "@/lib/game/api";
 import { getGameSupabase } from "@/lib/game/client";
+import { Button } from "@/components/game/ui/Button";
 
 type VotePhaseProps = {
   match: MatchSummary;
@@ -118,21 +119,23 @@ export function VotePhase({ match, players, myPlayer, gameJwt }: VotePhaseProps)
         </div>
 
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <button
+          <Button
+            variant="amber"
             onClick={() => handleVote(selectedTarget)}
             disabled={!selectedTarget || isSubmitting || submitted}
-            className="h-12 w-full max-w-[200px] rounded-md bg-amber-400 text-sm font-semibold text-slate-950 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/35 transition-colors"
+            className="w-full max-w-[200px]"
           >
             {submitted && selectedTarget ? "투표 완료" : isSubmitting ? "전송 중..." : "선택한 사람 투표"}
-          </button>
+          </Button>
           
-          <button
+          <Button
+            variant="ghost"
             onClick={() => handleVote(null)}
             disabled={isSubmitting || submitted}
-            className="h-12 w-full max-w-[200px] rounded-md border border-white/20 bg-transparent text-sm font-semibold text-white/70 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-30 transition-colors"
+            className="w-full max-w-[200px]"
           >
             {submitted && !selectedTarget ? "기권 완료" : "기권하기"}
-          </button>
+          </Button>
         </div>
         {voteError ? (
           <p role="alert" className="mt-4 text-sm text-red-300">{voteError}</p>
