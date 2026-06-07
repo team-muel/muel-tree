@@ -7,6 +7,7 @@ import { getGameSupabase } from "@/lib/game/client";
 import { GOMDORI_RULES } from "@/config/gomdori-rules";
 import { PHASE_TONES, SURFACE } from "@/config/design-tokens";
 import { roleLabel, roleMeta, isDemonTeamRole } from "@/config/gomdori-roles";
+import { SpectatorFeed } from "@/components/game/ui/SpectatorFeed";
 import { Button } from "@/components/game/ui/Button";
 
 type NightPhaseProps = {
@@ -33,6 +34,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
   const [submitted, setSubmitted] = useState(false);
   const [investigationResult, setInvestigationResult] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
   const [chatMessage, setChatMessage] = useState("");
   const [chats, setChats] = useState<ChatRow[]>([]);
@@ -180,6 +182,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
           <h2 className="text-sm font-medium text-white/50 tracking-widest uppercase">밤</h2>
           <h1 className="mt-6 text-2xl font-semibold text-white">관전 모드</h1>
           <p className="mt-4 text-sm text-white/40">당신은 사망했습니다. 다른 플레이어들의 행동을 지켜보세요.</p>
+          <SpectatorFeed events={events} players={players} />
         </div>
       </div>
     );
@@ -230,7 +233,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
           {targets.map((p) => (
             <button
               key={p.userId}
-              onClick={() => !submitted && setSelectedTarget(p.userId)}
+              onClick={() => { if (!submitted) { setSelectedTarget(p.userId); setConfirming(false); } }}
               disabled={submitted}
               className={`rounded-md border p-4 text-center transition-colors ${
                 selectedTarget === p.userId
@@ -242,15 +245,31 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
             </button>
           ))}
         </div>
-        <div className="mt-8 flex justify-center">
-          <Button
-            variant="primary"
-            onClick={() => handleAction(actionType)}
-            disabled={!selectedTarget || isSubmitting || submitted}
-            className="w-full max-w-xs"
-          >
-            {submitted ? "결정 완료" : isSubmitting ? "전송 중..." : buttonText}
-          </Button>
+        <div className="mt-8 flex flex-col items-center gap-3">
+          {confirming && selectedTarget && !submitted ? (
+            <div className="w-full max-w-xs rounded-md border border-amber-500/30 bg-amber-900/15 p-3 text-center">
+              <p className="text-sm text-amber-100">
+                <span className="font-semibold">{players.find((p) => p.userId === selectedTarget)?.displayName}</span> — 제출하면 되돌릴 수 없어요.
+              </p>
+              <div className="mt-3 flex gap-2">
+                <Button variant="primary" onClick={() => handleAction(actionType)} disabled={isSubmitting} className="flex-1">
+                  {isSubmitting ? "전송 중..." : "확정"}
+                </Button>
+                <Button variant="ghost" onClick={() => setConfirming(false)} disabled={isSubmitting} className="flex-1">
+                  취소
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button
+              variant="primary"
+              onClick={() => setConfirming(true)}
+              disabled={!selectedTarget || isSubmitting || submitted}
+              className="w-full max-w-xs"
+            >
+              {submitted ? "결정 완료" : buttonText}
+            </Button>
+          )}
         </div>
         {actionError ? (
           <p role="alert" className="mt-4 text-center text-sm text-red-300">{actionError}</p>
@@ -329,7 +348,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
     const targets = players.filter((p) => p.alive && p.faction !== "demon");
     
     return (
-      <div className="flex h-full w-full max-w-6xl mx-auto p-5 gap-5">
+      <div className="flex flex-col lg:flex-row h-full w-full max-w-6xl mx-auto p-5 gap-5">
         <div className="flex-1 rounded-lg border border-red-500/20 bg-red-900/10 p-6 sm:p-10">
           <h2 className="text-sm font-medium text-red-500/70 tracking-widest uppercase">{roleLabel(role)}</h2>
           
@@ -356,7 +375,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
           )}
         </div>
         
-        <div className="w-80 rounded-lg border border-red-500/10 bg-black/40 flex flex-col hidden lg:flex">
+        <div className="w-full lg:w-80 h-80 lg:h-auto rounded-lg border border-red-500/10 bg-black/40 flex flex-col">
           <div className="p-4 border-b border-white/5 font-medium text-red-200/80 text-sm">
             악마의 속삭임 (채팅)
           </div>
