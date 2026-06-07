@@ -1,6 +1,7 @@
 "use client";
 
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
+import { SpectatorFeed } from "@/components/game/ui/SpectatorFeed";
 
 type DayPhaseProps = {
   match: MatchSummary;
@@ -72,6 +73,7 @@ export function DayPhase({ players, events, myPlayer }: DayPhaseProps) {
               ? "당신은 사망했습니다. 산 자들의 토론을 조용히 지켜보세요." 
               : "Discord 음성 채널을 통해 마피아가 누구일지 자유롭게 추리하고 토론하세요."}
           </p>
+          {isDead ? <SpectatorFeed events={events} players={players} /> : null}
           <div className="mt-auto pt-8 w-full text-xs leading-5 text-blue-100/45">
             토론 시간이 끝나면 자동으로 투표가 시작됩니다.
           </div>
