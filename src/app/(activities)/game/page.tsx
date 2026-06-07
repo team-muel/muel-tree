@@ -443,6 +443,7 @@ function GameFrame({
         </div>
       ) : null}
       {status === "night" || status === "night_suspect" ? <NightSky /> : null}
+      {status === "role_assign" || status === "ended" || status === "lobby" ? <NightSky subtle /> : null}
       <div
         key={status ?? "static"}
         className="relative z-10 flex w-full items-center justify-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500"

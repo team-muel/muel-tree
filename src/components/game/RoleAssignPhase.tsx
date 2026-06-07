@@ -71,9 +71,14 @@ export function RoleAssignPhase({ players, myPlayer, events }: RoleAssignPhasePr
               <div className={`text-xs font-semibold uppercase tracking-widest ${factionColor.accent}`}>같은 편</div>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {allyRows.map((ally) => (
-                  <div key={ally.user_id} className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-2">
-                    <div className="truncate text-sm font-medium text-white">{ally.displayName}</div>
-                    <div className="mt-1 text-xs text-white/45">{ally.roleLabel}</div>
+                  <div key={ally.user_id} className="flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-3 py-2">
+                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-black/30 text-xs ${factionColor.accent}`} aria-hidden="true">
+                      {ally.displayName.slice(0, 1)}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium text-white">{ally.displayName}</div>
+                      <div className="text-xs text-white/45">{ally.roleLabel}</div>
+                    </div>
                   </div>
                 ))}
               </div>
