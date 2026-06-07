@@ -5,6 +5,7 @@ import { kickPlayer, leaveMatch, setReady, startMatch } from "@/lib/game/api";
 import { Button } from "@/components/game/ui/Button";
 import { useMemo, useState } from "react";
 import type { ActivitySession } from "@/components/ActivityLayout";
+import { GOMDORI_ROLES } from "@/config/gomdori-roles";
 
 type LobbyPhaseProps = {
   session: ActivitySession;
@@ -295,6 +296,17 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: Lobby
             <li>· 악마 승리: 악마 수가 천사 수 이상</li>
           </ul>
         </div>
+
+        <details className="rounded-md border border-white/10 bg-black/20 p-3">
+          <summary className="cursor-pointer text-xs uppercase tracking-widest text-white/35">직업 안내</summary>
+          <ul className="mt-2 space-y-1.5 text-xs leading-5 text-white/55">
+            {Object.values(GOMDORI_ROLES).map((r) => (
+              <li key={r.label}>
+                <span className="text-white/80">{r.label}</span> — {r.reveal}
+              </li>
+            ))}
+          </ul>
+        </details>
       </aside>
     </div>
   );
