@@ -1,7 +1,7 @@
 "use client";
 
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
-import { kickPlayer, setReady, startMatch } from "@/lib/game/api";
+import { kickPlayer, leaveMatch, setReady, startMatch } from "@/lib/game/api";
 import { Button } from "@/components/game/ui/Button";
 import { useMemo, useState } from "react";
 import type { ActivitySession } from "@/components/ActivityLayout";
@@ -26,12 +26,30 @@ function Info({ label, value }: { label: string; value: string }) {
 function Requirement({ met, label }: { met: boolean; label: string }) {
   return (
     <li className="flex items-center gap-2">
-      <span aria-hidden="true" className={met ? "text-emerald-300" : "text-white/30"}>
-        {met ? "✓" : "○"}
+      <span
+        aria-hidden="true"
+        className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] ${
+          met ? "bg-emerald-400/20 text-emerald-300" : "bg-white/5 text-white/30"
+        }`}
+      >
+        {met ? "✓" : ""}
       </span>
       <span className={met ? "text-white/80" : "text-white/45"}>{label}</span>
       <span className="sr-only">{met ? "충족됨" : "미충족"}</span>
     </li>
+  );
+}
+
+function Avatar({ name, dim }: { name: string; dim?: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-xs ${
+        dim ? "text-white/40" : "text-white/70"
+      }`}
+    >
+      {name.slice(0, 1)}
+    </span>
   );
 }
 
@@ -42,47 +60,102 @@ function hostName(players: PlayerSummary[], hostUserId: string | null): string {
 export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: LobbyPhaseProps) {
   const [readyPending, setReadyPending] = useState(false);
   const [startPending, setStartPending] = useState(false);
-  const [startError, setStartError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [kickPending, setKickPending] = useState<string | null>(null);
+  const [confirmKick, setConfirmKick] = useState<string | null>(null);
+  const [leavePending, setLeavePending] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  const channelId = session.activityContext.channelId;
   const userName = session.discordUser?.username ?? "-";
   const hostLabel = useMemo(() => hostName(players, match.hostUserId), [match.hostUserId, players]);
 
   const isHost = myPlayer?.isHost;
-  const enoughPlayers = players.length >= 5;
-  const notTooMany = players.length <= 12;
-  const everyoneReady = players.filter((p) => !p.isHost).every((p) => p.ready);
+  const total = players.length;
+  const enoughPlayers = total >= 5;
+  const notTooMany = total <= 12;
+  const nonHost = players.filter((p) => !p.isHost);
+  const readyCount = nonHost.filter((p) => p.ready).length;
+  const everyoneReady = nonHost.every((p) => p.ready);
   const canStart = enoughPlayers && notTooMany && everyoneReady;
 
+  // 인원별 진영 구성 미리보기 (match-start generateRoles 와 동기화: 악마팀 항상 2).
+  const composition = enoughPlayers && notTooMany ? { demons: 2, angels: total - 2 } : null;
+
+  const inviteUrl = process.env.NEXT_PUBLIC_DISCORD_INVITE_URL;
+
+  async function copyInvite() {
+    const url = inviteUrl ?? (typeof window !== "undefined" ? window.location.href : "");
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch {
+      setActionError("클립보드 복사에 실패했어요. 직접 링크를 공유해주세요.");
+    }
+  }
+
+  async function leave() {
+    if (!gameJwt || !match.id) return;
+    setActionError(null);
+    setLeavePending(true);
+    try {
+      await leaveMatch(match.id, gameJwt);
+      if (typeof window !== "undefined") window.location.reload();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "나가기 실패");
+      setLeavePending(false);
+    }
+  }
+
+  async function doKick(userId: string) {
+    if (!gameJwt || !match.id) return;
+    if (confirmKick !== userId) {
+      setConfirmKick(userId);
+      return;
+    }
+    setActionError(null);
+    setKickPending(userId);
+    try {
+      await kickPlayer(match.id, userId, gameJwt);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "강퇴 실패");
+    } finally {
+      setKickPending(null);
+      setConfirmKick(null);
+    }
+  }
+
   return (
-    <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-[1.4fr_0.9fr] gap-5">
-      <section className="min-h-[420px] rounded-lg border border-white/10 bg-white/[0.04] p-5">
+    <div className="grid w-full max-w-5xl grid-cols-1 gap-5 lg:grid-cols-[1.4fr_0.9fr]">
+      <section className="min-h-[420px] rounded-xl border border-white/10 border-t-white/20 bg-[#15131e] p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.18em] text-white/35">Gomdori Mafia</p>
             <h1 className="mt-2 text-2xl font-semibold text-white">로비</h1>
           </div>
           <div className="rounded-md border border-emerald-300/20 bg-emerald-300/10 px-3 py-1 text-xs text-emerald-100">
-            {match.status}
+            대기 중
           </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-2 gap-3 text-sm">
-          <Info label="채널" value={channelId ?? "-"} />
-          <Info label="참가자" value={`${players.length} / ${match.maxPlayers}`} />
-          <Info label="내 이름" value={userName} />
+        <div className="mt-6 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+          <Info label="참가자" value={`${total} / ${match.maxPlayers}`} />
           <Info label="방장" value={hostLabel} />
+          <Info label="내 이름" value={userName} />
+          <Info label="구성" value={composition ? `악마 ${composition.demons} · 천사 ${composition.angels}` : "5명 모이면 공개"} />
+          <Info label="준비" value={`${readyCount} / ${nonHost.length}`} />
         </div>
 
         <div className="mt-6">
           {isHost ? (
             <ul className="mb-4 space-y-1.5 text-sm" aria-label="시작 조건">
-              <Requirement met={enoughPlayers} label={`5명 이상 (${players.length}/5)`} />
+              <Requirement met={enoughPlayers} label={`5명 이상 (${total}/5)`} />
               <Requirement met={notTooMany} label="12명 이하" />
-              <Requirement met={everyoneReady} label="참가자 전원 준비" />
+              <Requirement met={everyoneReady} label={`참가자 전원 준비 (${readyCount}/${nonHost.length})`} />
             </ul>
           ) : null}
+
           {!isHost ? (
             <Button
               type="button"
@@ -97,7 +170,7 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: Lobby
                   setReadyPending(false);
                 }
               }}
-              className="mb-5 w-full"
+              className="mb-3 w-full"
             >
               {myPlayer?.ready ? "준비 해제" : "준비 완료"}
             </Button>
@@ -108,27 +181,46 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: Lobby
               disabled={!gameJwt || !myPlayer || startPending || !canStart}
               onClick={async () => {
                 if (!gameJwt || !myPlayer || !match.id) return;
-                setStartError(null);
+                setActionError(null);
                 setStartPending(true);
                 try {
                   await startMatch(match.id, gameJwt);
                 } catch (err) {
-                  setStartError(err instanceof Error ? err.message : "시작 실패");
+                  setActionError(err instanceof Error ? err.message : "시작 실패");
                   setStartPending(false);
                 }
               }}
-              className="mb-5 w-full"
+              className="mb-3 w-full"
             >
-              {startPending ? "시작하는 중..." : "게임 시작"}
+              {startPending ? "시작하는 중..." : canStart ? "게임 시작" : "시작 조건 미충족"}
             </Button>
           )}
-          {startError ? (
-            <p role="alert" className="mb-3 text-sm text-red-300">{startError}</p>
+
+          <div className="mb-5 flex gap-2">
+            <button
+              type="button"
+              onClick={copyInvite}
+              className="flex-1 rounded-md border border-white/15 bg-white/[0.04] px-3 py-2 text-sm text-white/75 transition-colors hover:bg-white/[0.08]"
+            >
+              {copied ? "복사됨 ✓" : "친구 초대 (링크 복사)"}
+            </button>
+            <button
+              type="button"
+              onClick={leave}
+              disabled={leavePending}
+              className="rounded-md border border-white/15 bg-white/[0.04] px-3 py-2 text-sm text-white/60 transition-colors hover:bg-white/[0.08] disabled:opacity-40"
+            >
+              {leavePending ? "..." : "나가기"}
+            </button>
+          </div>
+
+          {actionError ? (
+            <p role="alert" className="mb-3 text-sm text-rose-300">{actionError}</p>
           ) : null}
 
           <div className="mb-3 text-sm font-medium text-white/75">참가자</div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {players.length === 0 ? (
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {total === 0 ? (
               <div className="rounded-md border border-white/10 px-3 py-3 text-sm text-white/40">
                 참가자를 불러오는 중입니다.
               </div>
@@ -136,35 +228,27 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: Lobby
               players.map((player) => (
                 <div
                   key={player.userId}
-                  className="flex items-center justify-between rounded-md border border-white/10 bg-black/20 px-3 py-3"
+                  className="flex items-center justify-between gap-2 rounded-md border border-white/10 bg-black/20 px-3 py-2.5"
                 >
-                  <div className="min-w-0">
-                    <div className="truncate text-sm text-white">{player.displayName}</div>
-                    <div className="text-xs text-white/35">
-                      {player.isHost ? "방장" : "참가자"} · {player.ready ? "준비 완료" : "대기"}
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Avatar name={player.displayName} dim={!player.ready && !player.isHost} />
+                    <div className="min-w-0">
+                      <div className="truncate text-sm text-white">{player.displayName}</div>
+                      <div className="text-xs text-white/35">
+                        {player.isHost ? "방장" : player.ready ? "준비 완료" : "대기 중"}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div aria-hidden="true" className={`h-2 w-2 rounded-full ${player.ready ? "bg-emerald-300" : "bg-white/20"}`} />
+                    <div aria-hidden="true" className={`h-2 w-2 rounded-full ${player.ready || player.isHost ? "bg-emerald-300" : "bg-white/20"}`} />
                     {isHost && !player.isHost ? (
                       <button
                         type="button"
                         disabled={!gameJwt || kickPending === player.userId}
-                        onClick={async () => {
-                          if (!gameJwt || !match.id) return;
-                          setStartError(null);
-                          setKickPending(player.userId);
-                          try {
-                            await kickPlayer(match.id, player.userId, gameJwt);
-                          } catch (err) {
-                            setStartError(err instanceof Error ? err.message : "강퇴 실패");
-                          } finally {
-                            setKickPending(null);
-                          }
-                        }}
-                        className="rounded border border-red-500/30 px-2 py-0.5 text-xs text-red-300 transition-colors hover:bg-red-500/10 disabled:opacity-40"
+                        onClick={() => doKick(player.userId)}
+                        className="rounded border border-rose-400/30 px-2 py-0.5 text-xs text-rose-300 transition-colors hover:bg-rose-500/10 disabled:opacity-40"
                       >
-                        {kickPending === player.userId ? "..." : "강퇴"}
+                        {kickPending === player.userId ? "..." : confirmKick === player.userId ? "확인?" : "강퇴"}
                       </button>
                     ) : null}
                   </div>
@@ -175,11 +259,42 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: Lobby
         </div>
       </section>
 
-      {/* Log Section - In a real refactor, this could be shared. We'll leave it in Lobby for now, or move to GameShell. */}
-      {/* Since we want modularity, we'll extract it to a standalone layout later if needed. For now, Lobby doesn't strictly need logs, but we'll render a placeholder or empty log. */}
-      <aside className="rounded-lg border border-white/10 bg-white/[0.04] p-5">
-        <h2 className="text-base font-semibold text-white">대기실 안내</h2>
-        <p className="mt-4 text-sm text-white/40">게임이 시작되기를 기다리고 있습니다.</p>
+      <aside className="space-y-4 rounded-xl border border-white/10 border-t-white/20 bg-[#15131e] p-5">
+        <div>
+          <h2 className="text-base font-semibold text-white">친구 부르기</h2>
+          <p className="mt-2 text-sm text-white/45">
+            5명부터 시작할 수 있어요. 같은 채널 친구를 초대하세요.
+          </p>
+          <button
+            type="button"
+            onClick={copyInvite}
+            className="mt-3 w-full rounded-md border border-white/15 bg-white/[0.04] px-3 py-2 text-sm text-white/75 transition-colors hover:bg-white/[0.08]"
+          >
+            {copied ? "복사됨 ✓" : "초대 링크 복사"}
+          </button>
+        </div>
+
+        {composition ? (
+          <div className="rounded-md border border-white/10 bg-black/20 p-3">
+            <div className="text-xs uppercase tracking-widest text-white/35">이번 판 구성</div>
+            <div className="mt-2 flex items-center gap-3 text-sm">
+              <span className="text-rose-300">악마팀 {composition.demons}</span>
+              <span className="text-white/20">·</span>
+              <span className="text-amber-200">천사팀 {composition.angels}</span>
+            </div>
+            <p className="mt-1 text-xs text-white/35">악마·가인 / 의사·경찰·로마즈·라이너·시민</p>
+          </div>
+        ) : null}
+
+        <div className="rounded-md border border-white/10 bg-black/20 p-3">
+          <div className="text-xs uppercase tracking-widest text-white/35">규칙 요약</div>
+          <ul className="mt-2 space-y-1 text-xs leading-5 text-white/55">
+            <li>· 밤: 악마는 처치, 의사·경찰·로마즈는 능력 사용</li>
+            <li>· 아침: 토론 후 투표로 한 명을 지목·처형</li>
+            <li>· 천사 승리: 악마를 모두 찾아 제거</li>
+            <li>· 악마 승리: 악마 수가 천사 수 이상</li>
+          </ul>
+        </div>
       </aside>
     </div>
   );
