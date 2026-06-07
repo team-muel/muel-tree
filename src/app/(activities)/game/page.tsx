@@ -329,7 +329,7 @@ function GameShell({ session }: { session: ActivitySession }) {
   if (match.status === "night_suspect") {
     return (
       <GameFrame status="night_suspect" phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.nightSuspect.label} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} dayNumber={currentPhase?.phaseNumber}>
-        <SuspicionPhase match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} />
+        <SuspicionPhase match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} events={events} />
       </GameFrame>
     );
   }
@@ -361,7 +361,7 @@ function GameShell({ session }: { session: ActivitySession }) {
   if (match.status === "vote") {
     return (
       <GameFrame status="vote" phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.vote.label} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} dayNumber={currentPhase?.phaseNumber}>
-        <VotePhase match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} />
+        <VotePhase match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} events={events} />
       </GameFrame>
     );
   }
