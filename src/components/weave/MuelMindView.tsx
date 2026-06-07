@@ -50,6 +50,7 @@ export function MuelMindView({ session }: { session: ActivitySession }) {
   const [memo, setMemo] = useState("");
   const [memoState, setMemoState] = useState<"idle" | "sending" | "done">("idle");
   const [pending, setPending] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const authHeader = useMemo(
     () => (accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined),
@@ -91,12 +92,14 @@ export function MuelMindView({ session }: { session: ActivitySession }) {
 
   const loadServer = useCallback(async () => {
     if (!authHeader || server) return;
+    setServerError(null);
     try {
       const res = await appFetch("/api/weave/server", { headers: authHeader });
       const data = await res.json();
       if (res.ok) setServer(data);
+      else setServerError(data?.error ?? "서버 정보를 불러오지 못했어.");
     } catch {
-      /* ignore */
+      setServerError("서버 정보를 불러오지 못했어.");
     }
   }, [authHeader, server]);
 
@@ -305,7 +308,7 @@ export function MuelMindView({ session }: { session: ActivitySession }) {
                 </div>
               </>
             ) : (
-              <p className="mt-8 text-sm text-white/40">불러오는 중…</p>
+              <p className="mt-8 text-sm text-white/40">{serverError ?? "불러오는 중…"}</p>
             )}
           </>
         )}

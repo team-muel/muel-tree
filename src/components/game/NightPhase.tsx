@@ -71,7 +71,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
   }, [match.id, gameJwt]);
 
   useEffect(() => {
-    if (!isDemonTeamRole(role) || !match.id || !gameJwt) return;
+    if (!role || !isDemonTeamRole(role) || !match.id || !gameJwt) return;
 
     let cancelled = false;
     const supabase = getGameSupabase(gameJwt);

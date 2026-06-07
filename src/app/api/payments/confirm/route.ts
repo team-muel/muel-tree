@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { logServiceEvent } from "@/lib/service-events";
+import { isAllowedOrigin, forbiddenOrigin } from "@/lib/request-security";
 
 export async function POST(req: NextRequest) {
+  if (!isAllowedOrigin(req)) {
+    return forbiddenOrigin();
+  }
   let body: { paymentKey?: string; orderId?: string; amount?: number };
   try {
     body = await req.json();
