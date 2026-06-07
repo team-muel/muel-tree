@@ -21,9 +21,9 @@ export function VerdictPhase({ players, events }: VerdictPhaseProps) {
   return (
     <div className="flex h-full w-full items-center justify-center p-5">
       <div className={`w-full max-w-2xl rounded-lg border p-10 text-center shadow-2xl motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in motion-safe:duration-500 ${
-        executedPlayer ? "border-red-500/30 bg-red-950/40" : "border-white/10 bg-white/[0.04]"
+        executedPlayer ? "border-rose-400/25 bg-rose-950/40" : "border-white/10 bg-white/[0.04]"
       }`}>
-        <h2 className={`text-sm font-medium tracking-widest uppercase ${executedPlayer ? "text-red-400/80" : "text-white/50"}`}>
+        <h2 className={`text-sm font-medium tracking-widest uppercase ${executedPlayer ? "text-rose-300/80" : "text-white/50"}`}>
           투표 결과
         </h2>
         

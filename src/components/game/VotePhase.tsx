@@ -96,8 +96,8 @@ export function VotePhase({ match, players, myPlayer, gameJwt }: VotePhaseProps)
 
   return (
     <div className="flex flex-col h-full w-full max-w-4xl mx-auto p-5">
-      <div className="rounded-lg border border-amber-500/20 bg-amber-900/10 p-6 sm:p-10 text-center">
-        <h2 className="text-sm font-medium text-amber-500/70 tracking-widest uppercase">투표 시간</h2>
+      <div className="rounded-lg border border-amber-400/15 bg-amber-950/25 p-6 sm:p-10 text-center">
+        <h2 className="text-sm font-medium text-amber-300/70 tracking-widest uppercase">투표 시간</h2>
         <h1 className="mt-2 text-2xl font-semibold text-amber-100">마피아로 의심되는 사람을 투표하세요</h1>
         <p className="mt-2 text-sm text-amber-200/50">가장 많은 표를 받은 사람이 처형됩니다. 아무도 고르지 않으려면 기권하세요.</p>
 
@@ -138,7 +138,7 @@ export function VotePhase({ match, players, myPlayer, gameJwt }: VotePhaseProps)
           </Button>
         </div>
         {voteError ? (
-          <p role="alert" className="mt-4 text-sm text-red-300">{voteError}</p>
+          <p role="alert" className="mt-4 text-sm text-rose-300">{voteError}</p>
         ) : null}
       </div>
     </div>

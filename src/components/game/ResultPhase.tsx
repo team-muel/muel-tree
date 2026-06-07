@@ -22,12 +22,12 @@ export function ResultPhase({ match, players, events }: ResultPhaseProps) {
       <div className={`w-full rounded-lg border p-10 text-center shadow-2xl motion-safe:animate-in motion-safe:slide-in-from-top-4 motion-safe:duration-700 ${
         isAngelWin 
           ? "border-emerald-500/30 bg-emerald-950/40" 
-          : "border-red-500/30 bg-red-950/40"
+          : "border-rose-400/25 bg-rose-950/40"
       }`}>
-        <h2 className={`text-sm font-medium tracking-widest uppercase ${isAngelWin ? "text-emerald-400/80" : "text-red-400/80"}`}>
+        <h2 className={`text-sm font-medium tracking-widest uppercase ${isAngelWin ? "text-emerald-400/80" : "text-rose-300/80"}`}>
           게임 종료
         </h2>
-        <h1 className={`mt-6 text-5xl sm:text-6xl font-bold ${isAngelWin ? "text-emerald-100" : "text-red-100"}`}>
+        <h1 className={`mt-6 text-5xl sm:text-6xl font-bold ${isAngelWin ? "text-emerald-100" : "text-rose-100"}`}>
           {isAngelWin ? "천사 진영 승리!" : "악마 진영 승리!"}
         </h1>
         <p className="mt-6 text-lg text-white/60">
@@ -48,7 +48,7 @@ export function ResultPhase({ match, players, events }: ResultPhaseProps) {
               style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }} 
               className={`rounded-lg border p-5 flex flex-col items-center justify-center text-center ${
                 isDemonFaction
-                  ? "border-red-900/30 bg-red-950/20"
+                  ? "border-rose-950/30 bg-rose-950/25"
                   : "border-emerald-900/30 bg-emerald-950/20"
               } ${!p.alive ? "opacity-60" : ""} motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:fill-mode-backwards`}
             >
@@ -58,7 +58,7 @@ export function ResultPhase({ match, players, events }: ResultPhaseProps) {
               
               <div className={`mt-auto px-4 py-1.5 rounded-full text-sm font-semibold ${
                 isDemonFaction 
-                  ? "bg-red-500/20 text-red-300" 
+                  ? "bg-rose-400/15 text-rose-300" 
                   : "bg-emerald-500/20 text-emerald-300"
               }`}>
                 {roleLabel(role) || "알 수 없음"}

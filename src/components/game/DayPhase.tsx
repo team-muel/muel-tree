@@ -26,10 +26,10 @@ export function DayPhase({ players, events, myPlayer }: DayPhaseProps) {
       {/* Announcement Banner */}
       <div className={`w-full rounded-lg border p-6 text-center shadow-lg ${
         diedPlayer 
-          ? "border-red-500/30 bg-red-950/40" 
+          ? "border-rose-400/25 bg-rose-950/40" 
           : "border-emerald-500/30 bg-emerald-950/40"
       }`}>
-        <h2 className={`text-sm font-medium tracking-widest uppercase ${diedPlayer ? "text-red-400/80" : "text-emerald-400/80"}`}>
+        <h2 className={`text-sm font-medium tracking-widest uppercase ${diedPlayer ? "text-rose-300/80" : "text-emerald-400/80"}`}>
           아침이 밝았습니다
         </h2>
         <h1 className="mt-2 text-2xl font-bold text-white">
@@ -53,28 +53,28 @@ export function DayPhase({ players, events, myPlayer }: DayPhaseProps) {
                 className={`rounded-md p-4 text-center flex flex-col items-center justify-center gap-2 border transition-all ${
                   p.alive 
                     ? "border-white/10 bg-black/20 text-white" 
-                    : "border-red-900/20 bg-red-950/10 text-white/30 grayscale"
+                    : "border-rose-950/25 bg-rose-950/20 text-white/30 grayscale"
                 }`}
               >
                 <div className="truncate text-sm font-medium w-full">{p.displayName}</div>
-                {!p.alive && <div className="text-[10px] uppercase tracking-wider text-red-500/50">사망함</div>}
+                {!p.alive && <div className="text-[10px] uppercase tracking-wider text-rose-500/45">사망함</div>}
               </div>
             ))}
           </div>
         </div>
 
-        <div className="rounded-lg border border-blue-500/20 bg-blue-900/10 p-6 flex flex-col items-center text-center">
-          <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center mb-4">
+        <div className="rounded-lg border border-sky-400/15 bg-sky-950/25 p-6 flex flex-col items-center text-center">
+          <div className="w-12 h-12 rounded-full bg-sky-400/15 flex items-center justify-center mb-4">
             <span className="text-xl">🎙️</span>
           </div>
-          <h3 className="text-lg font-medium text-blue-100">자유 토론 시간</h3>
-          <p className="mt-3 text-sm text-blue-200/60 leading-relaxed">
+          <h3 className="text-lg font-medium text-sky-100">자유 토론 시간</h3>
+          <p className="mt-3 text-sm text-sky-200/55 leading-relaxed">
             {isDead 
               ? "당신은 사망했습니다. 산 자들의 토론을 조용히 지켜보세요." 
               : "Discord 음성 채널을 통해 마피아가 누구일지 자유롭게 추리하고 토론하세요."}
           </p>
           {isDead ? <SpectatorFeed events={events} players={players} /> : null}
-          <div className="mt-auto pt-8 w-full text-xs leading-5 text-blue-100/45">
+          <div className="mt-auto pt-8 w-full text-xs leading-5 text-sky-100/45">
             토론 시간이 끝나면 자동으로 투표가 시작됩니다.
           </div>
         </div>

@@ -101,7 +101,7 @@ export function SuspicionPhase({ match, players, myPlayer, gameJwt }: SuspicionP
         </div>
 
         {error ? (
-          <p role="alert" className="mt-4 text-sm text-red-300">{error}</p>
+          <p role="alert" className="mt-4 text-sm text-rose-300">{error}</p>
         ) : null}
       </div>
     </div>
