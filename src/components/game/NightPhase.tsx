@@ -191,9 +191,9 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
   if (iAmSuspected) {
     return (
       <div className="flex h-full w-full items-center justify-center p-5">
-        <div className="w-full max-w-lg rounded-lg border border-red-500/20 bg-red-900/10 p-10 text-center">
-          <h2 className="text-sm font-medium uppercase tracking-widest text-red-300/70">밤</h2>
-          <h1 className="mt-6 text-2xl font-semibold text-red-100">가장 의심받았습니다</h1>
+        <div className="w-full max-w-lg rounded-lg border border-rose-400/15 bg-rose-950/25 p-10 text-center">
+          <h2 className="text-sm font-medium uppercase tracking-widest text-rose-300/70">밤</h2>
+          <h1 className="mt-6 text-2xl font-semibold text-rose-100">가장 의심받았습니다</h1>
           <p className="mt-4 text-sm text-white/50">이번 밤에는 능력을 사용할 수 없습니다. 아침을 기다리세요.</p>
         </div>
       </div>
@@ -225,7 +225,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
     return (
       <div className="mt-8">
         {suspectedName ? (
-          <div className="mb-4 rounded-md border border-amber-500/20 bg-amber-900/10 px-4 py-2 text-sm text-amber-200/80">
+          <div className="mb-4 rounded-md border border-amber-400/15 bg-amber-950/25 px-4 py-2 text-sm text-amber-200/80">
             의심 지목: <span className="font-semibold">{suspectedName}</span> — 이번 밤 능력 불가
           </div>
         ) : null}
@@ -247,7 +247,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
         </div>
         <div className="mt-8 flex flex-col items-center gap-3">
           {confirming && selectedTarget && !submitted ? (
-            <div className="w-full max-w-xs rounded-md border border-amber-500/30 bg-amber-900/15 p-3 text-center">
+            <div className="w-full max-w-xs rounded-md border border-amber-400/20 bg-amber-950/25 p-3 text-center">
               <p className="text-sm text-amber-100">
                 <span className="font-semibold">{players.find((p) => p.userId === selectedTarget)?.displayName}</span> — 제출하면 되돌릴 수 없어요.
               </p>
@@ -272,7 +272,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
           )}
         </div>
         {actionError ? (
-          <p role="alert" className="mt-4 text-center text-sm text-red-300">{actionError}</p>
+          <p role="alert" className="mt-4 text-center text-sm text-rose-300">{actionError}</p>
         ) : null}
       </div>
     );
@@ -295,10 +295,10 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
     const targets = players.filter((p) => p.alive);
     return (
       <div className="flex flex-col h-full w-full max-w-4xl mx-auto p-5">
-        <div className="rounded-lg border border-emerald-500/20 bg-emerald-900/10 p-6 sm:p-10">
-          <h2 className="text-sm font-medium text-emerald-500/70 tracking-widest uppercase">의사</h2>
+        <div className="rounded-lg border border-emerald-400/15 bg-emerald-950/25 p-6 sm:p-10">
+          <h2 className="text-sm font-medium text-emerald-300/70 tracking-widest uppercase">의사</h2>
           <h1 className="mt-2 text-2xl font-semibold text-emerald-100">치료할 대상을 선택하세요</h1>
-          <p className="mt-2 text-sm text-emerald-200/50">오늘 밤 마피아의 공격으로부터 보호할 사람을 고르세요. (자기 자신 포함)</p>
+          <p className="mt-2 text-sm text-emerald-200/45">오늘 밤 마피아의 공격으로부터 보호할 사람을 고르세요. (자기 자신 포함)</p>
           {renderTargets(targets, "doctor_heal", "치료하기")}
         </div>
       </div>
@@ -309,15 +309,15 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
     const targets = players.filter((p) => p.alive && p.userId !== myPlayer.userId);
     return (
       <div className="flex flex-col h-full w-full max-w-4xl mx-auto p-5">
-        <div className="rounded-lg border border-blue-500/20 bg-blue-900/10 p-6 sm:p-10">
-          <h2 className="text-sm font-medium text-blue-500/70 tracking-widest uppercase">경찰</h2>
-          <h1 className="mt-2 text-2xl font-semibold text-blue-100">조사할 대상을 선택하세요</h1>
-          <p className="mt-2 text-sm text-blue-200/50">오늘 밤 정체를 알아볼 사람을 고르세요.</p>
+        <div className="rounded-lg border border-sky-400/15 bg-sky-950/25 p-6 sm:p-10">
+          <h2 className="text-sm font-medium text-sky-300/70 tracking-widest uppercase">경찰</h2>
+          <h1 className="mt-2 text-2xl font-semibold text-sky-100">조사할 대상을 선택하세요</h1>
+          <p className="mt-2 text-sm text-sky-200/50">오늘 밤 정체를 알아볼 사람을 고르세요.</p>
           
           {investigationResult ? (
-            <div className={`mt-8 p-6 rounded-lg text-center ${investigationResult === 'demon' ? 'bg-red-900/30 border border-red-500/30' : 'bg-emerald-900/30 border border-emerald-500/30'}`}>
+            <div className={`mt-8 p-6 rounded-lg text-center ${investigationResult === 'demon' ? 'bg-rose-950/30 border border-rose-400/25' : 'bg-emerald-950/30 border border-emerald-400/25'}`}>
               <div className="text-sm opacity-70 mb-2">조사 결과</div>
-              <div className={`text-2xl font-bold ${investigationResult === 'demon' ? 'text-red-400' : 'text-emerald-400'}`}>
+              <div className={`text-2xl font-bold ${investigationResult === 'demon' ? 'text-rose-300' : 'text-emerald-400'}`}>
                 {investigationResult === 'demon' ? '악마입니다!' : '악마가 아닙니다.'}
               </div>
             </div>
@@ -334,8 +334,8 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
     const targets = players.filter((p) => p.alive && p.userId !== myPlayer.userId);
     return (
       <div className="flex flex-col h-full w-full max-w-4xl mx-auto p-5">
-        <div className="rounded-lg border border-amber-500/20 bg-amber-900/10 p-6 sm:p-10">
-          <h2 className="text-sm font-medium text-amber-500/70 tracking-widest uppercase">로마즈</h2>
+        <div className="rounded-lg border border-amber-400/15 bg-amber-950/25 p-6 sm:p-10">
+          <h2 className="text-sm font-medium text-amber-300/70 tracking-widest uppercase">로마즈</h2>
           <h1 className="mt-2 text-2xl font-semibold text-amber-100">용의자를 지목하세요</h1>
           <p className="mt-2 text-sm text-amber-200/50">{meta?.night?.prompt}</p>
           {renderTargets(targets, "romaz_suspect", meta?.night?.label ?? "용의자 색출")}
@@ -349,19 +349,19 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
     
     return (
       <div className="flex flex-col lg:flex-row h-full w-full max-w-6xl mx-auto p-5 gap-5">
-        <div className="flex-1 rounded-lg border border-red-500/20 bg-red-900/10 p-6 sm:p-10">
-          <h2 className="text-sm font-medium text-red-500/70 tracking-widest uppercase">{roleLabel(role)}</h2>
+        <div className="flex-1 rounded-lg border border-rose-400/15 bg-rose-950/25 p-6 sm:p-10">
+          <h2 className="text-sm font-medium text-rose-300/70 tracking-widest uppercase">{roleLabel(role)}</h2>
           
           {role === "demon" ? (
             <>
-              <h1 className="mt-2 text-2xl font-semibold text-red-100">공격할 대상을 선택하세요</h1>
-              <p className="mt-2 text-sm text-red-200/50">조력자와 상의하여 오늘 밤 처치할 대상을 고르세요.</p>
+              <h1 className="mt-2 text-2xl font-semibold text-rose-100">공격할 대상을 선택하세요</h1>
+              <p className="mt-2 text-sm text-rose-200/50">조력자와 상의하여 오늘 밤 처치할 대상을 고르세요.</p>
               {renderTargets(targets, "demon_kill", "처치하기")}
             </>
           ) : (
             <>
-              <h1 className="mt-2 text-2xl font-semibold text-red-100">당신은 {roleLabel(role)}입니다</h1>
-              <p className="mt-2 text-sm text-red-200/50">우측 채팅을 통해 악마와 상의하세요. 직접 공격할 수는 없습니다.</p>
+              <h1 className="mt-2 text-2xl font-semibold text-rose-100">당신은 {roleLabel(role)}입니다</h1>
+              <p className="mt-2 text-sm text-rose-200/50">우측 채팅을 통해 악마와 상의하세요. 직접 공격할 수는 없습니다.</p>
               <div className="mt-8 opacity-50 pointer-events-none">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {targets.map((p) => (
@@ -375,8 +375,8 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
           )}
         </div>
         
-        <div className="w-full lg:w-80 h-80 lg:h-auto rounded-lg border border-red-500/10 bg-black/40 flex flex-col">
-          <div className="p-4 border-b border-white/5 font-medium text-red-200/80 text-sm">
+        <div className="w-full lg:w-80 h-80 lg:h-auto rounded-lg border border-rose-500/15 bg-black/40 flex flex-col">
+          <div className="p-4 border-b border-white/5 font-medium text-rose-200/80 text-sm">
             악마의 속삭임 (채팅)
           </div>
           <div className="flex-1 p-4 flex flex-col gap-3 overflow-y-auto">
@@ -392,7 +392,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
                   <div key={chat.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
                     {!isMe && <div className="text-[10px] text-white/40 mb-1 pl-1">{sender}</div>}
                     <div className={`px-3 py-2 rounded-lg text-sm max-w-[85%] break-words ${
-                      isMe ? "bg-red-500/20 text-red-100 rounded-tr-sm" : "bg-white/10 text-white rounded-tl-sm"
+                      isMe ? "bg-rose-500/20 text-rose-100 rounded-tr-sm" : "bg-white/10 text-white rounded-tl-sm"
                     }`}>
                       {chat.message}
                     </div>
@@ -404,7 +404,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
           </div>
           <div className="p-3 border-t border-white/5">
             {chatError ? (
-              <p role="alert" className="mb-2 text-xs text-red-300">{chatError}</p>
+              <p role="alert" className="mb-2 text-xs text-rose-300">{chatError}</p>
             ) : null}
             <form onSubmit={handleSendChat} className="flex gap-2">
               <input
@@ -413,9 +413,9 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
                 onChange={(e) => setChatMessage(e.target.value)}
                 placeholder="메시지 입력..."
                 aria-label="악마 팀 채팅 메시지"
-                className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500/50"
+                className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-rose-500/50"
               />
-              <button type="submit" disabled={!chatMessage.trim()} className="px-3 rounded bg-red-500/20 text-red-300 disabled:opacity-50 text-sm font-medium whitespace-nowrap">전송</button>
+              <button type="submit" disabled={!chatMessage.trim()} className="px-3 rounded bg-rose-500/20 text-rose-300 disabled:opacity-50 text-sm font-medium whitespace-nowrap">전송</button>
             </form>
           </div>
         </div>
