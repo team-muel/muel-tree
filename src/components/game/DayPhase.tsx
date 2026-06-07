@@ -11,7 +11,7 @@ type DayPhaseProps = {
 };
 
 export function DayPhase({ players, events, myPlayer }: DayPhaseProps) {
-  const deathEvent = [...events].reverse().find((e) => {
+  const deathEvent = events.find((e) => {
     if (e.event_type === "player_died") return true;
     return e.event_type === "player_eliminated" && e.payload?.cause === "night_kill";
   });

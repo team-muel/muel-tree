@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   const webhookTimestamp = req.headers.get("webhook-timestamp");
   const headers = Object.fromEntries(req.headers.entries());
   const secrets = await loadGeminiWebhookSecrets();
-  const allowUnverified = process.env.GEMINI_WEBHOOK_ALLOW_UNVERIFIED === "true";
+  const allowUnverified = process.env.NODE_ENV !== "production" && process.env.GEMINI_WEBHOOK_ALLOW_UNVERIFIED === "true";
 
   const verified = secrets.some((secret) => verifyStandardWebhook({ body: rawBody, headers, secret }));
   if (secrets.length > 0) {

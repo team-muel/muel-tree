@@ -10,6 +10,11 @@ export async function GET(req: NextRequest) {
 
   const operationName = req.nextUrl.searchParams.get("name");
   if (!operationName) {
+    // Listing every operation is admin-only (internal static token). Ordinary
+    // signed-in Discord users must not see other users' prompts/results.
+    if (caller.discordUser) {
+      return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    }
     const { data, error } = await getServerSupabase()
       .from("gemini_operations")
       .select("*")
@@ -19,6 +24,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error }, { status: 500 });
     }
     return NextResponse.json({ ok: true, operations: data ?? [] });
+  }
+
+  // Block path traversal / SSRF before interpolating the name into the Gemini URL.
+  if (operationName.includes("..") || !/^[A-Za-z0-9_./-]+$/.test(operationName)) {
+    return NextResponse.json({ error: "invalid operation name" }, { status: 400 });
   }
 
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/${operationName}`, {
