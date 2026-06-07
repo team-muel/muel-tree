@@ -6,6 +6,7 @@ import { submitAction, sendChat } from "@/lib/game/api";
 import { getGameSupabase } from "@/lib/game/client";
 import { GOMDORI_RULES } from "@/config/gomdori-rules";
 import { PHASE_TONES, SURFACE } from "@/config/design-tokens";
+import { roleLabel, roleMeta, isDemonTeamRole } from "@/config/gomdori-roles";
 import { Button } from "@/components/game/ui/Button";
 
 type NightPhaseProps = {
@@ -68,7 +69,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
   }, [match.id, gameJwt]);
 
   useEffect(() => {
-    if ((role !== "demon" && role !== "helper") || !match.id || !gameJwt) return;
+    if (!isDemonTeamRole(role) || !match.id || !gameJwt) return;
 
     let cancelled = false;
     const supabase = getGameSupabase(gameJwt);
@@ -259,7 +260,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
   };
 
   // Roles rendering
-  if (role === "citizen") {
+  if (role === "citizen" || role === "rainer") {
     return (
       <div className="flex h-full w-full items-center justify-center p-5">
         <div className="w-full max-w-lg rounded-lg border border-white/10 bg-white/[0.04] p-10 text-center">
@@ -309,13 +310,28 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
     );
   }
 
-  if (role === "demon" || role === "helper") {
+  if (role === "romaz") {
+    const meta = roleMeta("romaz");
+    const targets = players.filter((p) => p.alive && p.userId !== myPlayer.userId);
+    return (
+      <div className="flex flex-col h-full w-full max-w-4xl mx-auto p-5">
+        <div className="rounded-lg border border-amber-500/20 bg-amber-900/10 p-6 sm:p-10">
+          <h2 className="text-sm font-medium text-amber-500/70 tracking-widest uppercase">로마즈</h2>
+          <h1 className="mt-2 text-2xl font-semibold text-amber-100">용의자를 지목하세요</h1>
+          <p className="mt-2 text-sm text-amber-200/50">{meta?.night?.prompt}</p>
+          {renderTargets(targets, "romaz_suspect", meta?.night?.label ?? "용의자 색출")}
+        </div>
+      </div>
+    );
+  }
+
+  if (isDemonTeamRole(role)) {
     const targets = players.filter((p) => p.alive && p.faction !== "demon");
     
     return (
       <div className="flex h-full w-full max-w-6xl mx-auto p-5 gap-5">
         <div className="flex-1 rounded-lg border border-red-500/20 bg-red-900/10 p-6 sm:p-10">
-          <h2 className="text-sm font-medium text-red-500/70 tracking-widest uppercase">{role === "demon" ? "악마" : "조력자"}</h2>
+          <h2 className="text-sm font-medium text-red-500/70 tracking-widest uppercase">{roleLabel(role)}</h2>
           
           {role === "demon" ? (
             <>
@@ -325,7 +341,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
             </>
           ) : (
             <>
-              <h1 className="mt-2 text-2xl font-semibold text-red-100">당신은 조력자입니다</h1>
+              <h1 className="mt-2 text-2xl font-semibold text-red-100">당신은 {roleLabel(role)}입니다</h1>
               <p className="mt-2 text-sm text-red-200/50">우측 채팅을 통해 악마와 상의하세요. 직접 공격할 수는 없습니다.</p>
               <div className="mt-8 opacity-50 pointer-events-none">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
