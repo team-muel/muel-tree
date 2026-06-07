@@ -4,19 +4,21 @@ import { useState } from "react";
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
 import { submitAction } from "@/lib/game/api";
 import { Button } from "@/components/game/ui/Button";
+import { SpectatorFeed } from "@/components/game/ui/SpectatorFeed";
 
 type SuspicionPhaseProps = {
   match: MatchSummary;
   players: PlayerSummary[];
   myPlayer: PlayerSummary | null;
   gameJwt: string;
+  events?: Array<{ id: string; event_type: string; payload?: Record<string, unknown> }>;
 };
 
 /**
  * 밤 의심 투표 (canon §3). 최다 의심자는 다가오는 밤 능력을 쓸 수 없고 전원에게 공개된다.
  * 대상 없이 제출 = 기권(무투, canon §3). 동률/무표는 부결.
  */
-export function SuspicionPhase({ match, players, myPlayer, gameJwt }: SuspicionPhaseProps) {
+export function SuspicionPhase({ match, players, myPlayer, gameJwt, events }: SuspicionPhaseProps) {
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -45,6 +47,7 @@ export function SuspicionPhase({ match, players, myPlayer, gameJwt }: SuspicionP
           <h2 className="text-sm font-medium uppercase tracking-widest text-white/50">의심 투표</h2>
           <h1 className="mt-6 text-2xl font-semibold text-white">관전 모드</h1>
           <p className="mt-4 text-sm text-white/40">사망하여 의심 투표에 참여할 수 없습니다.</p>
+          <SpectatorFeed events={events} players={players} />
         </div>
       </div>
     );

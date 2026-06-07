@@ -5,15 +5,17 @@ import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
 import { submitAction } from "@/lib/game/api";
 import { getGameSupabase } from "@/lib/game/client";
 import { Button } from "@/components/game/ui/Button";
+import { SpectatorFeed } from "@/components/game/ui/SpectatorFeed";
 
 type VotePhaseProps = {
   match: MatchSummary;
   players: PlayerSummary[];
   myPlayer: PlayerSummary | null;
   gameJwt: string;
+  events?: Array<{ id: string; event_type: string; payload?: Record<string, unknown> }>;
 };
 
-export function VotePhase({ match, players, myPlayer, gameJwt }: VotePhaseProps) {
+export function VotePhase({ match, players, myPlayer, gameJwt, events }: VotePhaseProps) {
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -87,6 +89,7 @@ export function VotePhase({ match, players, myPlayer, gameJwt }: VotePhaseProps)
           <h2 className="text-sm font-medium text-white/50 tracking-widest uppercase">투표 시간</h2>
           <h1 className="mt-6 text-2xl font-semibold text-white">관전 모드</h1>
           <p className="mt-4 text-sm text-white/40">당신은 사망하여 투표권이 없습니다. 다른 사람들의 투표를 지켜보세요.</p>
+          <SpectatorFeed events={events} players={players} />
         </div>
       </div>
     );
