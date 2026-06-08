@@ -41,3 +41,26 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ ok: true, memo: data }, { status: 201 });
 }
+
+// 내가 남긴 메모 목록 — PDF 내보내기/조회용.
+export async function GET(req: NextRequest) {
+  if (!isAllowedOrigin(req)) {
+    return forbiddenOrigin();
+  }
+  const discordAuth = await requireDiscordUser(req);
+  if (!discordAuth.ok) {
+    return discordAuth.response;
+  }
+
+  const supabase = createServiceSupabaseClient();
+  const { data, error } = await supabase
+    .from("muel_user_memos")
+    .select("id, content, created_at")
+    .eq("discord_user_id", discordAuth.user.id)
+    .order("created_at", { ascending: false });
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ memos: data ?? [] });
+}
