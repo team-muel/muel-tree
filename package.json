@@ -17,6 +17,7 @@
     "@tosspayments/payment-sdk": "^1.9.2",
     "@types/three": "^0.184.0",
     "ai": "^6.0.191",
+    "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "next": "14.2.35",
     "react": "^18",
