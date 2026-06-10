@@ -4,7 +4,8 @@
 
 export type GomdoriRoleId =
   | "citizen" | "doctor" | "police" | "demon" | "helper"
-  | "rainer" | "romaz" | "gain";
+  | "rainer" | "romaz" | "gain"
+  | "pasua" | "converted";
 
 export interface GomdoriNightAction {
   actionType: string; // submitAction 으로 보낼 action_type
@@ -15,7 +16,7 @@ export interface GomdoriNightAction {
 
 export interface GomdoriRoleMeta {
   label: string; // 한글 직업명
-  faction: "angel" | "demon";
+  faction: "angel" | "demon" | "neutral";
   reveal: string; // RoleAssign 설명
   demonTeam?: boolean; // 악마 회로(동료 공개·악마 채팅) 포함
   night?: GomdoriNightAction; // 밤 능동 능력(없으면 패시브/취침)
@@ -88,6 +89,23 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     faction: "demon",
     reveal: "진실을 가리는 조력자. 악마를 살해·처형 1회로부터 보호합니다.",
     demonTeam: true,
+  },
+  // --- W6 v1 중립 ---
+  pasua: {
+    label: "파스아",
+    faction: "neutral",
+    reveal: "사이비 교주(중립). 매일 밤 한 명을 포교해 당신의 교세로 끌어들이세요. 3명을 전향시키면 당신만의 승리입니다.",
+    night: {
+      actionType: "pasua_convert",
+      label: "포교하기",
+      prompt: "포교할 대상을 고르세요. 천사와 조력자만 전향됩니다. (악마·중립 불가)",
+      excludeSelf: true,
+    },
+  },
+  converted: {
+    label: "전향자",
+    faction: "neutral",
+    reveal: "당신은 파스아의 교세에 전향되었습니다. 이제 파스아의 승리가 당신의 승리입니다.",
   },
 };
 

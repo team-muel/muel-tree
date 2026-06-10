@@ -279,7 +279,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
   };
 
   // Roles rendering
-  if (role === "citizen" || role === "rainer") {
+  if (role === "citizen" || role === "rainer" || role === "converted") {
     return (
       <div className="flex h-full w-full items-center justify-center p-5">
         <div className="w-full max-w-lg rounded-lg border border-white/10 bg-white/[0.04] p-10 text-center">
@@ -339,6 +339,21 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
           <h1 className="mt-2 text-2xl font-semibold text-amber-100">용의자를 지목하세요</h1>
           <p className="mt-2 text-sm text-amber-200/50">{meta?.night?.prompt}</p>
           {renderTargets(targets, "romaz_suspect", meta?.night?.label ?? "용의자 색출")}
+        </div>
+      </div>
+    );
+  }
+
+  if (role === "pasua") {
+    const meta = roleMeta("pasua");
+    const targets = players.filter((p) => p.alive && p.userId !== myPlayer.userId);
+    return (
+      <div className="flex flex-col h-full w-full max-w-4xl mx-auto p-5">
+        <div className="rounded-lg border border-violet-400/15 bg-violet-950/25 p-6 sm:p-10">
+          <h2 className="text-sm font-medium text-violet-300/70 tracking-widest uppercase">파스아</h2>
+          <h1 className="mt-2 text-2xl font-semibold text-violet-100">포교할 대상을 선택하세요</h1>
+          <p className="mt-2 text-sm text-violet-200/50">{meta?.night?.prompt}</p>
+          {renderTargets(targets, "pasua_convert", meta?.night?.label ?? "포교하기")}
         </div>
       </div>
     );

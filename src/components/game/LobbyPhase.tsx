@@ -300,11 +300,13 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: Lobby
         <details className="rounded-md border border-white/10 bg-black/20 p-3">
           <summary className="cursor-pointer text-xs uppercase tracking-widest text-white/35">직업 안내</summary>
           <ul className="mt-2 space-y-1.5 text-xs leading-5 text-white/55">
-            {Object.values(GOMDORI_ROLES).map((r) => (
-              <li key={r.label}>
-                <span className="text-white/80">{r.label}</span> — {r.reveal}
-              </li>
-            ))}
+            {Object.entries(GOMDORI_ROLES)
+              .filter(([id]) => id !== "converted") // 전향자는 런타임 상태 — 배정 직업 아님
+              .map(([id, r]) => (
+                <li key={id}>
+                  <span className="text-white/80">{r.label}</span> — {r.reveal}
+                </li>
+              ))}
           </ul>
         </details>
       </aside>
