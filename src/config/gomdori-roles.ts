@@ -125,14 +125,16 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
   luna: {
     label: "루나",
     faction: "demon",
-    reveal: "달의 사제. 악마를 도와 마을을 혼란에 빠뜨리세요.",
+    reveal: "달의 사제. 매일 밤 천사 하나를 악마팀으로 타락시킵니다.",
     demonTeam: true,
+    night: { actionType: "luna_corrupt", label: "공포 속에 밀어 넣다", prompt: "악마팀으로 타락시킬 천사를 고르세요.", excludeSelf: true },
   },
   logen: {
     label: "로건",
     faction: "demon",
-    reveal: "부서진 펜던트의 조력자. 악마와 접선해 마을을 흔드세요.",
+    reveal: "부서진 펜던트의 조력자. 매일 밤 한 명의 능력을 무력화합니다.",
     demonTeam: true,
+    night: { actionType: "logen_nullify", label: "네 안에 없는 것", prompt: "오늘 밤 능력을 무력화할 대상을 고르세요.", excludeSelf: true },
   },
   ellen: {
     label: "엘런",
