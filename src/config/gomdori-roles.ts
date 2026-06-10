@@ -19,6 +19,7 @@ export interface GomdoriNightAction {
   label: string; // 제출 버튼
   prompt: string; // 대상 선택 안내
   excludeSelf?: boolean; // 자신 제외 대상
+  kind?: "kill"; // 처치형(악마 처치/악몽/혼령 방출 등) — demon 블록 처치-UI 판정
 }
 
 export interface GomdoriRoleMeta {
@@ -67,6 +68,7 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
       label: "처치하기",
       prompt: "조력자와 상의하여 오늘 밤 처치할 대상을 고르세요.",
       excludeSelf: true,
+      kind: "kill",
     },
   },
   helper: {
@@ -104,22 +106,23 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     faction: "demon",
     reveal: "침묵의 밤의 악마. 악몽으로 빠뜨리고(아침에 탈락), 어둠으로 한 명의 능력을 봉인합니다.",
     demonTeam: true,
-    night: { actionType: "phantom_nightmare", label: "악몽", prompt: "악몽에 빠뜨릴 대상을 고르세요. 아침이 되면 탈락합니다(밤 보호로 막지 못함).", excludeSelf: true },
+    night: { actionType: "phantom_nightmare", label: "악몽", prompt: "악몽에 빠뜨릴 대상을 고르세요. 아침이 되면 탈락합니다(밤 보호로 막지 못함).", excludeSelf: true, kind: "kill" },
     night2: { actionType: "phantom_seal", label: "봉인하기", prompt: "어둠이 내린 도시 — 오늘 밤 능력을 봉인할 대상을 고르세요.", excludeSelf: true },
   },
   malen: {
     label: "말렌",
     faction: "demon",
-    reveal: "악령 마야의 강령술사. 오늘 밤 처치할 대상을 고르세요.",
+    reveal: "악령 마야의 강령술사. 혼령을 방출해 처치하고, 한 명에게 빙의해 묶습니다.",
     demonTeam: true,
-    night: { actionType: "demon_kill", label: "처치하기", prompt: "조력자와 상의하여 오늘 밤 처치할 대상을 고르세요.", excludeSelf: true },
+    night: { actionType: "malen_release", label: "혼령 방출", prompt: "혼령으로 처치할 대상을 고르세요.", excludeSelf: true, kind: "kill" },
+    night2: { actionType: "malen_possess", label: "빙의", prompt: "빙의할 대상을 고르세요. 그 밤 행동을 못 하고 악마팀으로 셈됩니다.", excludeSelf: true },
   },
   besto: {
     label: "베스토",
     faction: "demon",
     reveal: "히든 포지션의 악마. 오늘 밤 처치할 대상을 고르세요.",
     demonTeam: true,
-    night: { actionType: "demon_kill", label: "처치하기", prompt: "조력자와 상의하여 오늘 밤 처치할 대상을 고르세요.", excludeSelf: true },
+    night: { actionType: "demon_kill", label: "처치하기", prompt: "조력자와 상의하여 오늘 밤 처치할 대상을 고르세요.", excludeSelf: true, kind: "kill" },
   },
   // --- 기본 로스터: 조력자 풀 (악마 회로 패시브) ---
   luna: {

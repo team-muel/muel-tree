@@ -512,7 +512,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
         <div className="flex-1 rounded-lg border border-rose-400/15 bg-rose-950/25 p-6 sm:p-10">
           <h2 className="text-sm font-medium text-rose-300/70 tracking-widest uppercase">{roleLabel(role)}</h2>
           
-          {(roleMeta(role)?.night?.actionType === "demon_kill" || roleMeta(role)?.night?.actionType === "phantom_nightmare") ? (
+          {roleMeta(role)?.night?.kind === "kill" ? (
             <>
               <h1 className="mt-2 text-2xl font-semibold text-rose-100">공격할 대상을 선택하세요</h1>
               <p className="mt-2 text-sm text-rose-200/50">{roleMeta(role)?.night?.prompt ?? "조력자와 상의하여 오늘 밤 처치할 대상을 고르세요."}</p>
