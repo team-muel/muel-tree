@@ -139,8 +139,9 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
   ellen: {
     label: "엘런",
     faction: "demon",
-    reveal: "박해자. 악마를 도와 마을을 혼란에 빠뜨리세요.",
+    reveal: "박해자. 매일 밤 한 명에게 투표 무게를 실어 처형대로 몰아갑니다.",
     demonTeam: true,
+    night: { actionType: "ellen_persecute", label: "박해", prompt: "투표 무게를 실어 처형대로 몰 대상을 고르세요.", excludeSelf: true },
   },
   // --- 기본 로스터: 천사 풀 ---
   dordan: {
@@ -170,7 +171,8 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
   uno: {
     label: "우노",
     faction: "angel",
-    reveal: "명예의 군인. 살아있는 한 천사팀의 카운트를 더합니다. (밤 능동 능력 없음)",
+    reveal: "명예의 군인. 살아있는 한 천사팀 카운트를 더하고, 매일 밤 투쟁으로 한 명의 소속 카운트를 키웁니다.",
+    night: { actionType: "uno_struggle", label: "투쟁", prompt: "소속 카운트를 더해줄 대상을 고르세요.", excludeSelf: true },
   },
   arthur: {
     label: "아서",

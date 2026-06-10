@@ -336,7 +336,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
 
   // Roles rendering
   // 밤 능동 능력 없는 직업(취침): 시민/라이너/전향자 + 우노·아서·세이카·루루(패시브 천사).
-  const SLEEP_ROLES = ["citizen", "rainer", "converted", "uno", "arthur", "luru"];
+  const SLEEP_ROLES = ["citizen", "rainer", "converted", "arthur", "luru"];
   if (role && SLEEP_ROLES.includes(role)) {
     return (
       <div className="flex h-full w-full items-center justify-center p-5">
@@ -380,6 +380,22 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
           ) : (
             renderTargets(targets, meta?.night?.actionType ?? "mizlet_revive", meta?.night?.label ?? "되살리기")
           )}
+        </div>
+      </div>
+    );
+  }
+
+  // 투쟁(우노, v2) — 대상의 소속 카운트를 더한다.
+  if (role === "uno") {
+    const meta = roleMeta("uno");
+    const targets = players.filter((p) => p.alive && p.userId !== myPlayer.userId);
+    return (
+      <div className="flex flex-col h-full w-full max-w-4xl mx-auto p-5">
+        <div className="rounded-lg border border-amber-400/15 bg-amber-950/25 p-6 sm:p-10">
+          <h2 className="text-sm font-medium text-amber-300/70 tracking-widest uppercase">우노</h2>
+          <h1 className="mt-2 text-2xl font-semibold text-amber-100">투쟁할 대상을 선택하세요</h1>
+          <p className="mt-2 text-sm text-amber-200/50">{meta?.night?.prompt}</p>
+          {renderTargets(targets, "uno_struggle", meta?.night?.label ?? "투쟁")}
         </div>
       </div>
     );
