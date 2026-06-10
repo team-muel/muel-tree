@@ -20,9 +20,10 @@ type NightPhaseProps = {
 
 type ChatRow = { id: string; sender_user_id: string; message: string; created_at?: string; };
 
-// 보조 밤 능동(예: 팬텀 처치+봉인) — 메인 액션과 독립된 상태/제출. 자기 선택·확정만 관리.
+// 보조 밤 능동(예: 팬텀 봉인/일식, 베스토 변신) — 메인 액션과 독립된 상태/제출.
+// self=true 면 대상 그리드 없이 버튼만(자기 대상, target=null 제출).
 function SecondaryAbility({
-  matchId, gameJwt, targets, actionType, label, prompt,
+  matchId, gameJwt, targets, actionType, label, prompt, self = false,
 }: {
   matchId: string;
   gameJwt: string;
@@ -30,6 +31,7 @@ function SecondaryAbility({
   actionType: string;
   label: string;
   prompt: string;
+  self?: boolean;
 }) {
   const [sel, setSel] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -37,11 +39,11 @@ function SecondaryAbility({
   const [err, setErr] = useState<string | null>(null);
 
   const submit = async () => {
-    if (!sel) return;
+    if (!self && !sel) return;
     setBusy(true);
     setErr(null);
     try {
-      await submitAction(matchId, actionType, sel, gameJwt);
+      await submitAction(matchId, actionType, self ? null : sel, gameJwt);
       setDone(true);
     } catch {
       setErr("전송 실패. 다시 시도해줘.");
@@ -53,23 +55,25 @@ function SecondaryAbility({
     <div className="mt-8 border-t border-white/10 pt-6">
       <h3 className="text-sm font-semibold text-indigo-200/80">{label}</h3>
       <p className="mt-1 text-xs text-indigo-200/45">{prompt}</p>
-      <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {targets.map((p) => (
-          <button
-            key={p.userId}
-            type="button"
-            onClick={() => { if (!done) setSel(p.userId); }}
-            disabled={done}
-            className={`rounded-md border p-3 text-center text-sm transition-colors ${
-              sel === p.userId ? "border-indigo-400 bg-indigo-400/20 text-indigo-100" : "border-white/10 bg-black/20 text-white/70 hover:bg-white/5"
-            } ${done ? "opacity-50 cursor-not-allowed" : ""}`}
-          >
-            <span className="truncate">{p.displayName}</span>
-          </button>
-        ))}
-      </div>
+      {self ? null : (
+        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {targets.map((p) => (
+            <button
+              key={p.userId}
+              type="button"
+              onClick={() => { if (!done) setSel(p.userId); }}
+              disabled={done}
+              className={`rounded-md border p-3 text-center text-sm transition-colors ${
+                sel === p.userId ? "border-indigo-400 bg-indigo-400/20 text-indigo-100" : "border-white/10 bg-black/20 text-white/70 hover:bg-white/5"
+              } ${done ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              <span className="truncate">{p.displayName}</span>
+            </button>
+          ))}
+        </div>
+      )}
       {err ? <p role="alert" className="mt-3 text-sm text-rose-300">{err}</p> : null}
-      <Button variant="primary" onClick={submit} disabled={!sel || busy || done} className="mt-4 w-full max-w-xs">
+      <Button variant="primary" onClick={submit} disabled={(!self && !sel) || busy || done} className="mt-4 w-full max-w-xs">
         {done ? "완료" : busy ? "전송 중..." : label}
       </Button>
     </div>
@@ -517,16 +521,18 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
               <h1 className="mt-2 text-2xl font-semibold text-rose-100">공격할 대상을 선택하세요</h1>
               <p className="mt-2 text-sm text-rose-200/50">{roleMeta(role)?.night?.prompt ?? "조력자와 상의하여 오늘 밤 처치할 대상을 고르세요."}</p>
               {renderTargets(targets, roleMeta(role)!.night!.actionType, roleMeta(role)!.night!.label)}
-              {roleMeta(role)?.night2 ? (
+              {(roleMeta(role)?.extraNights ?? []).map((extra) => (
                 <SecondaryAbility
+                  key={extra.actionType}
                   matchId={match.id}
                   gameJwt={gameJwt}
                   targets={players.filter((p) => p.alive && p.userId !== myPlayer.userId)}
-                  actionType={roleMeta(role)!.night2!.actionType}
-                  label={roleMeta(role)!.night2!.label}
-                  prompt={roleMeta(role)!.night2!.prompt}
+                  actionType={extra.actionType}
+                  label={extra.label}
+                  prompt={extra.prompt}
+                  self={extra.self}
                 />
-              ) : null}
+              ))}
             </>
           ) : roleMeta(role)?.night ? (
             // 능동 조력자(루나 변환·로건 무력화) — 처치는 못 하지만 자기 능력을 쓴다.
