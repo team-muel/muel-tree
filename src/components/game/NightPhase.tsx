@@ -70,7 +70,7 @@ function SecondaryAbility({
       </div>
       {err ? <p role="alert" className="mt-3 text-sm text-rose-300">{err}</p> : null}
       <Button variant="primary" onClick={submit} disabled={!sel || busy || done} className="mt-4 w-full max-w-xs">
-        {done ? "봉인 완료" : busy ? "전송 중..." : label}
+        {done ? "완료" : busy ? "전송 중..." : label}
       </Button>
     </div>
   );
@@ -479,6 +479,20 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
                   prompt={roleMeta(role)!.night2!.prompt}
                 />
               ) : null}
+            </>
+          ) : roleMeta(role)?.night ? (
+            // 능동 조력자(루나 변환·로건 무력화) — 처치는 못 하지만 자기 능력을 쓴다.
+            <>
+              <h1 className="mt-2 text-2xl font-semibold text-rose-100">당신은 {roleLabel(role)}입니다</h1>
+              <p className="mt-2 text-sm text-rose-200/50">직접 공격할 수는 없지만, 당신의 능력을 사용하세요.</p>
+              <SecondaryAbility
+                matchId={match.id}
+                gameJwt={gameJwt}
+                targets={players.filter((p) => p.alive && p.userId !== myPlayer.userId)}
+                actionType={roleMeta(role)!.night!.actionType}
+                label={roleMeta(role)!.night!.label}
+                prompt={roleMeta(role)!.night!.prompt}
+              />
             </>
           ) : (
             <>
