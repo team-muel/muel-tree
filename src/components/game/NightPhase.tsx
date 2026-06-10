@@ -130,7 +130,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
       setSelectedTarget(actionData.target_user_id);
       setSubmitted(true);
 
-      if (role === "police" && actionData.result) {
+      if ((role === "police" || role === "dordan") && actionData.result) {
         const resultObj = actionData.result as { investigationResult?: string } | null;
         if (resultObj?.investigationResult) {
           setInvestigationResult(resultObj.investigationResult);
@@ -279,7 +279,9 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
   };
 
   // Roles rendering
-  if (role === "citizen" || role === "rainer") {
+  // 밤 능동 능력 없는 직업(취침): 시민/라이너/전향자 + 우노·아서·세이카·루루(패시브 천사).
+  const SLEEP_ROLES = ["citizen", "rainer", "converted", "uno", "arthur", "seika", "luru"];
+  if (role && SLEEP_ROLES.includes(role)) {
     return (
       <div className="flex h-full w-full items-center justify-center p-5">
         <div className="w-full max-w-lg rounded-lg border border-white/10 bg-white/[0.04] p-10 text-center">
@@ -291,26 +293,29 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
     );
   }
 
-  if (role === "doctor") {
+  // 치료 계열(의사 레거시 + 하브레터스/미즐렛/헬렌) — 같은 doctor_heal 액션.
+  if (role === "doctor" || role === "habreterus" || role === "mizlet" || role === "helen") {
+    const meta = roleMeta(role);
     const targets = players.filter((p) => p.alive);
     return (
       <div className="flex flex-col h-full w-full max-w-4xl mx-auto p-5">
         <div className="rounded-lg border border-emerald-400/15 bg-emerald-950/25 p-6 sm:p-10">
-          <h2 className="text-sm font-medium text-emerald-300/70 tracking-widest uppercase">의사</h2>
-          <h1 className="mt-2 text-2xl font-semibold text-emerald-100">치료할 대상을 선택하세요</h1>
-          <p className="mt-2 text-sm text-emerald-200/45">오늘 밤 마피아의 공격으로부터 보호할 사람을 고르세요. (자기 자신 포함)</p>
-          {renderTargets(targets, "doctor_heal", "치료하기")}
+          <h2 className="text-sm font-medium text-emerald-300/70 tracking-widest uppercase">{roleLabel(role)}</h2>
+          <h1 className="mt-2 text-2xl font-semibold text-emerald-100">보호할 대상을 선택하세요</h1>
+          <p className="mt-2 text-sm text-emerald-200/45">{meta?.night?.prompt ?? "오늘 밤 공격으로부터 보호할 사람을 고르세요. (자기 자신 포함)"}</p>
+          {renderTargets(targets, "doctor_heal", meta?.night?.label ?? "치료하기")}
         </div>
       </div>
     );
   }
 
-  if (role === "police") {
+  // 조사 계열(경찰 레거시 + 도르단 탐정) — 같은 police_investigate 액션.
+  if (role === "police" || role === "dordan") {
     const targets = players.filter((p) => p.alive && p.userId !== myPlayer.userId);
     return (
       <div className="flex flex-col h-full w-full max-w-4xl mx-auto p-5">
         <div className="rounded-lg border border-sky-400/15 bg-sky-950/25 p-6 sm:p-10">
-          <h2 className="text-sm font-medium text-sky-300/70 tracking-widest uppercase">경찰</h2>
+          <h2 className="text-sm font-medium text-sky-300/70 tracking-widest uppercase">{roleLabel(role)}</h2>
           <h1 className="mt-2 text-2xl font-semibold text-sky-100">조사할 대상을 선택하세요</h1>
           <p className="mt-2 text-sm text-sky-200/50">오늘 밤 정체를 알아볼 사람을 고르세요.</p>
           
@@ -344,6 +349,21 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
     );
   }
 
+  if (role === "pasua") {
+    const meta = roleMeta("pasua");
+    const targets = players.filter((p) => p.alive && p.userId !== myPlayer.userId);
+    return (
+      <div className="flex flex-col h-full w-full max-w-4xl mx-auto p-5">
+        <div className="rounded-lg border border-violet-400/15 bg-violet-950/25 p-6 sm:p-10">
+          <h2 className="text-sm font-medium text-violet-300/70 tracking-widest uppercase">파스아</h2>
+          <h1 className="mt-2 text-2xl font-semibold text-violet-100">포교할 대상을 선택하세요</h1>
+          <p className="mt-2 text-sm text-violet-200/50">{meta?.night?.prompt}</p>
+          {renderTargets(targets, "pasua_convert", meta?.night?.label ?? "포교하기")}
+        </div>
+      </div>
+    );
+  }
+
   if (isDemonTeamRole(role)) {
     const targets = players.filter((p) => p.alive && p.faction !== "demon");
     
@@ -352,7 +372,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
         <div className="flex-1 rounded-lg border border-rose-400/15 bg-rose-950/25 p-6 sm:p-10">
           <h2 className="text-sm font-medium text-rose-300/70 tracking-widest uppercase">{roleLabel(role)}</h2>
           
-          {role === "demon" ? (
+          {roleMeta(role)?.night?.actionType === "demon_kill" ? (
             <>
               <h1 className="mt-2 text-2xl font-semibold text-rose-100">공격할 대상을 선택하세요</h1>
               <p className="mt-2 text-sm text-rose-200/50">조력자와 상의하여 오늘 밤 처치할 대상을 고르세요.</p>

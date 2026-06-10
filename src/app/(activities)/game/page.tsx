@@ -321,7 +321,7 @@ function GameShell({ session }: { session: ActivitySession }) {
   if (match.status === "role_assign") {
     return (
       <GameFrame status="role_assign" phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.roleAssign.label}>
-        <RoleAssignPhase players={players} myPlayer={myPlayer} events={events} />
+        <RoleAssignPhase players={players} myPlayer={myPlayer} events={events} matchId={match.id} gameJwt={gameJwt} />
       </GameFrame>
     );
   }
