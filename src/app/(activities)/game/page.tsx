@@ -25,6 +25,7 @@ import { ResultPhase } from "@/components/game/ResultPhase";
 import { StatusDock } from "@/components/game/ui/StatusDock";
 import { NightSky } from "@/components/game/ui/NightSky";
 import { PhaseSweep } from "@/components/game/ui/PhaseSweep";
+import { IllustrationScene } from "@/components/game/ui/IllustrationScene";
 import { SuspicionPhase } from "@/components/game/SuspicionPhase";
 import { StatusBlock } from "@/components/game/ui/StatusBlock";
 
@@ -452,10 +453,25 @@ function LandingScreen({
     .map((p) => p.nickname || p.global_name || p.username)
     .filter((n): n is string => Boolean(n));
   return (
-    <div className="w-full max-w-lg rounded-lg border border-white/10 bg-white/[0.04] p-8 text-center">
-      <div className="text-sm text-white/35">Gomdori Mafia</div>
-      <h1 className="mt-3 text-2xl font-semibold text-white">천사와 악마의 추리</h1>
-      <p className="mt-3 text-sm leading-6 text-white/50">
+    <div className="w-full max-w-lg overflow-hidden rounded-lg border border-white/10 bg-white/[0.04] text-center">
+      {/* 키 아트 — 진입의 타이틀 모멘트. 일러스트가 어둠으로 침잠하며 카드와 만난다. */}
+      <div className="relative h-44 sm:h-52">
+        <IllustrationScene
+          id="night-muse"
+          priority
+          drift
+          className="absolute inset-0"
+          sizes="(max-width: 640px) 100vw, 512px"
+        />
+        <div className="absolute inset-x-0 bottom-0 pb-3">
+          <div className="text-sm text-white/45">Gomdori Mafia</div>
+          <h1 className="mt-1 text-2xl font-semibold text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
+            천사와 악마의 추리
+          </h1>
+        </div>
+      </div>
+      <div className="p-8 pt-4">
+      <p className="mt-0 text-sm leading-6 text-white/50">
         이 음성 채널에서 함께 플레이합니다. 방을 만들거나 이미 열린 방에 참가하세요.
       </p>
       {names.length > 0 ? (
@@ -480,6 +496,7 @@ function LandingScreen({
         >
           {joinable ? "참가하기" : existing != null ? "진행 중인 게임 참가" : "열린 게임 없음"}
         </button>
+      </div>
       </div>
     </div>
   );

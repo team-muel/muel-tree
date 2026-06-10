@@ -25,14 +25,8 @@
  *
  * 첫 후보 에셋(핑크 헤어 다크 페인터리, 마젠타/바이올렛 액센트 — 밤 무드와 동족)은
  * 파일 드롭 후 아래 주석을 해제해 등록한다:
- *
- *   "night-muse": {
- *     src: "/illust/night-muse.png",
- *     alt: "어둠 속에 누운 분홍 머리 인물 — 마젠타 파편이 흩어지는 페인터리 일러스트",
- *     focal: { x: 0.42, y: 0.28 },
- *     tone: "night",
- *     edge: "fade-b",
- *   },
+ * 첫 에셋 "night-muse" 등록됨 (2026-06-11, 1672x941 webp 219KB, 원본 보관 =
+ * Creations Vault/muel-illust). 추가 에셋도 같은 절차.
  */
 
 export type IllustrationTone = "night" | "ember" | "dawn" | "veil";
@@ -50,7 +44,15 @@ export interface IllustrationMeta {
 }
 
 export const ILLUSTRATIONS: Record<string, IllustrationMeta> = {
-  // 에셋 드롭 전까지 비어 있다 — 등록 절차는 상단 doc 참조.
+  // 다크 페인터리 — 어둠 속에 누운 분홍 머리 인물, 마젠타/바이올렛 파편.
+  // 얼굴이 좌상단(0.38, 0.24)이라 와이드 크롭에서도 시선이 산다. 밤 무드 동족.
+  "night-muse": {
+    src: "/illust/night-muse.webp",
+    alt: "어둠 속에 누운 분홍 머리 인물 — 마젠타 파편이 흩어지는 페인터리 일러스트",
+    focal: { x: 0.38, y: 0.24 },
+    tone: "night",
+    edge: "fade-b",
+  },
 };
 
 export function illustrationById(id: string): IllustrationMeta | null {
