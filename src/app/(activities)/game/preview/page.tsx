@@ -30,6 +30,7 @@ import { VerdictPhase } from "@/components/game/VerdictPhase";
 import { ResultPhase } from "@/components/game/ResultPhase";
 import { GOMDORI_RULES } from "@/config/gomdori-rules";
 import { PHASE_TONES } from "@/config/design-tokens";
+import { StatusDock } from "@/components/game/ui/StatusDock";
 import {
   MOCK_SESSION,
   MOCK_MATCH,
@@ -163,11 +164,19 @@ function PreviewSection({
         </div>
       </div>
       <div
-        className={`pointer-events-none h-[560px] overflow-auto ${tone?.bg ?? "bg-[#070712]"} ${
+        className={`pointer-events-none relative flex h-[560px] flex-col overflow-auto ${tone?.bg ?? "bg-[#070712]"} ${
           tone?.mood === "light" ? "text-[#2b2118]" : "text-white"
         }`}
       >
-        {children}
+        <div className="flex-1">{children}</div>
+        <StatusDock
+          status={toneKey}
+          dayNumber={toneKey === "lobby" || toneKey === "role_assign" ? undefined : 2}
+          phaseEndsAt={null}
+          myRole={toneKey === "lobby" || toneKey === "role_assign" ? undefined : "romaz"}
+          myFaction="angel"
+          inline
+        />
       </div>
     </section>
   );

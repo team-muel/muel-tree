@@ -1,14 +1,26 @@
 "use client";
 
+/**
+ * NightPhase — 밤도 무대다 (무대화, 2026-06-11).
+ *
+ * 능력 지정 = 무대(GameStage) 위 인물 직접 지목 + 창(ActionModal)에서 확정.
+ * 다중 능력(팬텀 봉인·일식, 말렌 빙의, 베스토 변신)은 창 안의 능력 칩으로 전환 —
+ * 각 능력은 독립 제출(기존 SecondaryAbility 의미 보존). 악마 채팅은 BottomSheet
+ * (데스크톱 사이드 / 모바일 하단 시트). 서버 로직·복원·조사 결과 처리 동일.
+ */
+
 import { useState, useEffect, useRef } from "react";
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
 import { submitAction, sendChat } from "@/lib/game/api";
 import { getGameSupabase } from "@/lib/game/client";
 import { GOMDORI_RULES } from "@/config/gomdori-rules";
-import { PHASE_TONES, SURFACE } from "@/config/design-tokens";
+import { GLOW } from "@/config/design-tokens";
 import { roleLabel, roleMeta, isDemonTeamRole } from "@/config/gomdori-roles";
 import { SpectatorFeed } from "@/components/game/ui/SpectatorFeed";
 import { Button } from "@/components/game/ui/Button";
+import { GameStage } from "@/components/game/ui/GameStage";
+import { ActionModal } from "@/components/game/ui/ActionModal";
+import { BottomSheet } from "@/components/game/ui/BottomSheet";
 
 type NightPhaseProps = {
   match: MatchSummary;
@@ -18,66 +30,91 @@ type NightPhaseProps = {
   events?: Array<{ id: string; event_type: string; created_at: string; payload?: Record<string, unknown> }>;
 };
 
-type ChatRow = { id: string; sender_user_id: string; message: string; created_at?: string; };
+type ChatRow = { id: string; sender_user_id: string; message: string; created_at?: string };
 
-// 보조 밤 능동(예: 팬텀 봉인/일식, 베스토 변신) — 메인 액션과 독립된 상태/제출.
-// self=true 면 대상 그리드 없이 버튼만(자기 대상, target=null 제출).
-function SecondaryAbility({
-  matchId, gameJwt, targets, actionType, label, prompt, self = false,
-}: {
-  matchId: string;
-  gameJwt: string;
-  targets: PlayerSummary[];
+type NightAbility = {
   actionType: string;
   label: string;
   prompt: string;
+  /** 자기 대상(변신/일식) — 대상 지목 없이 버튼만, target=null 제출. */
   self?: boolean;
-}) {
-  const [sel, setSel] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
+  /** 두 단계 확정(메인 능력 — 제출 비가역 경고). */
+  confirm?: boolean;
+  /** 무대에서 지목 가능한 대상 조건. */
+  eligible: (p: PlayerSummary) => boolean;
+  emptyNote?: string;
+};
 
-  const submit = async () => {
-    if (!self && !sel) return;
-    setBusy(true);
-    setErr(null);
-    try {
-      await submitAction(matchId, actionType, self ? null : sel, gameJwt);
-      setDone(true);
-    } catch {
-      setErr("전송 실패. 다시 시도해줘.");
-      setBusy(false);
-    }
-  };
+/** 직업 → 밤 능력 목록 (manifest 기반, 의미는 기존 NightPhase 분기와 동일). */
+function buildAbilities(role: string | null | undefined, myUserId: string | null | undefined): NightAbility[] {
+  if (!role) return [];
+  const meta = roleMeta(role);
+  const aliveNotMe = (p: PlayerSummary) => p.alive && p.userId !== myUserId;
 
-  return (
-    <div className="mt-8 border-t border-white/10 pt-6">
-      <h3 className="text-sm font-semibold text-indigo-200/80">{label}</h3>
-      <p className="mt-1 text-xs text-indigo-200/45">{prompt}</p>
-      {self ? null : (
-        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {targets.map((p) => (
-            <button
-              key={p.userId}
-              type="button"
-              onClick={() => { if (!done) setSel(p.userId); }}
-              disabled={done}
-              className={`rounded-md border p-3 text-center text-sm transition-colors ${
-                sel === p.userId ? "border-indigo-400 bg-indigo-400/20 text-indigo-100" : "border-white/10 bg-black/20 text-white/70 hover:bg-white/5"
-              } ${done ? "opacity-50 cursor-not-allowed" : ""}`}
-            >
-              <span className="truncate">{p.displayName}</span>
-            </button>
-          ))}
-        </div>
-      )}
-      {err ? <p role="alert" className="mt-3 text-sm text-rose-300">{err}</p> : null}
-      <Button variant="primary" onClick={submit} disabled={(!self && !sel) || busy || done} className="mt-4 w-full max-w-xs">
-        {done ? "완료" : busy ? "전송 중..." : label}
-      </Button>
-    </div>
-  );
+  // 치료 계열 — 자기 자신 포함 보호.
+  if (role === "doctor" || role === "habreterus") {
+    return [{
+      actionType: "doctor_heal",
+      label: meta?.night?.label ?? "치료하기",
+      prompt: meta?.night?.prompt ?? "오늘 밤 공격으로부터 보호할 사람을 고르세요. (자기 자신 포함)",
+      confirm: true,
+      eligible: (p) => p.alive,
+    }];
+  }
+
+  // 부활 계열 — 탈락자만 지목.
+  if (role === "mizlet" || role === "helen") {
+    return [{
+      actionType: meta?.night?.actionType ?? `${role}_revive`,
+      label: meta?.night?.label ?? "되살리기",
+      prompt: meta?.night?.prompt ?? "되살릴 탈락자를 고르세요.",
+      confirm: true,
+      eligible: (p) => !p.alive,
+      emptyNote: "아직 되살릴 탈락자가 없습니다.",
+    }];
+  }
+
+  // 악마 처치자 — 메인 처치 + 보조 능력(봉인/일식/빙의/변신).
+  if (isDemonTeamRole(role) && meta?.night?.kind === "kill") {
+    const main: NightAbility = {
+      actionType: meta.night.actionType,
+      label: meta.night.label,
+      prompt: meta.night.prompt,
+      confirm: true,
+      eligible: (p) => p.alive && p.faction !== "demon",
+    };
+    const extras: NightAbility[] = (meta.extraNights ?? []).map((extra) => ({
+      actionType: extra.actionType,
+      label: extra.label,
+      prompt: extra.prompt,
+      self: extra.self,
+      eligible: aliveNotMe,
+    }));
+    return [main, ...extras];
+  }
+
+  // 능동 조력자(루나/로건/엘런) — 처치 없음, 직접 제출(기존 SecondaryAbility 의미).
+  if (isDemonTeamRole(role) && meta?.night) {
+    return [{
+      actionType: meta.night.actionType,
+      label: meta.night.label,
+      prompt: meta.night.prompt,
+      eligible: aliveNotMe,
+    }];
+  }
+
+  // 일반 밤 능동(조사/용의자/잔불/투쟁/초신성/매료/포교 등) — manifest 단일 능력.
+  if (meta?.night) {
+    return [{
+      actionType: meta.night.actionType,
+      label: meta.night.label,
+      prompt: meta.night.prompt,
+      confirm: true,
+      eligible: aliveNotMe,
+    }];
+  }
+
+  return [];
 }
 
 export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightPhaseProps) {
@@ -88,20 +125,27 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
     ? players.find((p) => p.userId === suspectedUserId)?.displayName ?? null
     : null;
   const iAmSuspected = !!suspectedUserId && suspectedUserId === myPlayer?.userId;
-  const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
+
+  const role = myPlayer?.role;
+  const abilities = buildAbilities(role, myPlayer?.userId);
+  const mainType = abilities[0]?.actionType ?? null;
+
+  const [activeType, setActiveType] = useState<string | null>(null);
+  const currentType = activeType ?? mainType;
+  const current = abilities.find((a) => a.actionType === currentType) ?? null;
+
+  const [selectedMap, setSelectedMap] = useState<Record<string, string | null>>({});
+  const [doneMap, setDoneMap] = useState<Record<string, boolean>>({});
+  const [confirming, setConfirming] = useState(false);
   const [isFirstNight, setIsFirstNight] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [investigationResult, setInvestigationResult] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [confirming, setConfirming] = useState(false);
 
   const [chatMessage, setChatMessage] = useState("");
   const [chats, setChats] = useState<ChatRow[]>([]);
   const [chatError, setChatError] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
-
-  const role = myPlayer?.role;
 
   useEffect(() => {
     if (!match.id || !gameJwt) return;
@@ -187,8 +231,13 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
 
       if (cancelled || actionError || !actionData) return;
 
-      setSelectedTarget(actionData.target_user_id);
-      setSubmitted(true);
+      const restoredType =
+        typeof actionData.action_type === "string" ? actionData.action_type : null;
+      const key = restoredType ?? buildAbilities(role, myPlayer?.userId)[0]?.actionType;
+      if (key) {
+        setSelectedMap((m) => ({ ...m, [key]: actionData.target_user_id }));
+        setDoneMap((m) => ({ ...m, [key]: true }));
+      }
 
       if ((role === "police" || role === "dordan") && actionData.result) {
         const resultObj = actionData.result as { investigationResult?: string } | null;
@@ -211,7 +260,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
 
   const handleSendChat = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!chatMessage.trim() || isSubmitting) return;
+    if (!chatMessage.trim()) return;
     const msg = chatMessage;
     setChatMessage("");
     setChatError(null);
@@ -223,395 +272,283 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
     }
   };
 
-  if (isFirstNight) {
-    return (
-      <div className={`flex h-full w-full items-center justify-center p-5 ${PHASE_TONES.night.bg}`}>
-        <div className={SURFACE.statusBlock}>
-          <h2 className={`text-sm font-medium tracking-widest uppercase ${PHASE_TONES.night.accent}`}>밤</h2>
-          <h1 className="mt-6 text-2xl font-semibold text-white">{GOMDORI_RULES.firstNight.silentMessage}</h1>
-          <p className="mt-4 text-sm text-white/40">첫 밤에는 능력을 사용할 수 없습니다. 아침을 기다리세요.</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!myPlayer || !myPlayer.alive) {
-    return (
-      <div className="flex h-full w-full items-center justify-center p-5">
-        <div className="w-full max-w-lg rounded-lg border border-white/10 bg-white/[0.04] p-10 text-center">
-          <h2 className="text-sm font-medium text-white/50 tracking-widest uppercase">밤</h2>
-          <h1 className="mt-6 text-2xl font-semibold text-white">관전 모드</h1>
-          <p className="mt-4 text-sm text-white/40">당신은 사망했습니다. 다른 플레이어들의 행동을 지켜보세요.</p>
-          <SpectatorFeed events={events} players={players} />
-        </div>
-      </div>
-    );
-  }
-
-  if (iAmSuspected) {
-    return (
-      <div className="flex h-full w-full items-center justify-center p-5">
-        <div className="w-full max-w-lg rounded-lg border border-rose-400/15 bg-rose-950/25 p-10 text-center">
-          <h2 className="text-sm font-medium uppercase tracking-widest text-rose-300/70">밤</h2>
-          <h1 className="mt-6 text-2xl font-semibold text-rose-100">가장 의심받았습니다</h1>
-          <p className="mt-4 text-sm text-white/50">이번 밤에는 능력을 사용할 수 없습니다. 아침을 기다리세요.</p>
-        </div>
-      </div>
-    );
-  }
-
-  const handleAction = async (actionType: string) => {
-    if (!selectedTarget) return;
-    setIsSubmitting(true);
+  const handleSubmit = async (ability: NightAbility, target: string | null) => {
+    setBusy(true);
     setActionError(null);
     try {
-      const res = await submitAction(match.id, actionType, selectedTarget, gameJwt);
-      setSubmitted(true);
+      const res = await submitAction(match.id, ability.actionType, target, gameJwt);
+      setDoneMap((m) => ({ ...m, [ability.actionType]: true }));
+      setConfirming(false);
       if (res.investigationResult) {
         setInvestigationResult(res.investigationResult);
       }
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "행동 실패");
     } finally {
-      setIsSubmitting(false);
+      setBusy(false);
     }
   };
 
-  const renderTargets = (
-    targets: PlayerSummary[],
-    actionType: string,
-    buttonText: string
-  ) => {
-    return (
-      <div className="mt-8">
-        {suspectedName ? (
-          <div className="mb-4 rounded-md border border-amber-400/15 bg-amber-950/25 px-4 py-2 text-sm text-amber-200/80">
-            의심 지목: <span className="font-semibold">{suspectedName}</span> — 이번 밤 능력 불가
+  const demonChat = role && isDemonTeamRole(role) && myPlayer?.alive;
+
+  const chatPanel = (
+    <div className="flex h-72 flex-col">
+      <div className="flex-1 space-y-3 overflow-y-auto pr-1">
+        {chats.length === 0 ? (
+          <div className="flex h-full items-center justify-center text-sm text-white/20">
+            대화를 시작하세요
           </div>
+        ) : (
+          chats.map((chat) => {
+            const isMe = chat.sender_user_id === myPlayer?.userId;
+            const sender = players.find((p) => p.userId === chat.sender_user_id)?.displayName || "알 수 없음";
+            return (
+              <div key={chat.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+                {!isMe && <div className="mb-1 pl-1 text-[10px] text-white/40">{sender}</div>}
+                <div
+                  className={`max-w-[85%] break-words rounded-lg px-3 py-2 text-sm ${
+                    isMe ? "rounded-tr-sm bg-rose-500/20 text-rose-100" : "rounded-tl-sm bg-white/10 text-white"
+                  }`}
+                >
+                  {chat.message}
+                </div>
+              </div>
+            );
+          })
+        )}
+        <div ref={chatEndRef} />
+      </div>
+      <div className="border-t border-white/5 pt-3">
+        {chatError ? (
+          <p role="alert" className="mb-2 text-xs text-rose-300">{chatError}</p>
         ) : null}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {targets.map((p) => (
+        <form onSubmit={handleSendChat} className="flex gap-2">
+          <input
+            type="text"
+            value={chatMessage}
+            onChange={(e) => setChatMessage(e.target.value)}
+            placeholder="메시지 입력..."
+            aria-label="악마 팀 채팅 메시지"
+            className="min-w-0 flex-1 rounded border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-rose-500/50 focus:outline-none"
+          />
+          <button
+            type="submit"
+            disabled={!chatMessage.trim()}
+            className="whitespace-nowrap rounded bg-rose-500/20 px-3 text-sm font-medium text-rose-300 disabled:opacity-50"
+          >
+            전송
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+
+  const shell = (modal: React.ReactNode, opts?: { selectable?: boolean }) => (
+    <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center p-5 pb-24">
+      <GameStage
+        players={players}
+        myUserId={myPlayer?.userId}
+        mood="dark"
+        selectable={opts?.selectable ?? false}
+        canSelect={opts?.selectable && current ? current.eligible : undefined}
+        selectedId={currentType ? selectedMap[currentType] ?? null : null}
+        selectedGlow={GLOW.selectNight}
+        disabled={busy || (currentType ? doneMap[currentType] : false)}
+        onSelect={(id) => {
+          if (!currentType) return;
+          if (doneMap[currentType]) return;
+          setSelectedMap((m) => ({ ...m, [currentType]: id }));
+          setConfirming(false);
+        }}
+      />
+      {modal}
+      {demonChat ? <BottomSheet title="악마의 속삭임">{chatPanel}</BottomSheet> : null}
+    </div>
+  );
+
+  // --- 특수 상태들 (무대는 유지, 창만 바뀐다) ---
+
+  if (isFirstNight) {
+    return shell(
+      <ActionModal eyebrow="밤" title={GOMDORI_RULES.firstNight.silentMessage} mood="dark">
+        <p className="mt-2 text-sm text-white/40">첫 밤에는 능력을 사용할 수 없습니다. 아침을 기다리세요.</p>
+      </ActionModal>,
+    );
+  }
+
+  if (!myPlayer || !myPlayer.alive) {
+    return (
+      <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center p-5 pb-24">
+        <GameStage players={players} myUserId={myPlayer?.userId} mood="dark" />
+        <BottomSheet title="관전 피드">
+          <p className="text-sm text-white/55">당신은 사망했습니다. 다른 플레이어들의 행동을 지켜보세요.</p>
+          <SpectatorFeed events={events} players={players} />
+        </BottomSheet>
+      </div>
+    );
+  }
+
+  if (iAmSuspected) {
+    return shell(
+      <ActionModal eyebrow="밤" title="가장 의심받았습니다" mood="dark">
+        <p className="mt-2 text-sm text-white/50">이번 밤에는 능력을 사용할 수 없습니다. 아침을 기다리세요.</p>
+      </ActionModal>,
+    );
+  }
+
+  const SLEEP_ROLES = ["citizen", "rainer", "converted"];
+  if (role && SLEEP_ROLES.includes(role)) {
+    return shell(
+      <ActionModal eyebrow="밤이 되었습니다" title="당신은 잠들었습니다." mood="dark">
+        <p className="mt-2 text-sm text-white/40">아침이 밝을 때까지 기다려주세요.</p>
+      </ActionModal>,
+    );
+  }
+
+  // --- 채팅 전용 조력자 (가인 등 — 밤 능동 없음) ---
+  if (abilities.length === 0) {
+    if (demonChat) {
+      return shell(
+        <ActionModal eyebrow={roleLabel(role)} title={`당신은 ${roleLabel(role)}입니다`} mood="dark" raised>
+          <p className="mt-2 text-sm text-rose-200/60">
+            직접 공격할 수는 없습니다. 채팅으로 악마와 상의하세요.
+          </p>
+        </ActionModal>,
+      );
+    }
+    return shell(
+      <ActionModal eyebrow="밤" title="조용한 밤입니다" mood="dark">
+        <p className="mt-2 text-sm text-white/40">아침이 밝을 때까지 기다려주세요.</p>
+      </ActionModal>,
+    );
+  }
+
+  // --- 능력 행동 (무대 지목 + 창 확정) ---
+
+  const sel = currentType ? selectedMap[currentType] ?? null : null;
+  const done = currentType ? Boolean(doneMap[currentType]) : false;
+  const selName = sel ? players.find((p) => p.userId === sel)?.displayName ?? null : null;
+  const eligibleCount = current ? players.filter(current.eligible).length : 0;
+  const showInvestigation = (role === "police" || role === "dordan") && investigationResult;
+
+  const modalTitle = showInvestigation
+    ? "조사 결과"
+    : done
+      ? "결정 완료"
+      : current?.self
+        ? current.label
+        : selName
+          ? `${selName} — ${current?.label}`
+          : current?.prompt ?? "";
+
+  const footer = showInvestigation ? null : current ? (
+    current.self ? (
+      <Button
+        variant="primary"
+        onClick={() => handleSubmit(current, null)}
+        disabled={busy || done}
+        className="w-full"
+      >
+        {done ? "완료" : busy ? "전송 중..." : current.label}
+      </Button>
+    ) : current.confirm ? (
+      confirming && sel && !done ? (
+        <div className="flex gap-2">
+          <Button variant="primary" onClick={() => handleSubmit(current, sel)} disabled={busy} className="flex-1">
+            {busy ? "전송 중..." : "확정"}
+          </Button>
+          <Button variant="ghost" onClick={() => setConfirming(false)} disabled={busy} className="flex-1">
+            취소
+          </Button>
+        </div>
+      ) : (
+        <Button
+          variant="primary"
+          onClick={() => setConfirming(true)}
+          disabled={!sel || busy || done || eligibleCount === 0}
+          className="w-full"
+        >
+          {done ? "결정 완료" : current.label}
+        </Button>
+      )
+    ) : (
+      <Button
+        variant="primary"
+        onClick={() => handleSubmit(current, sel)}
+        disabled={!sel || busy || done}
+        className="w-full"
+      >
+        {done ? "완료" : busy ? "전송 중..." : current.label}
+      </Button>
+    )
+  ) : null;
+
+  return shell(
+    <ActionModal eyebrow={roleLabel(role)} title={modalTitle} mood="dark" raised={Boolean(demonChat)} footer={footer}>
+      {abilities.length > 1 ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {abilities.map((a) => (
             <button
-              key={p.userId}
-              onClick={() => { if (!submitted) { setSelectedTarget(p.userId); setConfirming(false); } }}
-              disabled={submitted}
-              className={`rounded-md border p-4 text-center transition-colors ${
-                selectedTarget === p.userId
-                  ? "border-emerald-400 bg-emerald-400/20 text-emerald-100"
-                  : "border-white/10 bg-black/20 text-white/70 hover:bg-white/5 hover:text-white"
-              } ${submitted ? "opacity-50 cursor-not-allowed" : ""}`}
+              key={a.actionType}
+              type="button"
+              onClick={() => {
+                setActiveType(a.actionType);
+                setConfirming(false);
+                setActionError(null);
+              }}
+              className={`rounded-full border px-3 py-1 text-xs transition ${
+                a.actionType === currentType
+                  ? "border-rose-400/50 bg-rose-400/15 text-rose-100"
+                  : "border-white/15 bg-white/[0.04] text-white/60 hover:bg-white/[0.08]"
+              }`}
             >
-              <div className="truncate text-sm font-medium">{p.displayName}</div>
+              {a.label}
+              {doneMap[a.actionType] ? " ✓" : ""}
             </button>
           ))}
         </div>
-        <div className="mt-8 flex flex-col items-center gap-3">
-          {confirming && selectedTarget && !submitted ? (
-            <div className="w-full max-w-xs rounded-md border border-amber-400/20 bg-amber-950/25 p-3 text-center">
-              <p className="text-sm text-amber-100">
-                <span className="font-semibold">{players.find((p) => p.userId === selectedTarget)?.displayName}</span> — 제출하면 되돌릴 수 없어요.
-              </p>
-              <div className="mt-3 flex gap-2">
-                <Button variant="primary" onClick={() => handleAction(actionType)} disabled={isSubmitting} className="flex-1">
-                  {isSubmitting ? "전송 중..." : "확정"}
-                </Button>
-                <Button variant="ghost" onClick={() => setConfirming(false)} disabled={isSubmitting} className="flex-1">
-                  취소
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <Button
-              variant="primary"
-              onClick={() => setConfirming(true)}
-              disabled={!selectedTarget || isSubmitting || submitted}
-              className="w-full max-w-xs"
-            >
-              {submitted ? "결정 완료" : buttonText}
-            </Button>
-          )}
-        </div>
-        {actionError ? (
-          <p role="alert" className="mt-4 text-center text-sm text-rose-300">{actionError}</p>
-        ) : null}
-      </div>
-    );
-  };
+      ) : null}
 
-  // Roles rendering
-  // 밤 능동 능력 없는 직업(취침): 시민/라이너/전향자 + 우노·아서·세이카·루루(패시브 천사).
-  const SLEEP_ROLES = ["citizen", "rainer", "converted"];
-  if (role && SLEEP_ROLES.includes(role)) {
-    return (
-      <div className="flex h-full w-full items-center justify-center p-5">
-        <div className="w-full max-w-lg rounded-lg border border-white/10 bg-white/[0.04] p-10 text-center">
-          <h2 className="text-sm font-medium text-white/50 tracking-widest uppercase">밤이 되었습니다</h2>
-          <h1 className="mt-6 text-2xl font-semibold text-white">당신은 잠들었습니다.</h1>
-          <p className="mt-4 text-sm text-white/40">아침이 밝을 때까지 기다려주세요.</p>
-        </div>
-      </div>
-    );
-  }
-
-  // 치료 계열(의사 레거시 + 하브레터스) — 생존자 보호(doctor_heal).
-  if (role === "doctor" || role === "habreterus") {
-    const meta = roleMeta(role);
-    const targets = players.filter((p) => p.alive);
-    return (
-      <div className="flex flex-col h-full w-full max-w-4xl mx-auto p-5">
-        <div className="rounded-lg border border-emerald-400/15 bg-emerald-950/25 p-6 sm:p-10">
-          <h2 className="text-sm font-medium text-emerald-300/70 tracking-widest uppercase">{roleLabel(role)}</h2>
-          <h1 className="mt-2 text-2xl font-semibold text-emerald-100">보호할 대상을 선택하세요</h1>
-          <p className="mt-2 text-sm text-emerald-200/45">{meta?.night?.prompt ?? "오늘 밤 공격으로부터 보호할 사람을 고르세요. (자기 자신 포함)"}</p>
-          {renderTargets(targets, "doctor_heal", meta?.night?.label ?? "치료하기")}
-        </div>
-      </div>
-    );
-  }
-
-  // 부활(미즐렛/헬렌, v2) — 탈락한 대상을 되살린다.
-  if (role === "mizlet" || role === "helen") {
-    const meta = roleMeta(role);
-    const targets = players.filter((p) => !p.alive);
-    return (
-      <div className="flex flex-col h-full w-full max-w-4xl mx-auto p-5">
-        <div className="rounded-lg border border-emerald-400/15 bg-emerald-950/25 p-6 sm:p-10">
-          <h2 className="text-sm font-medium text-emerald-300/70 tracking-widest uppercase">{roleLabel(role)}</h2>
-          <h1 className="mt-2 text-2xl font-semibold text-emerald-100">되살릴 대상을 선택하세요</h1>
-          <p className="mt-2 text-sm text-emerald-200/45">{meta?.night?.prompt ?? "되살릴 탈락자를 고르세요."}</p>
-          {targets.length === 0 ? (
-            <p className="mt-6 text-sm text-white/40">아직 되살릴 탈락자가 없습니다.</p>
-          ) : (
-            renderTargets(targets, meta?.night?.actionType ?? "mizlet_revive", meta?.night?.label ?? "되살리기")
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // 잔불 대검(아서, v2) — 대상에게 하루 무적.
-  if (role === "arthur") {
-    const meta = roleMeta("arthur");
-    const targets = players.filter((p) => p.alive && p.userId !== myPlayer.userId);
-    return (
-      <div className="flex flex-col h-full w-full max-w-4xl mx-auto p-5">
-        <div className="rounded-lg border border-amber-400/15 bg-amber-950/25 p-6 sm:p-10">
-          <h2 className="text-sm font-medium text-amber-300/70 tracking-widest uppercase">아서</h2>
-          <h1 className="mt-2 text-2xl font-semibold text-amber-100">무적을 부여할 대상을 선택하세요</h1>
-          <p className="mt-2 text-sm text-amber-200/50">{meta?.night?.prompt}</p>
-          {renderTargets(targets, "arthur_emberblade", meta?.night?.label ?? "잔불 대검")}
-        </div>
-      </div>
-    );
-  }
-
-  // 매료(루루, v2) — 대상의 처형 투표를 양도받는다.
-  if (role === "luru") {
-    const meta = roleMeta("luru");
-    const targets = players.filter((p) => p.alive && p.userId !== myPlayer.userId);
-    return (
-      <div className="flex flex-col h-full w-full max-w-4xl mx-auto p-5">
-        <div className="rounded-lg border border-fuchsia-400/15 bg-fuchsia-950/25 p-6 sm:p-10">
-          <h2 className="text-sm font-medium text-fuchsia-300/70 tracking-widest uppercase">루루</h2>
-          <h1 className="mt-2 text-2xl font-semibold text-fuchsia-100">매료할 대상을 선택하세요</h1>
-          <p className="mt-2 text-sm text-fuchsia-200/50">{meta?.night?.prompt}</p>
-          {renderTargets(targets, "luru_charm", meta?.night?.label ?? "영혼을 만지는 음색")}
-        </div>
-      </div>
-    );
-  }
-
-  // 투쟁(우노, v2) — 대상의 소속 카운트를 더한다.
-  if (role === "uno") {
-    const meta = roleMeta("uno");
-    const targets = players.filter((p) => p.alive && p.userId !== myPlayer.userId);
-    return (
-      <div className="flex flex-col h-full w-full max-w-4xl mx-auto p-5">
-        <div className="rounded-lg border border-amber-400/15 bg-amber-950/25 p-6 sm:p-10">
-          <h2 className="text-sm font-medium text-amber-300/70 tracking-widest uppercase">우노</h2>
-          <h1 className="mt-2 text-2xl font-semibold text-amber-100">투쟁할 대상을 선택하세요</h1>
-          <p className="mt-2 text-sm text-amber-200/50">{meta?.night?.prompt}</p>
-          {renderTargets(targets, "uno_struggle", meta?.night?.label ?? "투쟁")}
-        </div>
-      </div>
-    );
-  }
-
-  // 봉인(세이카 초신성, v2) — 그 밤 대상의 능력을 막는다.
-  if (role === "seika") {
-    const meta = roleMeta("seika");
-    const targets = players.filter((p) => p.alive && p.userId !== myPlayer.userId);
-    return (
-      <div className="flex flex-col h-full w-full max-w-4xl mx-auto p-5">
-        <div className="rounded-lg border border-indigo-400/15 bg-indigo-950/25 p-6 sm:p-10">
-          <h2 className="text-sm font-medium text-indigo-300/70 tracking-widest uppercase">세이카</h2>
-          <h1 className="mt-2 text-2xl font-semibold text-indigo-100">봉인할 대상을 선택하세요</h1>
-          <p className="mt-2 text-sm text-indigo-200/50">{meta?.night?.prompt}</p>
-          {renderTargets(targets, "seika_supernova", meta?.night?.label ?? "초신성")}
-        </div>
-      </div>
-    );
-  }
-
-  // 조사 계열(경찰 레거시 + 도르단 탐정) — 같은 police_investigate 액션.
-  if (role === "police" || role === "dordan") {
-    const targets = players.filter((p) => p.alive && p.userId !== myPlayer.userId);
-    return (
-      <div className="flex flex-col h-full w-full max-w-4xl mx-auto p-5">
-        <div className="rounded-lg border border-sky-400/15 bg-sky-950/25 p-6 sm:p-10">
-          <h2 className="text-sm font-medium text-sky-300/70 tracking-widest uppercase">{roleLabel(role)}</h2>
-          <h1 className="mt-2 text-2xl font-semibold text-sky-100">조사할 대상을 선택하세요</h1>
-          <p className="mt-2 text-sm text-sky-200/50">오늘 밤 정체를 알아볼 사람을 고르세요.</p>
-          
-          {investigationResult ? (
-            <div className={`mt-8 p-6 rounded-lg text-center ${investigationResult === 'demon' ? 'bg-rose-950/30 border border-rose-400/25' : 'bg-emerald-950/30 border border-emerald-400/25'}`}>
-              <div className="text-sm opacity-70 mb-2">조사 결과</div>
-              <div className={`text-2xl font-bold ${investigationResult === 'demon' ? 'text-rose-300' : 'text-emerald-400'}`}>
-                {investigationResult === 'demon' ? '악마입니다!' : '악마가 아닙니다.'}
-              </div>
-            </div>
-          ) : (
-            renderTargets(targets, "police_investigate", "조사하기")
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  if (role === "romaz") {
-    const meta = roleMeta("romaz");
-    const targets = players.filter((p) => p.alive && p.userId !== myPlayer.userId);
-    return (
-      <div className="flex flex-col h-full w-full max-w-4xl mx-auto p-5">
-        <div className="rounded-lg border border-amber-400/15 bg-amber-950/25 p-6 sm:p-10">
-          <h2 className="text-sm font-medium text-amber-300/70 tracking-widest uppercase">로마즈</h2>
-          <h1 className="mt-2 text-2xl font-semibold text-amber-100">용의자를 지목하세요</h1>
-          <p className="mt-2 text-sm text-amber-200/50">{meta?.night?.prompt}</p>
-          {renderTargets(targets, "romaz_suspect", meta?.night?.label ?? "용의자 색출")}
-        </div>
-      </div>
-    );
-  }
-
-  if (role === "pasua") {
-    const meta = roleMeta("pasua");
-    const targets = players.filter((p) => p.alive && p.userId !== myPlayer.userId);
-    return (
-      <div className="flex flex-col h-full w-full max-w-4xl mx-auto p-5">
-        <div className="rounded-lg border border-violet-400/15 bg-violet-950/25 p-6 sm:p-10">
-          <h2 className="text-sm font-medium text-violet-300/70 tracking-widest uppercase">파스아</h2>
-          <h1 className="mt-2 text-2xl font-semibold text-violet-100">포교할 대상을 선택하세요</h1>
-          <p className="mt-2 text-sm text-violet-200/50">{meta?.night?.prompt}</p>
-          {renderTargets(targets, "pasua_convert", meta?.night?.label ?? "포교하기")}
-        </div>
-      </div>
-    );
-  }
-
-  if (isDemonTeamRole(role)) {
-    const targets = players.filter((p) => p.alive && p.faction !== "demon");
-    
-    return (
-      <div className="flex flex-col lg:flex-row h-full w-full max-w-6xl mx-auto p-5 gap-5">
-        <div className="flex-1 rounded-lg border border-rose-400/15 bg-rose-950/25 p-6 sm:p-10">
-          <h2 className="text-sm font-medium text-rose-300/70 tracking-widest uppercase">{roleLabel(role)}</h2>
-          
-          {roleMeta(role)?.night?.kind === "kill" ? (
-            <>
-              <h1 className="mt-2 text-2xl font-semibold text-rose-100">공격할 대상을 선택하세요</h1>
-              <p className="mt-2 text-sm text-rose-200/50">{roleMeta(role)?.night?.prompt ?? "조력자와 상의하여 오늘 밤 처치할 대상을 고르세요."}</p>
-              {renderTargets(targets, roleMeta(role)!.night!.actionType, roleMeta(role)!.night!.label)}
-              {(roleMeta(role)?.extraNights ?? []).map((extra) => (
-                <SecondaryAbility
-                  key={extra.actionType}
-                  matchId={match.id}
-                  gameJwt={gameJwt}
-                  targets={players.filter((p) => p.alive && p.userId !== myPlayer.userId)}
-                  actionType={extra.actionType}
-                  label={extra.label}
-                  prompt={extra.prompt}
-                  self={extra.self}
-                />
-              ))}
-            </>
-          ) : roleMeta(role)?.night ? (
-            // 능동 조력자(루나 변환·로건 무력화) — 처치는 못 하지만 자기 능력을 쓴다.
-            <>
-              <h1 className="mt-2 text-2xl font-semibold text-rose-100">당신은 {roleLabel(role)}입니다</h1>
-              <p className="mt-2 text-sm text-rose-200/50">직접 공격할 수는 없지만, 당신의 능력을 사용하세요.</p>
-              <SecondaryAbility
-                matchId={match.id}
-                gameJwt={gameJwt}
-                targets={players.filter((p) => p.alive && p.userId !== myPlayer.userId)}
-                actionType={roleMeta(role)!.night!.actionType}
-                label={roleMeta(role)!.night!.label}
-                prompt={roleMeta(role)!.night!.prompt}
-              />
-            </>
-          ) : (
-            <>
-              <h1 className="mt-2 text-2xl font-semibold text-rose-100">당신은 {roleLabel(role)}입니다</h1>
-              <p className="mt-2 text-sm text-rose-200/50">우측 채팅을 통해 악마와 상의하세요. 직접 공격할 수는 없습니다.</p>
-              <div className="mt-8 opacity-50 pointer-events-none">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {targets.map((p) => (
-                    <div key={p.userId} className="rounded-md border border-white/10 bg-black/20 p-4 text-center text-white/70">
-                      <div className="truncate text-sm font-medium">{p.displayName}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-        
-        <div className="w-full lg:w-80 h-80 lg:h-auto rounded-lg border border-rose-500/15 bg-black/40 flex flex-col">
-          <div className="p-4 border-b border-white/5 font-medium text-rose-200/80 text-sm">
-            악마의 속삭임 (채팅)
-          </div>
-          <div className="flex-1 p-4 flex flex-col gap-3 overflow-y-auto">
-            {chats.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center text-white/20 text-sm">
-                대화를 시작하세요
-              </div>
-            ) : (
-              chats.map(chat => {
-                const isMe = chat.sender_user_id === myPlayer?.userId;
-                const sender = players.find(p => p.userId === chat.sender_user_id)?.displayName || "알 수 없음";
-                return (
-                  <div key={chat.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
-                    {!isMe && <div className="text-[10px] text-white/40 mb-1 pl-1">{sender}</div>}
-                    <div className={`px-3 py-2 rounded-lg text-sm max-w-[85%] break-words ${
-                      isMe ? "bg-rose-500/20 text-rose-100 rounded-tr-sm" : "bg-white/10 text-white rounded-tl-sm"
-                    }`}>
-                      {chat.message}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-            <div ref={chatEndRef} />
-          </div>
-          <div className="p-3 border-t border-white/5">
-            {chatError ? (
-              <p role="alert" className="mb-2 text-xs text-rose-300">{chatError}</p>
-            ) : null}
-            <form onSubmit={handleSendChat} className="flex gap-2">
-              <input
-                type="text"
-                value={chatMessage}
-                onChange={(e) => setChatMessage(e.target.value)}
-                placeholder="메시지 입력..."
-                aria-label="악마 팀 채팅 메시지"
-                className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-rose-500/50"
-              />
-              <button type="submit" disabled={!chatMessage.trim()} className="px-3 rounded bg-rose-500/20 text-rose-300 disabled:opacity-50 text-sm font-medium whitespace-nowrap">전송</button>
-            </form>
+      {showInvestigation ? (
+        <div
+          className={`mt-4 rounded-xl border p-5 text-center ${
+            investigationResult === "demon"
+              ? "border-rose-400/25 bg-rose-950/40"
+              : "border-emerald-400/25 bg-emerald-950/40"
+          }`}
+        >
+          <div
+            className={`text-xl font-bold ${
+              investigationResult === "demon" ? "text-rose-300" : "text-emerald-300"
+            }`}
+          >
+            {investigationResult === "demon" ? "악마입니다!" : "악마가 아닙니다."}
           </div>
         </div>
-      </div>
-    );
-  }
-
-  return null;
+      ) : (
+        <>
+          <p className="mt-2 text-sm text-white/50">{current?.prompt}</p>
+          {suspectedName ? (
+            <p className="mt-2 rounded-md border border-amber-400/15 bg-amber-950/25 px-3 py-1.5 text-xs text-amber-200/80">
+              의심 지목: <span className="font-semibold">{suspectedName}</span> — 이번 밤 능력 불가
+            </p>
+          ) : null}
+          {current && !current.self && eligibleCount === 0 ? (
+            <p className="mt-3 text-sm text-white/40">{current.emptyNote ?? "지목할 수 있는 대상이 없습니다."}</p>
+          ) : null}
+          {confirming && selName && !done ? (
+            <p className="mt-3 rounded-md border border-amber-400/20 bg-amber-950/25 px-3 py-2 text-sm text-amber-100">
+              <span className="font-semibold">{selName}</span> — 제출하면 되돌릴 수 없어요.
+            </p>
+          ) : null}
+          {actionError ? (
+            <p role="alert" className="mt-3 text-sm text-rose-300">
+              {actionError}
+            </p>
+          ) : null}
+        </>
+      )}
+    </ActionModal>,
+    { selectable: !done && !showInvestigation },
+  );
 }
