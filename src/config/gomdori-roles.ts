@@ -20,6 +20,7 @@ export interface GomdoriNightAction {
   prompt: string; // 대상 선택 안내
   excludeSelf?: boolean; // 자신 제외 대상
   kind?: "kill"; // 처치형(악마 처치/악몽/혼령 방출 등) — demon 블록 처치-UI 판정
+  self?: boolean; // 자기 대상(변신/일식) — 대상 그리드 없이 버튼만, target=null 제출
 }
 
 export interface GomdoriRoleMeta {
@@ -28,7 +29,8 @@ export interface GomdoriRoleMeta {
   reveal: string; // RoleAssign 설명
   demonTeam?: boolean; // 악마 회로(동료 공개·악마 채팅) 포함
   night?: GomdoriNightAction; // 밤 능동 능력(없으면 패시브/취침)
-  night2?: GomdoriNightAction; // 두 번째 밤 능동(예: 팬텀 처치+봉인). 독립 제출.
+  // 추가 밤 능동(예: 팬텀 봉인+일식, 베스토 변신). 각각 독립 제출. night2 의 일반화.
+  extraNights?: GomdoriNightAction[];
 }
 
 export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
@@ -61,7 +63,7 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
   demon: {
     label: "대악마",
     faction: "demon",
-    reveal: "대악마. 마을 사람들을 모두 처치하세요.",
+    reveal: "만악의 근원, 대악마. 처치하고, 메피스토 낙인으로 한 명의 정체를 뒤바꿉니다.",
     demonTeam: true,
     night: {
       actionType: "demon_kill",
@@ -70,6 +72,9 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
       excludeSelf: true,
       kind: "kill",
     },
+    extraNights: [
+      { actionType: "daeakma_brand", label: "메피스토 낙인", prompt: "낙인을 찍을 대상을 고르세요. 그 직업이 삭제되고 다른 정체로 비밀리에 재배정됩니다.", excludeSelf: true },
+    ],
   },
   helper: {
     label: "조력자",
@@ -104,10 +109,13 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
   phantom: {
     label: "팬텀",
     faction: "demon",
-    reveal: "침묵의 밤의 악마. 악몽으로 빠뜨리고(아침에 탈락), 어둠으로 한 명의 능력을 봉인합니다.",
+    reveal: "침묵의 밤의 악마. 악몽으로 빠뜨리고(아침에 탈락), 어둠으로 봉인하며, 일식으로 아침을 삼킵니다.",
     demonTeam: true,
     night: { actionType: "phantom_nightmare", label: "악몽", prompt: "악몽에 빠뜨릴 대상을 고르세요. 아침이 되면 탈락합니다(밤 보호로 막지 못함).", excludeSelf: true, kind: "kill" },
-    night2: { actionType: "phantom_seal", label: "봉인하기", prompt: "어둠이 내린 도시 — 오늘 밤 능력을 봉인할 대상을 고르세요.", excludeSelf: true },
+    extraNights: [
+      { actionType: "phantom_seal", label: "봉인하기", prompt: "어둠이 내린 도시 — 오늘 밤 능력을 봉인할 대상을 고르세요.", excludeSelf: true },
+      { actionType: "phantom_eclipse", label: "일식", prompt: "일식 — 다음 아침을 밤으로 바꿉니다. 단, 그 아침에 당신은 소멸합니다. (1회)", self: true },
+    ],
   },
   malen: {
     label: "말렌",
@@ -115,14 +123,19 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     reveal: "악령 마야의 강령술사. 혼령을 방출해 처치하고, 한 명에게 빙의해 묶습니다.",
     demonTeam: true,
     night: { actionType: "malen_release", label: "혼령 방출", prompt: "혼령으로 처치할 대상을 고르세요.", excludeSelf: true, kind: "kill" },
-    night2: { actionType: "malen_possess", label: "빙의", prompt: "빙의할 대상을 고르세요. 그 밤 행동을 못 하고 악마팀으로 셈됩니다.", excludeSelf: true },
+    extraNights: [
+      { actionType: "malen_possess", label: "빙의", prompt: "빙의할 대상을 고르세요. 그 밤 행동을 못 하고 악마팀으로 셈됩니다.", excludeSelf: true },
+    ],
   },
   besto: {
     label: "베스토",
     faction: "demon",
-    reveal: "히든 포지션의 악마. 오늘 밤 처치할 대상을 고르세요.",
+    reveal: "히든 포지션의 악마. 히든 포지션으로 처치하고, 변신으로 조사를 회피합니다.",
     demonTeam: true,
-    night: { actionType: "demon_kill", label: "처치하기", prompt: "조력자와 상의하여 오늘 밤 처치할 대상을 고르세요.", excludeSelf: true, kind: "kill" },
+    night: { actionType: "besto_hidden", label: "히든 포지션", prompt: "조력자와 상의하여 오늘 밤 처치할 대상을 고르세요.", excludeSelf: true, kind: "kill" },
+    extraNights: [
+      { actionType: "besto_shift", label: "변신", prompt: "변신 — 솔(조사 시 천사로 보임) ↔ 하베스토(악마)로 전환합니다.", self: true },
+    ],
   },
   // --- 기본 로스터: 조력자 풀 (악마 회로 패시브) ---
   luna: {
