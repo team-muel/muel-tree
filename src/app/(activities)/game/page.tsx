@@ -575,6 +575,10 @@ function mapMatchRow(row: Record<string, unknown>): MatchSummary {
     createdAt: String(row.created_at),
     startedAt: typeof row.started_at === "string" ? row.started_at : null,
     endedAt: typeof row.ended_at === "string" ? row.ended_at : null,
+    settings:
+      row.settings && typeof row.settings === "object" && !Array.isArray(row.settings)
+        ? (row.settings as Record<string, unknown>)
+        : {},
   };
 }
 
