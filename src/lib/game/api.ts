@@ -58,7 +58,25 @@ export type MatchSummary = {
   createdAt: string;
   startedAt: string | null;
   endedAt: string | null;
+  // 로비 게임 설정(jsonb 패스스루). 예: { neutral: "auto" | "on" | "off" }.
+  settings: Record<string, unknown>;
 };
+
+// 중립(파스아) 등장 모드 (M3-1, 결정 잠금 #2). 서버 resolveNeutralMode 와 동일 규칙:
+// settings.neutral 우선, 레거시 includeNeutral 불리언은 on/off 로, 미설정은 auto.
+export type NeutralMode = "auto" | "on" | "off";
+
+export const NEUTRAL_MODES: readonly NeutralMode[] = ["auto", "on", "off"];
+
+export function resolveNeutralMode(settings: Record<string, unknown>): NeutralMode {
+  const raw = settings.neutral;
+  if (typeof raw === "string" && (NEUTRAL_MODES as readonly string[]).includes(raw)) {
+    return raw as NeutralMode;
+  }
+  if (settings.includeNeutral === true) return "on";
+  if (settings.includeNeutral === false) return "off";
+  return "auto";
+}
 
 export type PlayerSummary = {
   matchId: string;
@@ -122,6 +140,18 @@ export async function startMatch(
   return postJson<{ matchId: string }, { success: boolean; phase: Record<string, unknown> }>(
     "match-start",
     { matchId },
+    { gameJwt },
+  );
+}
+
+export async function updateMatchSettings(
+  matchId: string,
+  settings: { neutral: NeutralMode },
+  gameJwt: string,
+): Promise<{ success: boolean; match: MatchSummary }> {
+  return postJson<{ matchId: string; neutral: NeutralMode }, { success: boolean; match: MatchSummary }>(
+    "match-settings",
+    { matchId, neutral: settings.neutral },
     { gameJwt },
   );
 }

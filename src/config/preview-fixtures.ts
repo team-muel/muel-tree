@@ -44,6 +44,7 @@ export const MOCK_MATCH: MatchSummary = {
   createdAt: NOW,
   startedAt: null,
   endedAt: null,
+  settings: {},
 };
 
 export const MOCK_PLAYERS: PlayerSummary[] = [

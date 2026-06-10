@@ -6,8 +6,15 @@
  * 로직(준비/시작/강퇴/나가기/초대 복사) 동일 — 배치만 오버홀 (2026-06-11).
  */
 
-import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
-import { kickPlayer, leaveMatch, setReady, startMatch } from "@/lib/game/api";
+import type { MatchSummary, NeutralMode, PlayerSummary } from "@/lib/game/api";
+import {
+  kickPlayer,
+  leaveMatch,
+  resolveNeutralMode,
+  setReady,
+  startMatch,
+  updateMatchSettings,
+} from "@/lib/game/api";
 import { Button } from "@/components/game/ui/Button";
 import { useMemo, useState } from "react";
 import type { ActivitySession } from "@/components/ActivityLayout";
@@ -61,6 +68,7 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: Lobby
   const [confirmKick, setConfirmKick] = useState<string | null>(null);
   const [leavePending, setLeavePending] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [neutralPending, setNeutralPending] = useState(false);
 
   const userName = session.discordUser?.username ?? "-";
   const hostLabel = useMemo(() => hostName(players, match.hostUserId), [match.hostUserId, players]);
@@ -74,8 +82,39 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: Lobby
   const everyoneReady = nonHost.every((p) => p.ready);
   const canStart = enoughPlayers && notTooMany && everyoneReady;
 
-  // 인원별 진영 구성 미리보기 (match-start generateRoles 와 동기화: 악마팀 항상 2).
-  const composition = enoughPlayers && notTooMany ? { demons: 2, angels: total - 2 } : null;
+  // 중립(파스아) 등장 모드 (M3-1, 결정 잠금 #2). auto = 존재를 알 수 없는 확률 등장.
+  // 8인 미만은 적격이 아니므로 모드와 무관하게 등장하지 않는다.
+  const neutralMode = resolveNeutralMode(match.settings);
+  const neutralEligible = total >= 8;
+
+  // 인원별 진영 구성 미리보기 (match-start generateRoles 와 동기화: 악마팀 항상 2 =
+  // 악마 변종 1 + 조력자 1, 나머지는 천사 풀 추첨. 중립은 등장 시 천사 슬롯 1 대체).
+  const composition =
+    enoughPlayers && notTooMany
+      ? {
+          demons: 2,
+          angels: total - 2 - (neutralEligible && neutralMode === "on" ? 1 : 0),
+          neutral: !neutralEligible || neutralMode === "off"
+            ? ("none" as const)
+            : neutralMode === "on"
+              ? ("one" as const)
+              : ("unknown" as const),
+        }
+      : null;
+
+  async function setNeutral(mode: NeutralMode) {
+    if (!gameJwt || !match.id || neutralPending || mode === neutralMode) return;
+    setActionError(null);
+    setNeutralPending(true);
+    try {
+      await updateMatchSettings(match.id, { neutral: mode }, gameJwt);
+      // 반영은 matches realtime 구독이 해준다.
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "설정 변경 실패");
+    } finally {
+      setNeutralPending(false);
+    }
+  }
 
   const inviteUrl = process.env.NEXT_PUBLIC_DISCORD_INVITE_URL;
 
@@ -141,14 +180,70 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: Lobby
       {composition ? (
         <div className="rounded-md border border-white/10 bg-black/20 p-3">
           <div className="text-xs uppercase tracking-widest text-white/35">이번 판 구성</div>
-          <div className="mt-2 flex items-center gap-3 text-sm">
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
             <span className="text-rose-300">악마팀 {composition.demons}</span>
             <span className="text-white/20">·</span>
-            <span className="text-amber-200">천사팀 {composition.angels}</span>
+            <span className="text-amber-200">
+              천사팀 {composition.angels}
+              {composition.neutral === "unknown" ? "~" + (composition.angels - 1) : ""}
+            </span>
+            {composition.neutral !== "none" ? (
+              <>
+                <span className="text-white/20">·</span>
+                <span className="text-violet-300">
+                  {composition.neutral === "one" ? "중립 1" : "중립 ?"}
+                </span>
+              </>
+            ) : null}
           </div>
-          <p className="mt-1 text-xs text-white/35">악마·가인 / 의사·경찰·로마즈·라이너·시민</p>
+          <p className="mt-1 text-xs text-white/35">
+            악마 변종 1 + 조력자 1 / 천사는 풀에서 추첨
+            {composition.neutral === "unknown" ? " / 중립은 나올 수도, 안 나올 수도" : ""}
+          </p>
         </div>
       ) : null}
+
+      <div className="rounded-md border border-white/10 bg-black/20 p-3">
+        <div className="text-xs uppercase tracking-widest text-white/35">게임 설정</div>
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <span className="text-sm text-white/75">중립 등장</span>
+          {isHost ? (
+            <div role="group" aria-label="중립 등장 설정" className="flex gap-1">
+              {(
+                [
+                  { mode: "auto", label: "자동" },
+                  { mode: "on", label: "등장" },
+                  { mode: "off", label: "제외" },
+                ] as const
+              ).map(({ mode, label }) => (
+                <button
+                  key={mode}
+                  type="button"
+                  disabled={!gameJwt || neutralPending || (mode !== "auto" && !neutralEligible)}
+                  aria-pressed={neutralMode === mode}
+                  onClick={() => setNeutral(mode)}
+                  className={`rounded border px-2 py-0.5 text-xs transition-colors disabled:opacity-40 ${
+                    neutralMode === mode
+                      ? "border-violet-300/40 bg-violet-400/15 text-violet-200"
+                      : "border-white/15 text-white/55 hover:bg-white/[0.08]"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <span className="rounded border border-white/15 px-2 py-0.5 text-xs text-white/55">
+              {neutralMode === "auto" ? "자동" : neutralMode === "on" ? "등장" : "제외"}
+            </span>
+          )}
+        </div>
+        <p className="mt-1.5 text-xs leading-5 text-white/35">
+          {neutralEligible
+            ? "자동: 중립(파스아)이 나올지 아무도 모릅니다. 방장은 강제로 켜거나 끌 수 있어요."
+            : "중립은 8인부터 등장할 수 있어요. 그 전까지는 자동(미등장)입니다."}
+        </p>
+      </div>
 
       <div className="rounded-md border border-white/10 bg-black/20 p-3">
         <div className="text-xs uppercase tracking-widest text-white/35">규칙 요약</div>
@@ -214,7 +309,16 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: Lobby
           <Info label="참가자" value={`${total} / ${match.maxPlayers}`} />
           <Info label="방장" value={hostLabel} />
           <Info label="내 이름" value={userName} />
-          <Info label="구성" value={composition ? `악마 ${composition.demons} · 천사 ${composition.angels}` : "5명 모이면 공개"} />
+          <Info
+            label="구성"
+            value={
+              composition
+                ? `악마 ${composition.demons} · 천사 ${composition.angels}${
+                    composition.neutral === "one" ? " · 중립 1" : composition.neutral === "unknown" ? " · 중립 ?" : ""
+                  }`
+                : "5명 모이면 공개"
+            }
+          />
           <Info label="준비" value={`${readyCount} / ${nonHost.length}`} />
         </div>
 
