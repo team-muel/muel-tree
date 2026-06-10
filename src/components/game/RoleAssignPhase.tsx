@@ -1,11 +1,18 @@
 "use client";
 
+/**
+ * RoleAssignPhase — 정체의 순간. 벨벳 어둠 위에 진영 광휘 + 직업 심볼(RoleEmblem)이
+ * 처음 켜진다. 변종 선택(악마/조력자 풀)도 심볼 토큰으로 고른다.
+ * 로직(변종 선택·selectRole·공개·같은 편) 동일, 시각 오버홀 (2026-06-11).
+ */
+
 import { useState } from "react";
 import { Badge } from "@/components/game/ui/Badge";
 import { Button } from "@/components/game/ui/Button";
 import { Card } from "@/components/game/ui/Card";
 import { FACTION_COLORS } from "@/config/design-tokens";
 import { roleMeta } from "@/config/gomdori-roles";
+import { RoleEmblem } from "@/components/game/ui/RoleEmblem";
 import { selectRole, type PlayerSummary } from "@/lib/game/api";
 
 type RoleAssignPhaseProps = {
@@ -79,12 +86,19 @@ export function RoleAssignPhase({ players, myPlayer, events, matchId, gameJwt }:
                   key={roleId}
                   type="button"
                   onClick={() => setPicked(roleId)}
-                  className={`rounded-lg border p-4 text-left transition ${
-                    active ? `${tone.border} ${tone.bgSoft} ring-1 ${tone.ring}` : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]"
+                  className={`flex items-start gap-3 rounded-xl border p-4 text-left transition ${
+                    active
+                      ? `${tone.border} ${tone.bgSoft} ring-1 ${tone.ring} ${tone.glow}`
+                      : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]"
                   }`}
                 >
-                  <div className={`text-base font-semibold ${active ? tone.primary : "text-white"}`}>{meta?.label ?? roleId}</div>
-                  <div className="mt-1 text-xs leading-5 text-white/55">{meta?.reveal ?? ""}</div>
+                  <RoleEmblem role={roleId} size="sm" mood="dark" glow={active} className="mt-0.5" />
+                  <span className="min-w-0">
+                    <span className={`block text-base font-semibold ${active ? tone.primary : "text-white"}`}>
+                      {meta?.label ?? roleId}
+                    </span>
+                    <span className="mt-1 block text-xs leading-5 text-white/55">{meta?.reveal ?? ""}</span>
+                  </span>
                 </button>
               );
             })}
@@ -103,7 +117,8 @@ export function RoleAssignPhase({ players, myPlayer, events, matchId, gameJwt }:
     return (
       <div className="flex h-full w-full items-center justify-center p-5">
         <Card emphasis className="w-full max-w-lg p-10 text-center">
-          <h1 className="text-2xl font-semibold text-white">{roleMeta(picked)?.label ?? "직업"} 확정</h1>
+          <RoleEmblem role={picked} size="lg" mood="dark" glow className="mx-auto" />
+          <h1 className="mt-6 text-2xl font-semibold text-white">{roleMeta(picked)?.label ?? "직업"} 확정</h1>
           <p className="mt-4 text-sm text-white/55">다른 플레이어의 배정을 기다리는 중...</p>
         </Card>
       </div>
@@ -139,7 +154,11 @@ export function RoleAssignPhase({ players, myPlayer, events, matchId, gameJwt }:
             {factionCopy.label}
           </Badge>
 
-          <p className="mt-8 text-xs font-semibold uppercase tracking-widest text-white/45">당신의 직업</p>
+          <div className="mt-8 flex justify-center">
+            <RoleEmblem role={role} size="lg" mood="dark" glow className="gomdori-emblem-rise" />
+          </div>
+
+          <p className="mt-6 text-xs font-semibold uppercase tracking-widest text-white/45">당신의 직업</p>
           <h1 className={`mt-3 text-5xl font-bold sm:text-6xl ${factionColor.primary}`} aria-live="polite">
             {roleCopy.label}
           </h1>
@@ -148,14 +167,12 @@ export function RoleAssignPhase({ players, myPlayer, events, matchId, gameJwt }:
           </p>
 
           {allyRows.length > 0 ? (
-            <div className={`mt-8 rounded-lg border p-4 text-left ${factionColor.border} bg-black/20`}>
+            <div className={`mt-8 rounded-xl border p-4 text-left ${factionColor.border} bg-black/20`}>
               <div className={`text-xs font-semibold uppercase tracking-widest ${factionColor.accent}`}>같은 편</div>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {allyRows.map((ally) => (
                   <div key={ally.user_id} className="flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-3 py-2">
-                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-black/30 text-xs ${factionColor.accent}`} aria-hidden="true">
-                      {ally.displayName.slice(0, 1)}
-                    </span>
+                    <RoleEmblem role={ally.role} size="sm" mood="dark" />
                     <div className="min-w-0">
                       <div className="truncate text-sm font-medium text-white">{ally.displayName}</div>
                       <div className="text-xs text-white/45">{ally.roleLabel}</div>

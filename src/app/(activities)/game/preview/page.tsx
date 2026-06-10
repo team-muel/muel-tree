@@ -3,8 +3,12 @@
 /**
  * `/game/preview` — 디자인 작업대.
  *
- * Discord Activity 외부에서도 7개 페이즈 컴포넌트의 시각 형상을 한 화면에서
+ * Discord Activity 외부에서도 페이즈 컴포넌트의 시각 형상을 한 화면에서
  * 미리 확인할 수 있도록 ActivityLayout 을 우회합니다.
+ *
+ * 2026-06-11 오버홀: 각 섹션 배경에 *실제 페이즈 톤*(PHASE_TONES)을 적용 —
+ * 이중 무드(밝은 아침/투표 ↔ 심야 밤/판결)가 작업대에서 그대로 보인다.
+ * 의심 투표(night_suspect, internal phase)도 섹션으로 추가.
  *
  * 동작 원칙:
  * - 페이즈 컴포넌트 자체는 *side effect* (supabase 구독, REST 호출) 를 시도하나,
@@ -14,18 +18,18 @@
  * 데이터 흐름:
  * - mock = `@/config/preview-fixtures` (인물명은 vault 정본).
  * - 페이즈 라벨 = `GOMDORI_RULES.publicFlowSteps`.
- *
- * 이 라우트는 *Phase 1 디자인 작업대* — 디자인 폴리시 사이클 (Step 5) 의 베이스.
  */
 
 import { LobbyPhase } from "@/components/game/LobbyPhase";
 import { RoleAssignPhase } from "@/components/game/RoleAssignPhase";
 import { NightPhase } from "@/components/game/NightPhase";
+import { SuspicionPhase } from "@/components/game/SuspicionPhase";
 import { DayPhase } from "@/components/game/DayPhase";
 import { VotePhase } from "@/components/game/VotePhase";
 import { VerdictPhase } from "@/components/game/VerdictPhase";
 import { ResultPhase } from "@/components/game/ResultPhase";
 import { GOMDORI_RULES } from "@/config/gomdori-rules";
+import { PHASE_TONES } from "@/config/design-tokens";
 import {
   MOCK_SESSION,
   MOCK_MATCH,
@@ -61,6 +65,15 @@ function renderPhasePreview(key: string): React.ReactNode {
       return (
         <NightPhase
           match={{ ...MOCK_MATCH, status: "night" }}
+          players={MOCK_PLAYERS}
+          myPlayer={ME}
+          gameJwt="preview"
+        />
+      );
+    case "night_suspect":
+      return (
+        <SuspicionPhase
+          match={{ ...MOCK_MATCH, status: "night_suspect" }}
           players={MOCK_PLAYERS}
           myPlayer={ME}
           gameJwt="preview"
@@ -104,29 +117,56 @@ function renderPhasePreview(key: string): React.ReactNode {
   }
 }
 
+/** publicFlowSteps + internal 의심 페이즈(밤 뒤에 끼움) — 작업대 전용 시퀀스. */
+const PREVIEW_STEPS: Array<{ key: string; label: string; detail: string }> = (() => {
+  const steps: Array<{ key: string; label: string; detail: string }> = [];
+  for (const step of GOMDORI_RULES.publicFlowSteps) {
+    steps.push(step);
+    if (step.key === "night") {
+      steps.push({
+        key: "night_suspect",
+        label: "의심",
+        detail: "의심 투표 — 최다 의심자는 그 밤 능력 불가 (internal)",
+      });
+    }
+  }
+  return steps;
+})();
+
 function PreviewSection({
   index,
+  toneKey,
   title,
   detail,
   children,
 }: {
   index: number;
+  toneKey: string;
   title: string;
   detail: string;
   children: React.ReactNode;
 }) {
+  const tone = PHASE_TONES[toneKey as keyof typeof PHASE_TONES];
+  const moodLabel = tone?.mood === "light" ? "낮 무드" : "밤 무드";
   return (
-    <section className="rounded-lg border border-white/10 bg-black/30 overflow-hidden">
+    <section className="overflow-hidden rounded-lg border border-white/10 bg-black/30">
       <div className="border-b border-white/10 bg-white/[0.02] px-5 py-3">
-        <div className="flex items-baseline gap-3 flex-wrap">
+        <div className="flex flex-wrap items-baseline gap-3">
           <span className="font-mono text-xs text-white/35">
             {String(index).padStart(2, "0")}
           </span>
           <span className="font-medium text-white">{title}</span>
           <span className="text-xs text-white/40">— {detail}</span>
+          <span className="ml-auto rounded-full border border-white/15 px-2 py-0.5 text-[10px] uppercase tracking-wider text-white/45">
+            {moodLabel}
+          </span>
         </div>
       </div>
-      <div className="h-[560px] overflow-auto bg-[#070712] pointer-events-none">
+      <div
+        className={`pointer-events-none h-[560px] overflow-auto ${tone?.bg ?? "bg-[#070712]"} ${
+          tone?.mood === "light" ? "text-[#2b2118]" : "text-white"
+        }`}
+      >
         {children}
       </div>
     </section>
@@ -141,25 +181,27 @@ export default function GamePreviewPage() {
           <div className="text-xs uppercase tracking-widest text-white/35">
             Gomdori Mafia · Preview
           </div>
-          <h1 className="mt-1 text-2xl font-semibold">디자인 작업대</h1>
+          <h1 className="mt-1 text-2xl font-semibold">디자인 작업대 — 이중 무드</h1>
           <p className="mt-2 max-w-2xl text-sm text-white/55">
-            7개 페이즈 컴포넌트를 mock 데이터로 한 화면에서 미리보기.
-            Discord Activity 외부에서도 시각 형상을 확인할 수 있도록 ActivityLayout 을 우회합니다.
-            각 카드는 ``pointer-events: none`` 으로 클릭 차단 — 시각 검토 전용.
+            페이즈 컴포넌트를 mock 데이터 + *실제 페이즈 톤*으로 미리보기.
+            아침·투표는 밝은 무대, 밤·판결은 심야 — 페이즈 전환이 공간을 뒤집는 이중 무드를
+            작업대에서 그대로 확인합니다. 각 카드는 ``pointer-events: none`` — 시각 검토 전용.
           </p>
           <div className="mt-3 text-xs text-white/40">
-            데이터 출처: <code className="font-mono">src/config/preview-fixtures.ts</code> ·
-            룰: <code className="font-mono">src/config/gomdori-rules.ts</code> ·
-            토큰: <code className="font-mono">src/config/design-tokens.ts</code>
+            데이터: <code className="font-mono">src/config/preview-fixtures.ts</code> ·
+            토큰: <code className="font-mono">src/config/design-tokens.ts</code> ·
+            시각 매핑: <code className="font-mono">src/config/gomdori-role-visuals.ts</code> ·
+            문서: <code className="font-mono">docs/gomdori-activity-design-language.md</code>
           </div>
         </div>
       </header>
 
       <div className="mx-auto max-w-6xl space-y-10 px-6 py-10">
-        {GOMDORI_RULES.publicFlowSteps.map((step, index) => (
+        {PREVIEW_STEPS.map((step, index) => (
           <PreviewSection
             key={step.key}
             index={index + 1}
+            toneKey={step.key}
             title={step.label}
             detail={step.detail}
           >
@@ -169,7 +211,7 @@ export default function GamePreviewPage() {
       </div>
 
       <footer className="border-t border-white/10 px-6 py-6 text-center text-xs text-white/35">
-        Gomdori Mafia · Phase 1 디자인 작업대 ·
+        Gomdori Mafia · 디자인 작업대 ·
         실 게임은 Discord Activity 안에서 <code className="font-mono">/게임</code>
       </footer>
     </main>

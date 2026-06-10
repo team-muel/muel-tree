@@ -1,7 +1,14 @@
 "use client";
 
+/**
+ * ResultPhase — 결과. 어둠의 무대 위에 진영 광휘가 선다.
+ * 정체 공개 = RoleEmblem(심볼 토큰)이 처음으로 전원에게 켜지는 순간.
+ * winner 판정 로직 동일, 시각 오버홀 (2026-06-11).
+ */
+
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
 import { roleLabel } from "@/config/gomdori-roles";
+import { RoleEmblem } from "@/components/game/ui/RoleEmblem";
 
 type ResultPhaseProps = {
   match: MatchSummary;
@@ -19,57 +26,68 @@ export function ResultPhase({ match, players, events }: ResultPhaseProps) {
   const isNeutralWin = winner === "neutral"; // 파스아 단독 승리(W6)
 
   const bannerTone = isNeutralWin
-    ? { border: "border-violet-400/30 bg-violet-950/40", accent: "text-violet-300/80", title: "text-violet-100" }
+    ? {
+        frame: "border-violet-400/30 bg-violet-950/40 shadow-[0_0_56px_rgba(196,181,253,0.22)]",
+        accent: "text-violet-300/80",
+        title: "text-violet-100",
+      }
     : isAngelWin
-      ? { border: "border-emerald-500/30 bg-emerald-950/40", accent: "text-emerald-400/80", title: "text-emerald-100" }
-      : { border: "border-rose-400/25 bg-rose-950/40", accent: "text-rose-300/80", title: "text-rose-100" };
+      ? {
+          frame: "border-amber-400/30 bg-amber-950/40 shadow-[0_0_56px_rgba(252,211,77,0.22)]",
+          accent: "text-amber-300/80",
+          title: "text-amber-100",
+        }
+      : {
+          frame: "border-rose-400/25 bg-rose-950/40 shadow-[0_0_56px_rgba(251,113,133,0.24)]",
+          accent: "text-rose-300/80",
+          title: "text-rose-100",
+        };
 
   const winTitle = isNeutralWin ? "파스아 단독 승리!" : isAngelWin ? "천사 진영 승리!" : "악마 진영 승리!";
 
   return (
-    <div className="flex flex-col h-full w-full max-w-5xl mx-auto p-5 overflow-y-auto">
-      <div className={`w-full rounded-lg border p-10 text-center shadow-2xl motion-safe:animate-in motion-safe:slide-in-from-top-4 motion-safe:duration-700 ${bannerTone.border}`}>
-        <h2 className={`text-sm font-medium tracking-widest uppercase ${bannerTone.accent}`}>
-          게임 종료
-        </h2>
-        <h1 className={`mt-6 text-5xl sm:text-6xl font-bold ${bannerTone.title}`}>
-          {winTitle}
-        </h1>
-        <p className="mt-6 text-lg text-white/60">
-          모든 플레이어의 정체가 공개됩니다.
-        </p>
+    <div className="mx-auto flex h-full w-full max-w-5xl flex-col overflow-y-auto p-5">
+      <div
+        className={`w-full rounded-2xl border p-10 text-center backdrop-blur-xl motion-safe:animate-in motion-safe:slide-in-from-top-4 motion-safe:duration-700 ${bannerTone.frame}`}
+      >
+        <h2 className={`text-sm font-medium uppercase tracking-widest ${bannerTone.accent}`}>게임 종료</h2>
+        <h1 className={`mt-6 text-5xl font-bold sm:text-6xl ${bannerTone.title}`}>{winTitle}</h1>
+        <p className="mt-6 text-lg text-white/60">모든 플레이어의 정체가 공개됩니다.</p>
       </div>
 
-      <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {players.map((p, i) => {
-          // If the player's role is still masked (because Realtime didn't update yet), we fallback to events or just rely on backend to unmask
           const role = p.role;
           const faction = p.faction;
           const isDemonFaction = faction === "demon";
           const isNeutralFaction = faction === "neutral"; // 파스아(W6)
 
           const cardTone = isNeutralFaction
-            ? "border-violet-900/30 bg-violet-950/25"
+            ? "border-violet-400/20 bg-violet-950/25"
             : isDemonFaction
-              ? "border-rose-950/30 bg-rose-950/25"
-              : "border-emerald-900/30 bg-emerald-950/20";
+              ? "border-rose-400/20 bg-rose-950/25"
+              : "border-amber-400/20 bg-amber-950/20";
           const badgeTone = isNeutralFaction
             ? "bg-violet-400/15 text-violet-300"
             : isDemonFaction
               ? "bg-rose-400/15 text-rose-300"
-              : "bg-emerald-500/20 text-emerald-300";
+              : "bg-amber-400/15 text-amber-200";
 
           return (
             <div
               key={p.userId}
               style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}
-              className={`rounded-lg border p-5 flex flex-col items-center justify-center text-center ${cardTone} ${!p.alive ? "opacity-60" : ""} motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:fill-mode-backwards`}
+              className={`flex flex-col items-center justify-center rounded-2xl border p-5 text-center backdrop-blur-md ${cardTone} ${
+                !p.alive ? "opacity-60" : ""
+              } motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:fill-mode-backwards`}
             >
-              <div className="text-lg font-bold text-white mb-1 truncate w-full">{p.displayName}</div>
-              {!p.alive && <div className="text-[10px] text-white/40 uppercase tracking-widest mb-3">사망함</div>}
-              {p.alive && <div className="text-[10px] text-white/40 uppercase tracking-widest mb-3">생존함</div>}
+              <RoleEmblem role={role} size="md" mood="dark" glow={p.alive} className="mb-3" />
+              <div className="mb-1 w-full truncate text-lg font-bold text-white">{p.displayName}</div>
+              <div className="mb-3 text-[10px] uppercase tracking-widest text-white/40">
+                {p.alive ? "생존함" : "사망함"}
+              </div>
 
-              <div className={`mt-auto px-4 py-1.5 rounded-full text-sm font-semibold ${badgeTone}`}>
+              <div className={`mt-auto rounded-full px-4 py-1.5 text-sm font-semibold ${badgeTone}`}>
                 {roleLabel(role) || "알 수 없음"}
               </div>
             </div>

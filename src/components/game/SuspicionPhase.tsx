@@ -1,9 +1,17 @@
 "use client";
 
+/**
+ * SuspicionPhase — 밤 의심 투표. 깊은 심야, 인디고 광휘.
+ * 대상은 PlayerToken 테이블 — 선택 광휘는 GLOW.selectNight.
+ * 로직 동일, 시각 오버홀 (2026-06-11).
+ */
+
 import { useState } from "react";
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
 import { submitAction } from "@/lib/game/api";
+import { MOOD, GLOW } from "@/config/design-tokens";
 import { Button } from "@/components/game/ui/Button";
+import { PlayerToken } from "@/components/game/ui/PlayerToken";
 import { SpectatorFeed } from "@/components/game/ui/SpectatorFeed";
 
 type SuspicionPhaseProps = {
@@ -25,6 +33,7 @@ export function SuspicionPhase({ match, players, myPlayer, gameJwt, events }: Su
   const [error, setError] = useState<string | null>(null);
 
   const isDead = myPlayer && !myPlayer.alive;
+  const ink = MOOD.dark;
 
   const submit = async (targetId: string | null) => {
     setIsSubmitting(true);
@@ -43,10 +52,10 @@ export function SuspicionPhase({ match, players, myPlayer, gameJwt, events }: Su
   if (isDead) {
     return (
       <div className="flex h-full w-full items-center justify-center p-5">
-        <div className="w-full max-w-lg rounded-lg border border-white/10 bg-white/[0.04] p-10 text-center">
-          <h2 className="text-sm font-medium uppercase tracking-widest text-white/50">의심 투표</h2>
-          <h1 className="mt-6 text-2xl font-semibold text-white">관전 모드</h1>
-          <p className="mt-4 text-sm text-white/40">사망하여 의심 투표에 참여할 수 없습니다.</p>
+        <div className={`${ink.panelStrong} w-full max-w-lg p-10 text-center`}>
+          <h2 className="text-sm font-medium uppercase tracking-widest text-indigo-300/70">의심 투표</h2>
+          <h1 className={`mt-6 text-2xl font-semibold ${ink.heading}`}>관전 모드</h1>
+          <p className={`mt-4 text-sm ${ink.faint}`}>사망하여 의심 투표에 참여할 수 없습니다.</p>
           <SpectatorFeed events={events} players={players} />
         </div>
       </div>
@@ -57,7 +66,7 @@ export function SuspicionPhase({ match, players, myPlayer, gameJwt, events }: Su
 
   return (
     <div className="mx-auto flex h-full w-full max-w-4xl flex-col p-5">
-      <div className="rounded-lg border border-indigo-500/20 bg-indigo-900/10 p-6 text-center sm:p-10">
+      <div className={`${ink.panelStrong} p-6 text-center sm:p-10 shadow-[0_0_44px_rgba(99,102,241,0.14)]`}>
         <h2 className="text-sm font-medium uppercase tracking-widest text-indigo-300/70">의심 투표</h2>
         <h1 className="mt-2 text-2xl font-semibold text-indigo-100">이 밤, 누가 가장 수상한가요</h1>
         <p className="mt-2 text-sm text-indigo-200/50">
@@ -66,19 +75,17 @@ export function SuspicionPhase({ match, players, myPlayer, gameJwt, events }: Su
 
         <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {targets.map((p) => (
-            <button
+            <PlayerToken
               key={p.userId}
-              type="button"
-              onClick={() => !submitted && setSelectedTarget(p.userId)}
+              name={p.displayName}
+              avatarUrl={p.avatarUrl}
+              alive
+              mood="dark"
+              selected={selectedTarget === p.userId}
+              selectedGlow={GLOW.selectNight}
               disabled={submitted}
-              className={`rounded-md border p-4 text-center transition-colors ${
-                selectedTarget === p.userId
-                  ? "border-indigo-400 bg-indigo-400/20 text-indigo-100"
-                  : "border-white/10 bg-black/20 text-white/70 hover:bg-white/5 hover:text-white"
-              } ${submitted && selectedTarget !== p.userId ? "cursor-not-allowed opacity-30" : ""}`}
-            >
-              <div className="truncate text-sm font-medium">{p.displayName}</div>
-            </button>
+              onClick={() => !submitted && setSelectedTarget(p.userId)}
+            />
           ))}
         </div>
 
@@ -104,7 +111,9 @@ export function SuspicionPhase({ match, players, myPlayer, gameJwt, events }: Su
         </div>
 
         {error ? (
-          <p role="alert" className="mt-4 text-sm text-rose-300">{error}</p>
+          <p role="alert" className="mt-4 text-sm text-rose-300">
+            {error}
+          </p>
         ) : null}
       </div>
     </div>

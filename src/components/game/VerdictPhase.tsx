@@ -1,6 +1,12 @@
 "use client";
 
+/**
+ * VerdictPhase — 판결. 황혼이 핏빛으로 식는 순간 (dark 무드, 잔불 광휘).
+ * 이벤트 파싱 로직 동일, 시각 오버홀 (2026-06-11).
+ */
+
 import type { PlayerSummary } from "@/lib/game/api";
+import { MOOD, GLOW } from "@/config/design-tokens";
 
 type VerdictPhaseProps = {
   players: PlayerSummary[];
@@ -15,21 +21,30 @@ export function VerdictPhase({ players, events }: VerdictPhaseProps) {
     events.find((e) => e.event_type === "player_eliminated" && e.payload?.cause === "vote");
   const executedUserId = (verdictEvent?.payload?.executed_user_id ??
     verdictEvent?.payload?.user_id) as string | null | undefined;
-  
-  const executedPlayer = executedUserId ? players.find(p => p.userId === executedUserId) : null;
+
+  const executedPlayer = executedUserId ? players.find((p) => p.userId === executedUserId) : null;
+  const ink = MOOD.dark;
 
   return (
     <div className="flex h-full w-full items-center justify-center p-5">
-      <div className={`w-full max-w-2xl rounded-lg border p-10 text-center shadow-2xl motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in motion-safe:duration-500 ${
-        executedPlayer ? "border-rose-400/25 bg-rose-950/40" : "border-white/10 bg-white/[0.04]"
-      }`}>
-        <h2 className={`text-sm font-medium tracking-widest uppercase ${executedPlayer ? "text-rose-300/80" : "text-white/50"}`}>
+      <div
+        className={`w-full max-w-2xl rounded-2xl border p-10 text-center backdrop-blur-xl motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in motion-safe:duration-500 ${
+          executedPlayer
+            ? `border-rose-400/25 bg-[#1a0d12]/90 ${GLOW.ember}`
+            : `border-white/10 bg-white/[0.05] ${GLOW.halo}`
+        }`}
+      >
+        <h2
+          className={`text-sm font-medium uppercase tracking-widest ${
+            executedPlayer ? "text-rose-300/80" : ink.faint
+          }`}
+        >
           투표 결과
         </h2>
-        
+
         {executedPlayer ? (
           <>
-            <h1 className="mt-8 text-4xl sm:text-5xl font-bold text-white">
+            <h1 className="mt-8 text-4xl font-bold text-white sm:text-5xl">
               {executedPlayer.displayName}님이 처형되었습니다.
             </h1>
             <p className="mt-8 text-lg text-white/60">
@@ -38,12 +53,10 @@ export function VerdictPhase({ players, events }: VerdictPhaseProps) {
           </>
         ) : (
           <>
-            <h1 className="mt-8 text-4xl sm:text-5xl font-bold text-white">
+            <h1 className="mt-8 text-4xl font-bold text-white sm:text-5xl">
               동률이거나 기권이 많습니다.
             </h1>
-            <p className="mt-8 text-lg text-white/60">
-              오늘은 아무도 처형되지 않았습니다.
-            </p>
+            <p className="mt-8 text-lg text-white/60">오늘은 아무도 처형되지 않았습니다.</p>
           </>
         )}
       </div>
