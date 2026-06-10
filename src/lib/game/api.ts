@@ -162,6 +162,18 @@ export async function submitAction(
   );
 }
 
+export async function selectRole(
+  matchId: string,
+  role: string,
+  gameJwt: string,
+): Promise<{ success: boolean; role: string }> {
+  return postJson<{ matchId: string; role: string }, { success: boolean; role: string }>(
+    "match-select-role",
+    { matchId, role },
+    { gameJwt },
+  );
+}
+
 export async function sendChat(
   matchId: string,
   message: string,

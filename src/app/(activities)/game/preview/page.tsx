@@ -53,6 +53,8 @@ function renderPhasePreview(key: string): React.ReactNode {
           players={MOCK_PLAYERS}
           myPlayer={ME}
           events={MOCK_EVENTS.roleAssign}
+          matchId="preview"
+          gameJwt={null}
         />
       );
     case "night":
