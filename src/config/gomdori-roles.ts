@@ -3,8 +3,15 @@
 // 관련: muel-bot/docs/gomdori-w4-roles-design.md, vault [[Universes/BoW/Lore/Gomdori-마피아-규칙]]
 
 export type GomdoriRoleId =
-  | "citizen" | "doctor" | "police" | "demon" | "helper"
-  | "rainer" | "romaz" | "gain"
+  // 레거시(미배정)
+  | "citizen" | "doctor" | "police" | "helper"
+  // 악마 풀
+  | "demon" | "phantom" | "malen" | "besto"
+  // 조력자 풀
+  | "gain" | "luna" | "logen" | "ellen"
+  // 천사 풀
+  | "romaz" | "rainer" | "dordan" | "habreterus" | "mizlet" | "helen" | "uno" | "arthur" | "seika" | "luru"
+  // 중립
   | "pasua" | "converted";
 
 export interface GomdoriNightAction {
@@ -50,9 +57,9 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     },
   },
   demon: {
-    label: "악마",
+    label: "대악마",
     faction: "demon",
-    reveal: "악마로서 마을 사람들을 모두 처치하세요.",
+    reveal: "대악마. 마을 사람들을 모두 처치하세요.",
     demonTeam: true,
     night: {
       actionType: "demon_kill",
@@ -89,6 +96,92 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     faction: "demon",
     reveal: "진실을 가리는 조력자. 악마를 살해·처형 1회로부터 보호합니다.",
     demonTeam: true,
+  },
+  // --- 기본 로스터: 악마 풀 (전부 v1 처치) ---
+  phantom: {
+    label: "팬텀",
+    faction: "demon",
+    reveal: "침묵의 밤의 악마. 오늘 밤 처치할 대상을 고르세요.",
+    demonTeam: true,
+    night: { actionType: "demon_kill", label: "처치하기", prompt: "조력자와 상의하여 오늘 밤 처치할 대상을 고르세요.", excludeSelf: true },
+  },
+  malen: {
+    label: "말렌",
+    faction: "demon",
+    reveal: "악령 마야의 강령술사. 오늘 밤 처치할 대상을 고르세요.",
+    demonTeam: true,
+    night: { actionType: "demon_kill", label: "처치하기", prompt: "조력자와 상의하여 오늘 밤 처치할 대상을 고르세요.", excludeSelf: true },
+  },
+  besto: {
+    label: "베스토",
+    faction: "demon",
+    reveal: "히든 포지션의 악마. 오늘 밤 처치할 대상을 고르세요.",
+    demonTeam: true,
+    night: { actionType: "demon_kill", label: "처치하기", prompt: "조력자와 상의하여 오늘 밤 처치할 대상을 고르세요.", excludeSelf: true },
+  },
+  // --- 기본 로스터: 조력자 풀 (악마 회로 패시브) ---
+  luna: {
+    label: "루나",
+    faction: "demon",
+    reveal: "달의 사제. 악마를 도와 마을을 혼란에 빠뜨리세요.",
+    demonTeam: true,
+  },
+  logen: {
+    label: "로건",
+    faction: "demon",
+    reveal: "부서진 펜던트의 조력자. 악마와 접선해 마을을 흔드세요.",
+    demonTeam: true,
+  },
+  ellen: {
+    label: "엘런",
+    faction: "demon",
+    reveal: "박해자. 악마를 도와 마을을 혼란에 빠뜨리세요.",
+    demonTeam: true,
+  },
+  // --- 기본 로스터: 천사 풀 ---
+  dordan: {
+    label: "도르단",
+    faction: "angel",
+    reveal: "탐정. 매일 밤 한 명의 정체를 조사할 수 있습니다.",
+    night: { actionType: "police_investigate", label: "조사하기", prompt: "오늘 밤 정체를 알아볼 사람을 고르세요.", excludeSelf: true },
+  },
+  habreterus: {
+    label: "하브레터스",
+    faction: "angel",
+    reveal: "생명의 언약을 맺는 치료자. 매일 밤 한 명을 보호할 수 있습니다.",
+    night: { actionType: "doctor_heal", label: "치료하기", prompt: "오늘 밤 공격으로부터 보호할 사람을 고르세요. (자기 자신 포함)" },
+  },
+  mizlet: {
+    label: "미즐렛",
+    faction: "angel",
+    reveal: "행복을 파는 가게의 주인. 매일 밤 한 명을 보호할 수 있습니다.",
+    night: { actionType: "doctor_heal", label: "보호하기", prompt: "오늘 밤 공격으로부터 보호할 사람을 고르세요. (자기 자신 포함)" },
+  },
+  helen: {
+    label: "헬렌",
+    faction: "angel",
+    reveal: "황금빛 수면의 천사. 매일 밤 한 명을 보호할 수 있습니다.",
+    night: { actionType: "doctor_heal", label: "보호하기", prompt: "오늘 밤 공격으로부터 보호할 사람을 고르세요. (자기 자신 포함)" },
+  },
+  uno: {
+    label: "우노",
+    faction: "angel",
+    reveal: "명예의 군인. 살아있는 한 천사팀의 카운트를 더합니다. (밤 능동 능력 없음)",
+  },
+  arthur: {
+    label: "아서",
+    faction: "angel",
+    reveal: "여명의 기사. 밤의 살해·처형을 한 번 막아내는 보호막을 지닙니다. (밤 능동 능력 없음)",
+  },
+  seika: {
+    label: "세이카",
+    faction: "angel",
+    reveal: "초신성·등대의 천사. (밤 능동 능력 없음 — v1)",
+  },
+  luru: {
+    label: "루루",
+    faction: "angel",
+    reveal: "영혼을 만지는 연주자. (밤 능동 능력 없음 — v1)",
   },
   // --- W6 v1 중립 ---
   pasua: {
