@@ -102,9 +102,9 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
   phantom: {
     label: "팬텀",
     faction: "demon",
-    reveal: "침묵의 밤의 악마. 처치하고, 어둠으로 한 명의 능력을 봉인합니다.",
+    reveal: "침묵의 밤의 악마. 악몽으로 빠뜨리고(아침에 탈락), 어둠으로 한 명의 능력을 봉인합니다.",
     demonTeam: true,
-    night: { actionType: "demon_kill", label: "처치하기", prompt: "조력자와 상의하여 오늘 밤 처치할 대상을 고르세요.", excludeSelf: true },
+    night: { actionType: "phantom_nightmare", label: "악몽", prompt: "악몽에 빠뜨릴 대상을 고르세요. 아침이 되면 탈락합니다(밤 보호로 막지 못함).", excludeSelf: true },
     night2: { actionType: "phantom_seal", label: "봉인하기", prompt: "어둠이 내린 도시 — 오늘 밤 능력을 봉인할 대상을 고르세요.", excludeSelf: true },
   },
   malen: {
