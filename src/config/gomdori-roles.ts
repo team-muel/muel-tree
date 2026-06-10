@@ -177,7 +177,8 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
   arthur: {
     label: "아서",
     faction: "angel",
-    reveal: "여명의 기사. 밤의 살해·처형을 한 번 막아내는 보호막을 지닙니다. (밤 능동 능력 없음)",
+    reveal: "여명의 기사. 자신은 보호막을 지니고, 매일 밤 잔불 대검으로 한 명에게 하루 무적을 부여합니다.",
+    night: { actionType: "arthur_emberblade", label: "잔불 대검", prompt: "오늘 밤 하루 무적을 부여할 대상을 고르세요.", excludeSelf: true },
   },
   seika: {
     label: "세이카",
@@ -188,7 +189,8 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
   luru: {
     label: "루루",
     faction: "angel",
-    reveal: "영혼을 만지는 연주자. (밤 능동 능력 없음 — v1)",
+    reveal: "영혼을 만지는 연주자. 매일 밤 한 명을 매료해 그 처형 투표를 당신에게 양도받습니다.",
+    night: { actionType: "luru_charm", label: "영혼을 만지는 음색", prompt: "매료해 처형 투표를 양도받을 대상을 고르세요.", excludeSelf: true },
   },
   // --- W6 v1 중립 ---
   pasua: {
