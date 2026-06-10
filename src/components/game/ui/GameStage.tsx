@@ -53,7 +53,7 @@ export function GameStage({
         }`}
       />
       <div className="relative mx-auto flex max-w-3xl flex-wrap items-end justify-center gap-3 px-2 py-4 sm:gap-4">
-        {players.map((p) => {
+        {players.map((p, index) => {
           const isMe = p.userId === myUserId;
           const eligible = canSelect ? canSelect(p) : p.alive && !(excludeSelf && isMe);
           const canPick = selectable && !disabled && eligible && Boolean(onSelect);
@@ -69,6 +69,7 @@ export function GameStage({
                 disabled={selectable ? !canPick : false}
                 sub={isMe ? "나" : !p.alive ? "사망" : undefined}
                 onClick={canPick ? () => onSelect?.(p.userId) : undefined}
+                idleDelayMs={(index % 7) * 420}
               />
             </div>
           );

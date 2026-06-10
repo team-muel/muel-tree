@@ -28,6 +28,7 @@ export function PlayerToken({
   mood = "dark",
   sub,
   onClick,
+  idleDelayMs,
 }: {
   name: string;
   avatarUrl?: string | null;
@@ -40,6 +41,8 @@ export function PlayerToken({
   /** 토큰 아래 보조 라벨 (직업·상태 등). */
   sub?: React.ReactNode;
   onClick?: () => void;
+  /** Feign식 idle 부유의 위상차(ms). 생존 토큰만 숨쉰다. undefined = 부유 없음. */
+  idleDelayMs?: number;
 }) {
   const light = mood === "light";
   const ink = light ? "text-[#2b2118]" : "text-white";
@@ -53,12 +56,15 @@ export function PlayerToken({
   // 쓰러짐: 기울고(rotate) 살짝 가라앉으며(translate) 빛이 빠진다(grayscale).
   const deadFx = "motion-safe:rotate-12 motion-safe:translate-y-0.5 opacity-45 grayscale";
 
+  const idleFloat = alive && idleDelayMs !== undefined;
+
   const body = (
     <>
       <span
+        style={idleFloat ? { animationDelay: `${idleDelayMs}ms` } : undefined}
         className={`relative inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border text-base font-semibold backdrop-blur-sm transition-all duration-500 ${tokenBase} ${ink} ${
           selected ? selectedGlow : ""
-        } ${!alive ? deadFx : ""}`}
+        } ${!alive ? deadFx : ""} ${idleFloat ? "gomdori-stage-idle" : ""}`}
       >
         {avatarUrl ? (
           <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
