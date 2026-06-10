@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ActivityLayout, type ActivitySession } from "@/components/ActivityLayout";
 import { getActivity } from "@/config/activities";
 import { GOMDORI_RULES } from "@/config/gomdori-rules";
-import { PHASE_TONES, FACTION_COLORS } from "@/config/design-tokens";
+import { PHASE_TONES } from "@/config/design-tokens";
 import {
   authExchange,
   createMatch,
@@ -22,9 +22,8 @@ import { DayPhase } from "@/components/game/DayPhase";
 import { VotePhase } from "@/components/game/VotePhase";
 import { VerdictPhase } from "@/components/game/VerdictPhase";
 import { ResultPhase } from "@/components/game/ResultPhase";
-import { PhaseTimer } from "@/components/game/PhaseTimer";
+import { StatusDock } from "@/components/game/ui/StatusDock";
 import { NightSky } from "@/components/game/ui/NightSky";
-import { roleLabel } from "@/config/gomdori-roles";
 import { SuspicionPhase } from "@/components/game/SuspicionPhase";
 import { StatusBlock } from "@/components/game/ui/StatusBlock";
 
@@ -320,7 +319,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "role_assign") {
     return (
-      <GameFrame status="role_assign" phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.roleAssign.label}>
+      <GameFrame status="role_assign" phaseEndsAt={phaseEndsAt}>
         <RoleAssignPhase players={players} myPlayer={myPlayer} events={events} matchId={match.id} gameJwt={gameJwt} />
       </GameFrame>
     );
@@ -328,7 +327,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "night_suspect") {
     return (
-      <GameFrame status="night_suspect" phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.nightSuspect.label} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} dayNumber={currentPhase?.phaseNumber}>
+      <GameFrame status="night_suspect" phaseEndsAt={phaseEndsAt} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} dayNumber={currentPhase?.phaseNumber}>
         <SuspicionPhase match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} events={events} />
       </GameFrame>
     );
@@ -336,7 +335,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "night") {
     return (
-      <GameFrame status="night" phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.night.label} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} dayNumber={currentPhase?.phaseNumber}>
+      <GameFrame status="night" phaseEndsAt={phaseEndsAt} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} dayNumber={currentPhase?.phaseNumber}>
         <NightPhase match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} events={events} />
       </GameFrame>
     );
@@ -352,7 +351,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "day") {
     return (
-      <GameFrame status="day" phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.day.label} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} dayNumber={currentPhase?.phaseNumber}>
+      <GameFrame status="day" phaseEndsAt={phaseEndsAt} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} dayNumber={currentPhase?.phaseNumber}>
         <DayPhase match={match} players={players} events={events} myPlayer={myPlayer} />
       </GameFrame>
     );
@@ -360,7 +359,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "vote") {
     return (
-      <GameFrame status="vote" phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.vote.label} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} dayNumber={currentPhase?.phaseNumber}>
+      <GameFrame status="vote" phaseEndsAt={phaseEndsAt} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} dayNumber={currentPhase?.phaseNumber}>
         <VotePhase match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} events={events} />
       </GameFrame>
     );
@@ -368,7 +367,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "verdict") {
     return (
-      <GameFrame status="verdict" phaseEndsAt={phaseEndsAt} timerLabel={GOMDORI_RULES.phases.verdict.label} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} dayNumber={currentPhase?.phaseNumber}>
+      <GameFrame status="verdict" phaseEndsAt={phaseEndsAt} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} dayNumber={currentPhase?.phaseNumber}>
         <VerdictPhase players={players} events={events} />
       </GameFrame>
     );
@@ -407,7 +406,6 @@ function GameFrame({
   children,
   status,
   phaseEndsAt,
-  timerLabel,
   myRole,
   myFaction,
   dayNumber,
@@ -415,7 +413,6 @@ function GameFrame({
   children: React.ReactNode;
   status?: string;
   phaseEndsAt?: string | null;
-  timerLabel?: string;
   myRole?: string;
   myFaction?: string;
   dayNumber?: number;
@@ -442,27 +439,15 @@ function GameFrame({
 
   return (
     <main
-      className={`relative flex min-h-full w-full items-center justify-center px-4 py-5 text-white transition-colors duration-700 sm:px-6 ${bg}`}
+      className={`relative flex min-h-full w-full items-center justify-center px-4 pb-20 pt-5 text-white transition-colors duration-700 sm:px-6 ${bg}`}
     >
-      {phaseEndsAt ? (
-        <div className="absolute left-1/2 top-3 z-10 -translate-x-1/2">
-          <PhaseTimer expectedEndedAt={phaseEndsAt} label={timerLabel} />
-        </div>
-      ) : null}
-      {myRole && status !== "lobby" && status !== "role_assign" && status !== "ended" ? (
-        <div className="absolute left-3 top-3 z-20 flex items-center gap-2 rounded-md border border-white/10 bg-black/30 px-2.5 py-1 text-xs">
-          {dayNumber ? (
-            <>
-              <span className="text-white/45">{dayNumber}일차</span>
-              <span className="text-white/20">·</span>
-            </>
-          ) : null}
-          <span className="text-white/40">나</span>
-          <span className={FACTION_COLORS[(myFaction ?? "neutral") as keyof typeof FACTION_COLORS]?.accent ?? "text-white/70"}>
-            {roleLabel(myRole)}
-          </span>
-        </div>
-      ) : null}
+      <StatusDock
+        status={status}
+        dayNumber={dayNumber}
+        phaseEndsAt={phaseEndsAt ?? null}
+        myRole={myRole}
+        myFaction={myFaction}
+      />
       {status === "night" || status === "night_suspect" ? <NightSky /> : null}
       {status === "role_assign" || status === "ended" || status === "lobby" ? <NightSky subtle /> : null}
       <div
