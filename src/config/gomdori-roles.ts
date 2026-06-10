@@ -27,6 +27,7 @@ export interface GomdoriRoleMeta {
   reveal: string; // RoleAssign 설명
   demonTeam?: boolean; // 악마 회로(동료 공개·악마 채팅) 포함
   night?: GomdoriNightAction; // 밤 능동 능력(없으면 패시브/취침)
+  night2?: GomdoriNightAction; // 두 번째 밤 능동(예: 팬텀 처치+봉인). 독립 제출.
 }
 
 export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
@@ -101,9 +102,10 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
   phantom: {
     label: "팬텀",
     faction: "demon",
-    reveal: "침묵의 밤의 악마. 오늘 밤 처치할 대상을 고르세요.",
+    reveal: "침묵의 밤의 악마. 처치하고, 어둠으로 한 명의 능력을 봉인합니다.",
     demonTeam: true,
     night: { actionType: "demon_kill", label: "처치하기", prompt: "조력자와 상의하여 오늘 밤 처치할 대상을 고르세요.", excludeSelf: true },
+    night2: { actionType: "phantom_seal", label: "봉인하기", prompt: "어둠이 내린 도시 — 오늘 밤 능력을 봉인할 대상을 고르세요.", excludeSelf: true },
   },
   malen: {
     label: "말렌",

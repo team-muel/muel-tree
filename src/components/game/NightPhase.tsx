@@ -20,6 +20,62 @@ type NightPhaseProps = {
 
 type ChatRow = { id: string; sender_user_id: string; message: string; created_at?: string; };
 
+// 보조 밤 능동(예: 팬텀 처치+봉인) — 메인 액션과 독립된 상태/제출. 자기 선택·확정만 관리.
+function SecondaryAbility({
+  matchId, gameJwt, targets, actionType, label, prompt,
+}: {
+  matchId: string;
+  gameJwt: string;
+  targets: PlayerSummary[];
+  actionType: string;
+  label: string;
+  prompt: string;
+}) {
+  const [sel, setSel] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const submit = async () => {
+    if (!sel) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      await submitAction(matchId, actionType, sel, gameJwt);
+      setDone(true);
+    } catch {
+      setErr("전송 실패. 다시 시도해줘.");
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="mt-8 border-t border-white/10 pt-6">
+      <h3 className="text-sm font-semibold text-indigo-200/80">{label}</h3>
+      <p className="mt-1 text-xs text-indigo-200/45">{prompt}</p>
+      <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {targets.map((p) => (
+          <button
+            key={p.userId}
+            type="button"
+            onClick={() => { if (!done) setSel(p.userId); }}
+            disabled={done}
+            className={`rounded-md border p-3 text-center text-sm transition-colors ${
+              sel === p.userId ? "border-indigo-400 bg-indigo-400/20 text-indigo-100" : "border-white/10 bg-black/20 text-white/70 hover:bg-white/5"
+            } ${done ? "opacity-50 cursor-not-allowed" : ""}`}
+          >
+            <span className="truncate">{p.displayName}</span>
+          </button>
+        ))}
+      </div>
+      {err ? <p role="alert" className="mt-3 text-sm text-rose-300">{err}</p> : null}
+      <Button variant="primary" onClick={submit} disabled={!sel || busy || done} className="mt-4 w-full max-w-xs">
+        {done ? "봉인 완료" : busy ? "전송 중..." : label}
+      </Button>
+    </div>
+  );
+}
+
 export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightPhaseProps) {
   // 의심 투표 결과(W1): events 는 최신순이라 첫 suspicion_revealed 가 이번 밤 것.
   const suspicionEvent = (events ?? []).find((e) => e.event_type === "suspicion_revealed");
@@ -413,6 +469,16 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
               <h1 className="mt-2 text-2xl font-semibold text-rose-100">공격할 대상을 선택하세요</h1>
               <p className="mt-2 text-sm text-rose-200/50">조력자와 상의하여 오늘 밤 처치할 대상을 고르세요.</p>
               {renderTargets(targets, "demon_kill", "처치하기")}
+              {roleMeta(role)?.night2 ? (
+                <SecondaryAbility
+                  matchId={match.id}
+                  gameJwt={gameJwt}
+                  targets={players.filter((p) => p.alive && p.userId !== myPlayer.userId)}
+                  actionType={roleMeta(role)!.night2!.actionType}
+                  label={roleMeta(role)!.night2!.label}
+                  prompt={roleMeta(role)!.night2!.prompt}
+                />
+              ) : null}
             </>
           ) : (
             <>
