@@ -1,12 +1,14 @@
 /* eslint-disable @next/next/no-img-element */
+"use client";
+
 /**
  * PlayerToken — "캐릭터가 보이는 테이블"의 기본 단위 (Feign 경험 구조 차용).
  *
  * 아바타(있으면) 또는 이니셜 토큰 + 이름 + 상태(생존/사망/선택)를 하나의
- * 시각 단위로. 아침 명단·투표·의심 등 모든 대상 그리드가 이걸 쓴다.
+ * 시각 단위로. 아침 명단·투표·의심·밤 능력 등 모든 대상 그리드가 이걸 쓴다.
  *
- * 무드 인지: light(아침/투표 무대)에서는 어두운 잉크, dark(밤)에서는 흰 잉크.
- * 선택 광휘는 GLOW 토큰 — 의미 순간에만 빛.
+ * 모션 (2026-06-11): 입장 = fade+zoom, 죽음 = 쓰러짐(기울며 가라앉음 — transition,
+ * alive 플래그가 뒤집히는 순간 자동 재생), 선택 = 광휘 전환. reduced-motion 존중.
  */
 
 import type { Mood } from "@/config/design-tokens";
@@ -48,12 +50,13 @@ export function PlayerToken({
   const cardBase = light
     ? "border-[#2b2118]/10 bg-white/45 hover:bg-white/65"
     : "border-white/10 bg-black/20 hover:bg-white/[0.06]";
-  const deadFx = "opacity-45 grayscale";
+  // 쓰러짐: 기울고(rotate) 살짝 가라앉으며(translate) 빛이 빠진다(grayscale).
+  const deadFx = "motion-safe:rotate-12 motion-safe:translate-y-0.5 opacity-45 grayscale";
 
   const body = (
     <>
       <span
-        className={`relative inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border text-base font-semibold backdrop-blur-sm transition-shadow ${tokenBase} ${ink} ${
+        className={`relative inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border text-base font-semibold backdrop-blur-sm transition-all duration-500 ${tokenBase} ${ink} ${
           selected ? selectedGlow : ""
         } ${!alive ? deadFx : ""}`}
       >
@@ -65,22 +68,31 @@ export function PlayerToken({
         {!alive ? (
           <span
             aria-hidden="true"
-            className={`absolute inset-0 flex items-center justify-center text-lg ${light ? "text-[#2b2118]/70" : "text-white/70"}`}
+            className={`absolute inset-0 flex items-center justify-center text-lg motion-safe:animate-in motion-safe:fade-in motion-safe:duration-700 ${
+              light ? "text-[#2b2118]/70" : "text-white/70"
+            }`}
           >
             ✕
           </span>
         ) : null}
       </span>
-      <span className={`block w-full truncate text-sm font-medium ${alive ? ink : inkFaint}`}>
+      <span
+        className={`block w-full truncate text-sm font-medium transition-colors duration-500 ${alive ? ink : inkFaint}`}
+      >
         {name}
       </span>
       {sub ? <span className={`block text-[10px] uppercase tracking-wider ${inkFaint}`}>{sub}</span> : null}
     </>
   );
 
+  const enter =
+    "motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-300";
+
   if (!onClick) {
     return (
-      <div className={`flex flex-col items-center gap-2 rounded-xl border p-3 text-center ${cardBase}`}>
+      <div
+        className={`flex flex-col items-center gap-2 rounded-xl border p-3 text-center transition-all duration-500 ${cardBase} ${enter}`}
+      >
         {body}
       </div>
     );
@@ -91,7 +103,7 @@ export function PlayerToken({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex flex-col items-center gap-2 rounded-xl border p-3 text-center transition ${cardBase} ${
+      className={`flex w-full flex-col items-center gap-2 rounded-xl border p-3 text-center transition-all duration-300 ${cardBase} ${enter} ${
         selected ? selectedGlow : ""
       } ${disabled && !selected ? "cursor-not-allowed opacity-40" : ""}`}
     >

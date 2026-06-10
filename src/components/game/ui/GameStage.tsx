@@ -6,7 +6,8 @@
  * 페이즈가 바뀌어도 무대는 그대로: 아침엔 밝은 무대, 투표는 그 위의 창(ActionModal),
  * 죽음은 빈자리가 아니라 쓰러진 토큰. 모바일 우선 — 토큰이 줄로 서는 좁은 무대도 성립.
  *
- * selectable 모드: 무대 위 인물을 직접 지목 (투표/의심/능력 공용).
+ * selectable 모드: 무대 위 인물을 직접 지목 (투표/의심/밤 능력 공용).
+ * canSelect 로 대상 조건을 주입 (예: 부활 = 탈락자만, 처치 = 악마팀 제외).
  */
 
 import type { PlayerSummary } from "@/lib/game/api";
@@ -19,6 +20,7 @@ export function GameStage({
   mood = "dark",
   selectable = false,
   excludeSelf = false,
+  canSelect,
   selectedId = null,
   selectedGlow,
   disabled = false,
@@ -28,9 +30,11 @@ export function GameStage({
   players: PlayerSummary[];
   myUserId?: string | null;
   mood?: Mood;
-  /** true 면 생존자 토큰이 지목 가능해진다. */
+  /** true 면 토큰이 지목 가능해진다. */
   selectable?: boolean;
   excludeSelf?: boolean;
+  /** 대상 조건 주입 — 없으면 기본(생존자, excludeSelf 반영). */
+  canSelect?: (p: PlayerSummary) => boolean;
   selectedId?: string | null;
   selectedGlow?: string;
   disabled?: boolean;
@@ -51,8 +55,8 @@ export function GameStage({
       <div className="relative mx-auto flex max-w-3xl flex-wrap items-end justify-center gap-3 px-2 py-4 sm:gap-4">
         {players.map((p) => {
           const isMe = p.userId === myUserId;
-          const canPick =
-            selectable && !disabled && p.alive && !(excludeSelf && isMe) && Boolean(onSelect);
+          const eligible = canSelect ? canSelect(p) : p.alive && !(excludeSelf && isMe);
+          const canPick = selectable && !disabled && eligible && Boolean(onSelect);
           return (
             <div key={p.userId} className="w-[88px] sm:w-[104px]">
               <PlayerToken
