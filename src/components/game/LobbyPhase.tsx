@@ -259,8 +259,8 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: Lobby
         <summary className="cursor-pointer text-xs uppercase tracking-widest text-white/35">직업 안내</summary>
         <ul className="mt-2 space-y-1.5 text-xs leading-5 text-white/55">
           {Object.entries(GOMDORI_ROLES)
-            // 레거시(시민/의사/경찰/조력자 일반)·전향자는 현 로스터 미배정 — 안내에서 제외.
-            .filter(([id]) => !["citizen", "doctor", "police", "helper", "converted"].includes(id))
+            // 레거시(시민/의사/경찰/조력자 일반)·변환 산물(전향자/타락자)은 배정 풀 아님 — 안내에서 제외.
+            .filter(([id]) => !["citizen", "doctor", "police", "helper", "converted", "corrupted"].includes(id))
             .map(([id, r]) => (
               <li key={id}>
                 <span className="text-white/80">{r.label}</span> — {r.reveal}
