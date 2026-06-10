@@ -78,10 +78,106 @@ body {
   animation: gomdori-emblem-rise 720ms 140ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* 무대 숨쉬기 — 살아있는 토큰의 Feign식 idle 부유. delay 는 인라인 style 로 토큰별 어긋남. */
+@keyframes gomdori-stage-idle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.gomdori-stage-idle {
+  animation: gomdori-stage-idle 3.4s ease-in-out infinite;
+}
+
+/* 페이즈 스윕 — 밤/아침이 무대를 가로질러 덮였다 걷히는 전환막 (Feign 전환 구조). */
+@keyframes gomdori-phase-sweep {
+  0% {
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  72% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.gomdori-phase-sweep {
+  animation: gomdori-phase-sweep 1700ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes gomdori-sweep-label {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+    letter-spacing: 0.4em;
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(0);
+    letter-spacing: 0.18em;
+  }
+  78% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.gomdori-sweep-label {
+  animation: gomdori-sweep-label 1700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* 일러스트 드리프트 — 배경 원화의 아주 느린 팬/줌 (IllustrationScene). */
+@keyframes gomdori-illust-drift {
+  0%,
+  100% {
+    transform: scale(1.04) translate(0, 0);
+  }
+  50% {
+    transform: scale(1.08) translate(-1.2%, -0.8%);
+  }
+}
+
+.gomdori-illust-drift {
+  animation: gomdori-illust-drift 25s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* 처형 스포트라이트 — 판결 무대 중앙, 잔불빛이 숨쉬듯. */
+@keyframes gomdori-spotlight {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+.gomdori-spotlight {
+  animation: gomdori-spotlight 2.6s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .gomdori-role-card,
   .gomdori-role-burst,
-  .gomdori-emblem-rise {
+  .gomdori-emblem-rise,
+  .gomdori-stage-idle,
+  .gomdori-spotlight,
+  .gomdori-illust-drift {
     animation: none;
+  }
+  .gomdori-phase-sweep,
+  .gomdori-sweep-label {
+    animation-duration: 1ms;
   }
 }

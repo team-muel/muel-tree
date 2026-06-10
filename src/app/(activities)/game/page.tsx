@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { ActivityLayout, type ActivitySession } from "@/components/ActivityLayout";
 import { getActivity } from "@/config/activities";
 import { GOMDORI_RULES } from "@/config/gomdori-rules";
@@ -24,6 +24,7 @@ import { VerdictPhase } from "@/components/game/VerdictPhase";
 import { ResultPhase } from "@/components/game/ResultPhase";
 import { StatusDock } from "@/components/game/ui/StatusDock";
 import { NightSky } from "@/components/game/ui/NightSky";
+import { PhaseSweep } from "@/components/game/ui/PhaseSweep";
 import { SuspicionPhase } from "@/components/game/SuspicionPhase";
 import { StatusBlock } from "@/components/game/ui/StatusBlock";
 
@@ -391,16 +392,6 @@ function GameShell({ session }: { session: ActivitySession }) {
   );
 }
 
-const PHASE_LABEL: Record<string, string> = {
-  role_assign: "직업 배정",
-  night_suspect: "의심",
-  night: "밤",
-  night_resolve: "밤 정리",
-  day: "아침",
-  vote: "투표",
-  verdict: "판결",
-  ended: "결과",
-};
 
 function GameFrame({
   children,
@@ -419,23 +410,6 @@ function GameFrame({
 }) {
   const tone = status ? PHASE_TONES[status as keyof typeof PHASE_TONES] : undefined;
   const bg = tone?.bg ?? "bg-[#11131a]";
-  const [announce, setAnnounce] = useState<string | null>(null);
-  const prevStatus = useRef<string | undefined>(undefined);
-
-  useEffect(() => {
-    if (!status || status === prevStatus.current) return;
-    const isFirst = prevStatus.current === undefined;
-    prevStatus.current = status;
-    const label = PHASE_LABEL[status];
-    if (!label || isFirst) return;
-    const reduce =
-      typeof window !== "undefined" &&
-      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) return;
-    setAnnounce(label);
-    const t = setTimeout(() => setAnnounce(null), 900);
-    return () => clearTimeout(t);
-  }, [status]);
 
   return (
     <main
@@ -456,13 +430,8 @@ function GameFrame({
       >
         {children}
       </div>
-      {announce ? (
-        <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-black/70 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-300">
-          <span className="text-5xl font-bold tracking-[0.3em] text-white/90 motion-safe:animate-in motion-safe:zoom-in-95 motion-safe:duration-500">
-            {announce}
-          </span>
-        </div>
-      ) : null}
+      {/* 페이즈 전환막 — 밤이 내리고 아침이 걷히는 스윕 (Feign 전환 구조) */}
+      {status ? <PhaseSweep status={status} /> : null}
     </main>
   );
 }
