@@ -16,11 +16,28 @@ type ResultPhaseProps = {
   events: Array<{ id: string; event_type: string; payload?: Record<string, unknown> }>;
 };
 
+// game_ended payload 의 reveal 항목 (M4-1). final_* 는 게임 내 변환(전향·타락·낙인
+// 재배정 등)이 반영된 최종 정체 — canon §9: 종료 시 이전→변한 직업 모두 공개.
+type RevealedPlayer = {
+  user_id: string;
+  role?: string;
+  faction?: string;
+  final_role?: string;
+  final_faction?: string;
+  changed?: boolean;
+};
+
+function revealMap(payload: Record<string, unknown> | undefined): Map<string, RevealedPlayer> {
+  const list = Array.isArray(payload?.players) ? (payload.players as RevealedPlayer[]) : [];
+  return new Map(list.filter((p) => typeof p?.user_id === "string").map((p) => [p.user_id, p]));
+}
+
 export function ResultPhase({ match, players, events }: ResultPhaseProps) {
   // Primary source: match.winner from Realtime (set by phase-advance on DB).
   // Fallback: game_ended event payload (if phase-advance emits it in the future).
   const endEvent = events.find((e) => e.event_type === "game_ended");
   const winner = match.winner ?? (endEvent?.payload?.winner as string | undefined);
+  const revealed = revealMap(endEvent?.payload);
 
   const isAngelWin = winner === "angels";
   const isNeutralWin = winner === "neutral"; // 파스아 단독 승리(W6)
@@ -57,8 +74,12 @@ export function ResultPhase({ match, players, events }: ResultPhaseProps) {
 
       <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {players.map((p, i) => {
-          const role = p.role;
-          const faction = p.faction;
+          // reveal payload 가 있으면 최종 정체(변환 반영)를 우선한다 (M4-1).
+          const reveal = revealed.get(p.userId);
+          const startRole = reveal?.role ?? p.role;
+          const role = reveal?.final_role ?? p.role;
+          const faction = reveal?.final_faction ?? p.faction;
+          const transformed = reveal?.changed === true;
           const isDemonFaction = faction === "demon";
           const isNeutralFaction = faction === "neutral"; // 파스아(W6)
 
@@ -88,8 +109,13 @@ export function ResultPhase({ match, players, events }: ResultPhaseProps) {
               </div>
 
               <div className={`mt-auto rounded-full px-4 py-1.5 text-sm font-semibold ${badgeTone}`}>
-                {roleLabel(role) || "알 수 없음"}
+                {roleLabel(role) || role || "알 수 없음"}
               </div>
+              {transformed ? (
+                <div className="mt-2 text-[11px] text-white/45">
+                  {(roleLabel(startRole) || startRole) + " → " + (roleLabel(role) || role)}
+                </div>
+              ) : null}
             </div>
           );
         })}

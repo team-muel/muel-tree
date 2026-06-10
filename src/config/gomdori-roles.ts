@@ -12,7 +12,9 @@ export type GomdoriRoleId =
   // 천사 풀
   | "romaz" | "rainer" | "dordan" | "habreterus" | "mizlet" | "helen" | "uno" | "arthur" | "seika" | "luru"
   // 중립
-  | "pasua" | "converted";
+  | "pasua" | "converted"
+  // 게임 내 변환 산물(배정 풀 아님): 루나 타락(천사 → 악마팀)
+  | "corrupted";
 
 export interface GomdoriNightAction {
   actionType: string; // submitAction 으로 보낼 action_type
@@ -224,6 +226,11 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     label: "전향자",
     faction: "neutral",
     reveal: "당신은 파스아의 교세에 전향되었습니다. 이제 파스아의 승리가 당신의 승리입니다.",
+  },
+  corrupted: {
+    label: "타락자",
+    faction: "demon",
+    reveal: "공포 속에서 타락했습니다. 이제 악마팀의 승리가 당신의 승리입니다.",
   },
 };
 
