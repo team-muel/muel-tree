@@ -1,6 +1,15 @@
 "use client";
 
+/**
+ * DayPhase — 아침. 이중 무드의 "밝은 면".
+ * 따뜻한 무대 위에서 간밤의 결과를 공표하고, 테이블(PlayerToken 그리드)이
+ * 마을 전원을 보여준다 (Feign 경험 구조 — 캐릭터가 보이는 테이블).
+ * 죽음 공표는 밝은 화면 위의 핏빛 카드 — 대비로 무게를 만든다.
+ */
+
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
+import { MOOD } from "@/config/design-tokens";
+import { PlayerToken } from "@/components/game/ui/PlayerToken";
 import { SpectatorFeed } from "@/components/game/ui/SpectatorFeed";
 
 type DayPhaseProps = {
@@ -17,64 +26,78 @@ export function DayPhase({ players, events, myPlayer }: DayPhaseProps) {
   });
   const diedUserId = (deathEvent?.payload?.user_id ??
     deathEvent?.payload?.eliminated_user_id) as string | undefined;
-  const diedPlayer = players.find(p => p.userId === diedUserId);
+  const diedPlayer = players.find((p) => p.userId === diedUserId);
 
   const isDead = myPlayer && !myPlayer.alive;
+  const ink = MOOD.light;
 
   return (
-    <div className="flex flex-col h-full w-full max-w-5xl mx-auto p-5">
-      {/* Announcement Banner */}
-      <div className={`w-full rounded-lg border p-6 text-center shadow-lg ${
-        diedPlayer 
-          ? "border-rose-400/25 bg-rose-950/40" 
-          : "border-emerald-500/30 bg-emerald-950/40"
-      }`}>
-        <h2 className={`text-sm font-medium tracking-widest uppercase ${diedPlayer ? "text-rose-300/80" : "text-emerald-400/80"}`}>
+    <div className="mx-auto flex h-full w-full max-w-5xl flex-col p-5">
+      {/* 공표 배너 — 밝은 무대 위 핏빛/온기 카드 */}
+      <div
+        className={`w-full rounded-2xl border p-6 text-center backdrop-blur-md ${
+          diedPlayer
+            ? "border-rose-900/25 bg-rose-950/85 shadow-[0_0_36px_rgba(244,63,94,0.25)]"
+            : "border-[#2b2118]/10 bg-white/60 shadow-[0_8px_30px_rgba(80,60,20,0.10)]"
+        }`}
+      >
+        <h2
+          className={`text-sm font-medium uppercase tracking-widest ${
+            diedPlayer ? "text-rose-300/90" : "text-amber-700"
+          }`}
+        >
           아침이 밝았습니다
         </h2>
-        <h1 className="mt-2 text-2xl font-bold text-white">
-          {diedPlayer ? `어젯밤, ${diedPlayer.displayName}님이 사망했습니다.` : "어젯밤은 아무 일도 없이 평화로웠습니다."}
+        <h1 className={`mt-2 text-2xl font-bold ${diedPlayer ? "text-rose-50" : ink.heading}`}>
+          {diedPlayer
+            ? `어젯밤, ${diedPlayer.displayName}님이 사망했습니다.`
+            : "어젯밤은 아무 일도 없이 평화로웠습니다."}
         </h1>
       </div>
 
-      <div className="mt-8 flex-1 grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-        <div className="rounded-lg border border-white/10 bg-white/[0.04] p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-medium text-white">마을 주민 목록</h3>
-            <div className="px-3 py-1 rounded bg-white/5 text-xs text-white/50">
-              생존: {players.filter(p => p.alive).length}명
+      <div className="mt-8 grid flex-1 grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
+        {/* 테이블 — 마을 전원 */}
+        <div className={ink.panel + " p-6"}>
+          <div className="mb-6 flex items-center justify-between">
+            <h3 className={`text-lg font-medium ${ink.heading}`}>마을 주민</h3>
+            <div className={`rounded-full px-3 py-1 text-xs ${ink.chip}`}>
+              생존 {players.filter((p) => p.alive).length}명
             </div>
           </div>
-          
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {players.map((p) => (
-              <div 
-                key={p.userId} 
-                className={`rounded-md p-4 text-center flex flex-col items-center justify-center gap-2 border transition-all ${
-                  p.alive 
-                    ? "border-white/10 bg-black/20 text-white" 
-                    : "border-rose-950/25 bg-rose-950/20 text-white/30 grayscale"
-                }`}
-              >
-                <div className="truncate text-sm font-medium w-full">{p.displayName}</div>
-                {!p.alive && <div className="text-[10px] uppercase tracking-wider text-rose-500/45">사망함</div>}
-              </div>
+              <PlayerToken
+                key={p.userId}
+                name={p.displayName}
+                avatarUrl={p.avatarUrl}
+                alive={p.alive}
+                mood="light"
+                sub={!p.alive ? "사망함" : undefined}
+              />
             ))}
           </div>
         </div>
 
-        <div className="rounded-lg border border-sky-400/15 bg-sky-950/25 p-6 flex flex-col items-center text-center">
-          <div className="w-12 h-12 rounded-full bg-sky-400/15 flex items-center justify-center mb-4">
-            <span className="text-xl">🎙️</span>
+        {/* 토론 패널 */}
+        <div className={`${ink.panel} flex flex-col items-center p-6 text-center`}>
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-[#2b2118]/10 bg-white/70">
+            <span className="text-xl" aria-hidden="true">
+              🎙️
+            </span>
           </div>
-          <h3 className="text-lg font-medium text-sky-100">자유 토론 시간</h3>
-          <p className="mt-3 text-sm text-sky-200/55 leading-relaxed">
-            {isDead 
-              ? "당신은 사망했습니다. 산 자들의 토론을 조용히 지켜보세요." 
+          <h3 className={`text-lg font-medium ${ink.heading}`}>자유 토론 시간</h3>
+          <p className={`mt-3 text-sm leading-relaxed ${ink.body}`}>
+            {isDead
+              ? "당신은 사망했습니다. 산 자들의 토론을 조용히 지켜보세요."
               : "Discord 음성 채널을 통해 마피아가 누구일지 자유롭게 추리하고 토론하세요."}
           </p>
-          {isDead ? <SpectatorFeed events={events} players={players} /> : null}
-          <div className="mt-auto pt-8 w-full text-xs leading-5 text-sky-100/45">
+          {isDead ? (
+            <div className="mt-4 w-full rounded-xl border border-white/10 bg-[#15131e]/90 p-3 text-left">
+              <SpectatorFeed events={events} players={players} />
+            </div>
+          ) : null}
+          <div className={`mt-auto w-full pt-8 text-xs leading-5 ${ink.faint}`}>
             토론 시간이 끝나면 자동으로 투표가 시작됩니다.
           </div>
         </div>

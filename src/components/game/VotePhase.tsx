@@ -1,10 +1,18 @@
 "use client";
 
+/**
+ * VotePhase — 투표. 황혼의 무대 (light 무드, 금빛이 짙어진다).
+ * 대상은 PlayerToken 테이블 — 선택 순간에만 황혼 광휘(GLOW.selectDusk).
+ * 로직(복원 useEffect·제출)은 그대로, 시각만 오버홀 (2026-06-11).
+ */
+
 import { useState, useEffect } from "react";
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
 import { submitAction } from "@/lib/game/api";
 import { getGameSupabase } from "@/lib/game/client";
+import { MOOD, GLOW } from "@/config/design-tokens";
 import { Button } from "@/components/game/ui/Button";
+import { PlayerToken } from "@/components/game/ui/PlayerToken";
 import { SpectatorFeed } from "@/components/game/ui/SpectatorFeed";
 
 type VotePhaseProps = {
@@ -65,6 +73,7 @@ export function VotePhase({ match, players, myPlayer, gameJwt, events }: VotePha
   }, [match.id, gameJwt, myPlayer?.userId]);
 
   const isDead = myPlayer && !myPlayer.alive;
+  const ink = MOOD.light;
 
   const handleVote = async (targetId: string | null) => {
     setIsSubmitting(true);
@@ -85,43 +94,50 @@ export function VotePhase({ match, players, myPlayer, gameJwt, events }: VotePha
   if (isDead) {
     return (
       <div className="flex h-full w-full items-center justify-center p-5">
-        <div className="w-full max-w-lg rounded-lg border border-white/10 bg-white/[0.04] p-10 text-center">
-          <h2 className="text-sm font-medium text-white/50 tracking-widest uppercase">투표 시간</h2>
-          <h1 className="mt-6 text-2xl font-semibold text-white">관전 모드</h1>
-          <p className="mt-4 text-sm text-white/40">당신은 사망하여 투표권이 없습니다. 다른 사람들의 투표를 지켜보세요.</p>
-          <SpectatorFeed events={events} players={players} />
+        <div className={`${ink.panelStrong} w-full max-w-lg p-10 text-center`}>
+          <h2 className="text-sm font-medium uppercase tracking-widest text-amber-800">투표 시간</h2>
+          <h1 className={`mt-6 text-2xl font-semibold ${ink.heading}`}>관전 모드</h1>
+          <p className={`mt-4 text-sm ${ink.body}`}>
+            당신은 사망하여 투표권이 없습니다. 다른 사람들의 투표를 지켜보세요.
+          </p>
+          <div className="mt-4 rounded-xl border border-white/10 bg-[#15131e]/90 p-3 text-left">
+            <SpectatorFeed events={events} players={players} />
+          </div>
         </div>
       </div>
     );
   }
 
-  const alivePlayers = players.filter(p => p.alive);
+  const alivePlayers = players.filter((p) => p.alive);
 
   return (
-    <div className="flex flex-col h-full w-full max-w-4xl mx-auto p-5">
-      <div className="rounded-lg border border-amber-400/15 bg-amber-950/25 p-6 sm:p-10 text-center">
-        <h2 className="text-sm font-medium text-amber-300/70 tracking-widest uppercase">투표 시간</h2>
-        <h1 className="mt-2 text-2xl font-semibold text-amber-100">마피아로 의심되는 사람을 투표하세요</h1>
-        <p className="mt-2 text-sm text-amber-200/50">가장 많은 표를 받은 사람이 처형됩니다. 아무도 고르지 않으려면 기권하세요.</p>
+    <div className="mx-auto flex h-full w-full max-w-4xl flex-col p-5">
+      <div className={`${ink.panelStrong} p-6 text-center sm:p-10`}>
+        <h2 className="text-sm font-medium uppercase tracking-widest text-amber-800">투표 시간</h2>
+        <h1 className={`mt-2 text-2xl font-semibold ${ink.heading}`}>
+          마피아로 의심되는 사람을 투표하세요
+        </h1>
+        <p className={`mt-2 text-sm ${ink.body}`}>
+          가장 많은 표를 받은 사람이 처형됩니다. 아무도 고르지 않으려면 기권하세요.
+        </p>
 
-        <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {alivePlayers.map((p) => (
-            <button
+            <PlayerToken
               key={p.userId}
-              onClick={() => !submitted && setSelectedTarget(p.userId)}
+              name={p.displayName}
+              avatarUrl={p.avatarUrl}
+              alive
+              mood="light"
+              selected={selectedTarget === p.userId}
+              selectedGlow={GLOW.selectDusk}
               disabled={submitted}
-              className={`rounded-md border p-4 text-center transition-colors ${
-                selectedTarget === p.userId
-                  ? "border-amber-400 bg-amber-400/20 text-amber-100"
-                  : "border-white/10 bg-black/20 text-white/70 hover:bg-white/5 hover:text-white"
-              } ${submitted && selectedTarget !== p.userId ? "opacity-30 cursor-not-allowed" : ""}`}
-            >
-              <div className="truncate text-sm font-medium">{p.displayName}</div>
-            </button>
+              onClick={() => !submitted && setSelectedTarget(p.userId)}
+            />
           ))}
         </div>
 
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Button
             variant="amber"
             onClick={() => handleVote(selectedTarget)}
@@ -130,18 +146,20 @@ export function VotePhase({ match, players, myPlayer, gameJwt, events }: VotePha
           >
             {submitted && selectedTarget ? "투표 완료" : isSubmitting ? "전송 중..." : "선택한 사람 투표"}
           </Button>
-          
+
           <Button
             variant="ghost"
             onClick={() => handleVote(null)}
             disabled={isSubmitting || submitted}
-            className="w-full max-w-[200px]"
+            className="w-full max-w-[200px] border-[#2b2118]/25 text-[#5c4d3c] hover:bg-[#2b2118]/5"
           >
             {submitted && !selectedTarget ? "기권 완료" : "기권하기"}
           </Button>
         </div>
         {voteError ? (
-          <p role="alert" className="mt-4 text-sm text-rose-300">{voteError}</p>
+          <p role="alert" className="mt-4 text-sm text-rose-700">
+            {voteError}
+          </p>
         ) : null}
       </div>
     </div>
