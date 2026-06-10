@@ -280,7 +280,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
 
   // Roles rendering
   // 밤 능동 능력 없는 직업(취침): 시민/라이너/전향자 + 우노·아서·세이카·루루(패시브 천사).
-  const SLEEP_ROLES = ["citizen", "rainer", "converted", "uno", "arthur", "seika", "luru"];
+  const SLEEP_ROLES = ["citizen", "rainer", "converted", "uno", "arthur", "luru"];
   if (role && SLEEP_ROLES.includes(role)) {
     return (
       <div className="flex h-full w-full items-center justify-center p-5">
@@ -293,8 +293,8 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
     );
   }
 
-  // 치료 계열(의사 레거시 + 하브레터스/미즐렛/헬렌) — 같은 doctor_heal 액션.
-  if (role === "doctor" || role === "habreterus" || role === "mizlet" || role === "helen") {
+  // 치료 계열(의사 레거시 + 하브레터스) — 생존자 보호(doctor_heal).
+  if (role === "doctor" || role === "habreterus") {
     const meta = roleMeta(role);
     const targets = players.filter((p) => p.alive);
     return (
@@ -304,6 +304,42 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
           <h1 className="mt-2 text-2xl font-semibold text-emerald-100">보호할 대상을 선택하세요</h1>
           <p className="mt-2 text-sm text-emerald-200/45">{meta?.night?.prompt ?? "오늘 밤 공격으로부터 보호할 사람을 고르세요. (자기 자신 포함)"}</p>
           {renderTargets(targets, "doctor_heal", meta?.night?.label ?? "치료하기")}
+        </div>
+      </div>
+    );
+  }
+
+  // 부활(미즐렛/헬렌, v2) — 탈락한 대상을 되살린다.
+  if (role === "mizlet" || role === "helen") {
+    const meta = roleMeta(role);
+    const targets = players.filter((p) => !p.alive);
+    return (
+      <div className="flex flex-col h-full w-full max-w-4xl mx-auto p-5">
+        <div className="rounded-lg border border-emerald-400/15 bg-emerald-950/25 p-6 sm:p-10">
+          <h2 className="text-sm font-medium text-emerald-300/70 tracking-widest uppercase">{roleLabel(role)}</h2>
+          <h1 className="mt-2 text-2xl font-semibold text-emerald-100">되살릴 대상을 선택하세요</h1>
+          <p className="mt-2 text-sm text-emerald-200/45">{meta?.night?.prompt ?? "되살릴 탈락자를 고르세요."}</p>
+          {targets.length === 0 ? (
+            <p className="mt-6 text-sm text-white/40">아직 되살릴 탈락자가 없습니다.</p>
+          ) : (
+            renderTargets(targets, meta?.night?.actionType ?? "mizlet_revive", meta?.night?.label ?? "되살리기")
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // 봉인(세이카 초신성, v2) — 그 밤 대상의 능력을 막는다.
+  if (role === "seika") {
+    const meta = roleMeta("seika");
+    const targets = players.filter((p) => p.alive && p.userId !== myPlayer.userId);
+    return (
+      <div className="flex flex-col h-full w-full max-w-4xl mx-auto p-5">
+        <div className="rounded-lg border border-indigo-400/15 bg-indigo-950/25 p-6 sm:p-10">
+          <h2 className="text-sm font-medium text-indigo-300/70 tracking-widest uppercase">세이카</h2>
+          <h1 className="mt-2 text-2xl font-semibold text-indigo-100">봉인할 대상을 선택하세요</h1>
+          <p className="mt-2 text-sm text-indigo-200/50">{meta?.night?.prompt}</p>
+          {renderTargets(targets, "seika_supernova", meta?.night?.label ?? "초신성")}
         </div>
       </div>
     );

@@ -154,14 +154,14 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
   mizlet: {
     label: "미즐렛",
     faction: "angel",
-    reveal: "행복을 파는 가게의 주인. 매일 밤 한 명을 보호할 수 있습니다.",
-    night: { actionType: "doctor_heal", label: "보호하기", prompt: "오늘 밤 공격으로부터 보호할 사람을 고르세요. (자기 자신 포함)" },
+    reveal: "행복을 파는 가게의 주인. 매일 밤 탈락한 한 명을 되살릴 수 있습니다.",
+    night: { actionType: "mizlet_revive", label: "디저트 선물", prompt: "디저트로 되살릴 탈락자를 고르세요." },
   },
   helen: {
     label: "헬렌",
     faction: "angel",
-    reveal: "황금빛 수면의 천사. 매일 밤 한 명을 보호할 수 있습니다.",
-    night: { actionType: "doctor_heal", label: "보호하기", prompt: "오늘 밤 공격으로부터 보호할 사람을 고르세요. (자기 자신 포함)" },
+    reveal: "황금빛 수면의 천사. 매일 밤 탈락한 한 명을 되살릴 수 있습니다.",
+    night: { actionType: "helen_revive", label: "황금빛 수면", prompt: "수면으로 되살릴 탈락자를 고르세요." },
   },
   uno: {
     label: "우노",
@@ -176,7 +176,8 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
   seika: {
     label: "세이카",
     faction: "angel",
-    reveal: "초신성·등대의 천사. (밤 능동 능력 없음 — v1)",
+    reveal: "초신성·등대의 천사. 매일 밤 한 명의 능력을 봉인할 수 있습니다.",
+    night: { actionType: "seika_supernova", label: "초신성", prompt: "오늘 밤 능력을 봉인할 대상을 고르세요.", excludeSelf: true },
   },
   luru: {
     label: "루루",
