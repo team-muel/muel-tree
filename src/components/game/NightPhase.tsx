@@ -304,7 +304,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
             const sender = players.find((p) => p.userId === chat.sender_user_id)?.displayName || "알 수 없음";
             return (
               <div key={chat.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
-                {!isMe && <div className="mb-1 pl-1 text-[10px] text-white/40">{sender}</div>}
+                {!isMe && <div className="mb-1 pl-1 text-[0.625rem] text-white/40">{sender}</div>}
                 <div
                   className={`max-w-[85%] break-words rounded-lg px-3 py-2 text-sm ${
                     isMe ? "rounded-tr-sm bg-rose-500/20 text-rose-100" : "rounded-tl-sm bg-white/10 text-white"

@@ -1,14 +1,19 @@
 "use client";
 
 /**
- * BottomSheet — 모바일에서 하단에서 올라오는 패널 / 데스크톱(lg+)에선 정적 사이드 블록.
+ * BottomSheet — 모바일에선 하단에서 올라오는 패널 / 데스크톱에선 정적 사이드 블록.
  *
  * 사용자 요구 (2026-06-11): "친구 부르기" 같은 보조 패널이 모바일에서
  * 우측이 아니라 하단 시트로. 핸들 탭 또는 **드래그 제스처**(위로 끌면 펼침,
  * 아래로 끌면 접힘 — 드래그 중 손맛 추종)로 조작. StatusDock 위(z-40)에 뜬다.
+ *
+ * 분기 (2026-06-11 반응형 개편): CSS 브레이크포인트(lg:)가 아니라
+ * useDisplay().layout 으로 *구조 자체*를 분기 — 모바일은 시트 DOM 만,
+ * 데스크톱은 사이드 블록 DOM 만 렌더된다 (Discord platform=mobile 신호 반영).
  */
 
 import { useRef, useState } from "react";
+import { useDisplay } from "@/lib/game/display";
 
 function clamp(v: number, lo: number, hi: number): number {
   return Math.min(hi, Math.max(lo, v));
@@ -25,6 +30,7 @@ export function BottomSheet({
   defaultOpen?: boolean;
   className?: string;
 }) {
+  const { layout } = useDisplay();
   const [open, setOpen] = useState(defaultOpen);
   const [pull, setPull] = useState(0);
   const startYRef = useRef<number | null>(null);
@@ -55,18 +61,21 @@ export function BottomSheet({
     // 중간 거리(8~50px)는 제자리 스냅백.
   };
 
-  return (
-    <>
-      {/* 데스크톱: 정적 사이드 블록 */}
+  if (layout === "desktop") {
+    return (
       <aside
-        className={`hidden lg:block space-y-4 rounded-2xl border border-white/10 border-t-white/20 bg-[#15131e]/90 p-5 backdrop-blur-md ${className ?? ""}`}
+        className={`space-y-4 rounded-2xl border border-white/10 border-t-white/20 bg-[#15131e]/90 p-5 backdrop-blur-md ${className ?? ""}`}
       >
         <h2 className="text-base font-semibold text-white">{title}</h2>
         {children}
       </aside>
+    );
+  }
 
+  return (
+    <>
       {/* 모바일: 하단 시트 */}
-      <div className="lg:hidden">
+      <div>
         {open ? (
           <button
             type="button"

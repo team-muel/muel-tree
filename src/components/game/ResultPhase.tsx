@@ -104,7 +104,7 @@ export function ResultPhase({ match, players, events }: ResultPhaseProps) {
             >
               <RoleEmblem role={role} size="md" mood="dark" glow={p.alive} className="mb-3" />
               <div className="mb-1 w-full truncate text-lg font-bold text-white">{p.displayName}</div>
-              <div className="mb-3 text-[10px] uppercase tracking-widest text-white/40">
+              <div className="mb-3 text-[0.625rem] uppercase tracking-widest text-white/40">
                 {p.alive ? "생존함" : "사망함"}
               </div>
 
@@ -112,7 +112,7 @@ export function ResultPhase({ match, players, events }: ResultPhaseProps) {
                 {roleLabel(role) || role || "알 수 없음"}
               </div>
               {transformed ? (
-                <div className="mt-2 text-[11px] text-white/45">
+                <div className="mt-2 text-[0.6875rem] text-white/45">
                   {(roleLabel(startRole) || startRole) + " → " + (roleLabel(role) || role)}
                 </div>
               ) : null}

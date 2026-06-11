@@ -25,9 +25,10 @@ import { ResultPhase } from "@/components/game/ResultPhase";
 import { StatusDock } from "@/components/game/ui/StatusDock";
 import { NightSky } from "@/components/game/ui/NightSky";
 import { PhaseSweep } from "@/components/game/ui/PhaseSweep";
-import { IllustrationScene } from "@/components/game/ui/IllustrationScene";
 import { SuspicionPhase } from "@/components/game/SuspicionPhase";
 import { StatusBlock } from "@/components/game/ui/StatusBlock";
+import { LandingScreen } from "@/components/game/LandingScreen";
+import { DisplayProvider } from "@/lib/game/display";
 
 const GAME_ACTIVITY = getActivity("gomdori-mafia")!;
 
@@ -42,7 +43,11 @@ type BootState =
 export default function GamePage() {
   return (
     <ActivityLayout activity={GAME_ACTIVITY}>
-      {(session) => <GameShell session={session} />}
+      {(session) => (
+        <DisplayProvider>
+          <GameShell session={session} />
+        </DisplayProvider>
+      )}
     </ActivityLayout>
   );
 }
@@ -294,8 +299,14 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (boot.status === "landing") {
     return (
-      <GameFrame>
-        <LandingScreen existing={landingMatch} participants={session.instanceParticipants} onCreate={createGame} onJoin={joinGame} />
+      <GameFrame status="landing">
+        <LandingScreen
+          existing={landingMatch}
+          participants={session.instanceParticipants}
+          myUserId={session.discordUser?.id ?? null}
+          onCreate={createGame}
+          onJoin={joinGame}
+        />
       </GameFrame>
     );
   }
@@ -426,9 +437,13 @@ function GameFrame({
   const tone = status ? PHASE_TONES[status as keyof typeof PHASE_TONES] : undefined;
   const bg = tone?.bg ?? "bg-[#11131a]";
 
+  // h-full + overflow-y-auto: ActivityLayout 루트가 overflow-hidden 이라
+  // 내용이 뷰포트보다 길면 그대로 잘렸다(스크롤 불가 — 작은 디스플레이에서 치명).
+  // 내부 래퍼 m-auto = 짧으면 중앙 정렬, 길면 위에서부터 스크롤 (flex 중앙정렬의
+  // overflow 클리핑을 피하는 표준 패턴).
   return (
     <main
-      className={`relative flex min-h-full w-full items-center justify-center px-4 pb-20 pt-5 text-white transition-colors duration-700 sm:px-6 ${bg}`}
+      className={`relative flex h-full w-full overflow-y-auto px-4 pb-20 pt-5 text-white transition-colors duration-700 sm:px-6 ${bg}`}
     >
       <StatusDock
         status={status}
@@ -438,81 +453,18 @@ function GameFrame({
         myFaction={myFaction}
       />
       {status === "night" || status === "night_suspect" ? <NightSky /> : null}
-      {status === "role_assign" || status === "ended" || status === "lobby" ? <NightSky subtle /> : null}
+      {status === "role_assign" || status === "ended" || status === "lobby" || status === "landing" ? (
+        <NightSky subtle />
+      ) : null}
       <div
         key={status ?? "static"}
-        className="relative z-10 flex w-full items-center justify-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500"
+        className="relative z-10 m-auto flex w-full justify-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500"
       >
         {children}
       </div>
       {/* 페이즈 전환막 — 밤이 내리고 아침이 걷히는 스윕 (Feign 전환 구조) */}
       {status ? <PhaseSweep status={status} /> : null}
     </main>
-  );
-}
-
-function LandingScreen({
-  existing,
-  participants,
-  onCreate,
-  onJoin,
-}: {
-  existing: MatchSummary | null;
-  participants: { id: string; username: string; global_name?: string | null; nickname?: string }[];
-  onCreate: () => void;
-  onJoin: () => void;
-}) {
-  const joinable = existing != null && existing.status === "lobby";
-  const names = participants
-    .map((p) => p.nickname || p.global_name || p.username)
-    .filter((n): n is string => Boolean(n));
-  return (
-    <div className="w-full max-w-lg overflow-hidden rounded-lg border border-white/10 bg-white/[0.04] text-center">
-      {/* 키 아트 — 진입의 타이틀 모멘트. 일러스트가 어둠으로 침잠하며 카드와 만난다. */}
-      <div className="relative h-44 sm:h-52">
-        <IllustrationScene
-          id="night-muse"
-          priority
-          drift
-          className="absolute inset-0"
-          sizes="(max-width: 640px) 100vw, 512px"
-        />
-        <div className="absolute inset-x-0 bottom-0 pb-3">
-          <div className="text-sm text-white/45">Gomdori Mafia</div>
-          <h1 className="mt-1 text-2xl font-semibold text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
-            천사와 악마의 추리
-          </h1>
-        </div>
-      </div>
-      <div className="p-8 pt-4">
-      <p className="mt-0 text-sm leading-6 text-white/50">
-        이 음성 채널에서 함께 플레이합니다. 방을 만들거나 이미 열린 방에 참가하세요.
-      </p>
-      {names.length > 0 ? (
-        <div className="mt-4 rounded-md border border-white/10 bg-black/20 px-4 py-3 text-left">
-          <div className="text-xs text-white/35">이 Activity에 모인 사람 ({names.length})</div>
-          <div className="mt-1 text-sm text-white/70">{names.join(", ")}</div>
-        </div>
-      ) : null}
-      <div className="mt-7 grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <button
-          type="button"
-          onClick={onCreate}
-          className="h-24 rounded-lg bg-emerald-300 text-base font-semibold text-slate-950 hover:bg-emerald-200"
-        >
-          게임 만들기
-        </button>
-        <button
-          type="button"
-          onClick={onJoin}
-          disabled={existing == null}
-          className="h-24 rounded-lg border border-white/15 bg-white/[0.06] text-base font-semibold text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:text-white/30 disabled:hover:bg-white/[0.06]"
-        >
-          {joinable ? "참가하기" : existing != null ? "진행 중인 게임 참가" : "열린 게임 없음"}
-        </button>
-      </div>
-      </div>
-    </div>
   );
 }
 
