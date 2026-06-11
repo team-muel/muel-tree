@@ -23,11 +23,17 @@ export function BottomSheet({
   title,
   children,
   defaultOpen = false,
+  peek = "dock",
   className,
 }: {
   title: string;
   children: React.ReactNode;
   defaultOpen?: boolean;
+  /**
+   * 접힌 peek 의 하단 앵커. "dock" = StatusDock 위(bottom-16 — 인게임 관전 등
+   * 독과 공존하는 화면). "edge" = 화면 바닥(bottom-0 — 독이 없는 로비).
+   */
+  peek?: "dock" | "edge";
   className?: string;
 }) {
   const { layout } = useDisplay();
@@ -85,7 +91,7 @@ export function BottomSheet({
           />
         ) : null}
         <div
-          className={`fixed inset-x-0 z-40 ${open ? "bottom-0" : "bottom-16"} ${
+          className={`fixed inset-x-0 z-40 ${open ? "bottom-0" : peek === "dock" ? "bottom-16" : "bottom-0"} ${
             pull === 0 ? "transition-all duration-300" : ""
           }`}
           style={pull !== 0 ? { transform: `translateY(${pull}px)` } : undefined}

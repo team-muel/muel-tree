@@ -417,19 +417,20 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
   );
 
   // 모바일: 세로 단일 흐름 + 하단 시트 / 데스크톱: 무대 + 우측 패널 — 별도 구조.
+  // 로비엔 StatusDock 이 없으므로(GameFrame) 시트 peek 은 화면 바닥(edge)에 붙는다.
   if (layout === "mobile") {
     return (
-      <div className="flex w-full max-w-xl flex-col p-4 pb-24">
+      <div className="flex w-full max-w-xl flex-col p-4 pb-20">
         {mainPanel}
-        <BottomSheet title="친구 부르기 · 게임 안내">{sheetContent}</BottomSheet>
+        <BottomSheet title="친구 부르기 · 게임 안내" peek="edge">{sheetContent}</BottomSheet>
       </div>
     );
   }
 
   return (
-    <div className="grid w-full max-w-6xl grid-cols-[1.6fr_0.9fr] items-start gap-5 p-5 pb-24">
+    <div className="grid w-full max-w-6xl grid-cols-[1.6fr_0.9fr] items-start gap-5 p-5 pb-10">
       {mainPanel}
-      <BottomSheet title="친구 부르기 · 게임 안내">{sheetContent}</BottomSheet>
+      <BottomSheet title="친구 부르기 · 게임 안내" peek="edge">{sheetContent}</BottomSheet>
     </div>
   );
 }
