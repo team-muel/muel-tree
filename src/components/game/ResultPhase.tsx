@@ -8,6 +8,7 @@
 
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
 import { roleLabel } from "@/config/gomdori-roles";
+import { GOMDORI_RULES } from "@/config/gomdori-rules";
 import { RoleEmblem } from "@/components/game/ui/RoleEmblem";
 
 type ResultPhaseProps = {
@@ -38,6 +39,8 @@ export function ResultPhase({ match, players, events }: ResultPhaseProps) {
   const endEvent = events.find((e) => e.event_type === "game_ended");
   const winner = match.winner ?? (endEvent?.payload?.winner as string | undefined);
   const revealed = revealMap(endEvent?.payload);
+  // 최대 일수 도달 → 우세 판정 종착 (M2-5 안전망). 갑작스러운 종료로 읽히지 않게 명시.
+  const byTimeout = endEvent?.payload?.timeout === true;
 
   const isAngelWin = winner === "angels";
   const isNeutralWin = winner === "neutral"; // 파스아 단독 승리(W6)
@@ -69,7 +72,11 @@ export function ResultPhase({ match, players, events }: ResultPhaseProps) {
       >
         <h2 className={`text-sm font-medium uppercase tracking-widest ${bannerTone.accent}`}>게임 종료</h2>
         <h1 className={`mt-6 text-5xl font-bold sm:text-6xl ${bannerTone.title}`}>{winTitle}</h1>
-        <p className="mt-6 text-lg text-white/60">모든 플레이어의 정체가 공개됩니다.</p>
+        <p className="mt-6 text-lg text-white/60">
+          {byTimeout
+            ? `${GOMDORI_RULES.gameLength.maxDays}일이 지나도 결판나지 않아 우세한 진영이 승리했습니다.`
+            : "모든 플레이어의 정체가 공개됩니다."}
+        </p>
       </div>
 
       <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">

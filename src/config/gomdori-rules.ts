@@ -61,6 +61,27 @@ export const GOMDORI_RULES = {
     angels: "aliveDemons === 0",
     demons: "aliveDemons >= aliveAngels",
   },
+
+  /**
+   * 중립(파스아) 등장 정책 (결정 잠금 #2 — 확률 등장). backend 동기.
+   * - minPlayers: 등장 자격 최소 인원 (중립은 천사 슬롯 1 대체).
+   * - autoSpawnChance: 모드 "auto"(기본)의 등장 확률 — 참여자는 존재를 알 수 없다.
+   *   호스트는 로비 설정(match-settings)으로 "on"/"off" 강제 가능.
+   *   판정 권위는 서버(muel-bot _shared/neutral.ts) — 이 값은 표시/안내용 동기 사본.
+   */
+  neutral: {
+    minPlayers: 8,
+    autoSpawnChance: 1 / 3,
+  },
+
+  /**
+   * 게임 길이 안전망 (M2-5 교착 방지). backend 동기.
+   * maxDays 일차의 판결까지 승부가 나지 않으면 우세 판정(카운트 비교, 동률은
+   * 악마 — canon §30)으로 종착. game_ended payload 에 timeout: true 가 실린다.
+   */
+  gameLength: {
+    maxDays: 15,
+  },
 } as const;
 
 export type GomdoriRules = typeof GOMDORI_RULES;

@@ -21,6 +21,7 @@ import { Button } from "@/components/game/ui/Button";
 import { useMemo, useState } from "react";
 import type { ActivitySession } from "@/components/ActivityLayout";
 import { GOMDORI_ROLES } from "@/config/gomdori-roles";
+import { GOMDORI_RULES } from "@/config/gomdori-rules";
 import { GameStage } from "@/components/game/ui/GameStage";
 import { BottomSheet } from "@/components/game/ui/BottomSheet";
 import { useDisplay } from "@/lib/game/display";
@@ -88,9 +89,9 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
   const canStart = enoughPlayers && notTooMany && everyoneReady;
 
   // 중립(파스아) 등장 모드 (M3-1, 결정 잠금 #2). auto = 존재를 알 수 없는 확률 등장.
-  // 8인 미만은 적격이 아니므로 모드와 무관하게 등장하지 않는다.
+  // 자격 인원 미만은 모드와 무관하게 등장하지 않는다 — 기준은 룰 매니페스트 단일 출처.
   const neutralMode = resolveNeutralMode(match.settings);
-  const neutralEligible = total >= 8;
+  const neutralEligible = total >= GOMDORI_RULES.neutral.minPlayers;
 
   // 인원별 진영 구성 미리보기 (match-start generateRoles 와 동기화: 악마팀 항상 2 =
   // 악마 변종 1 + 조력자 1, 나머지는 천사 풀 추첨. 중립은 등장 시 천사 슬롯 1 대체).
@@ -248,7 +249,7 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
         <p className="mt-1.5 text-xs leading-5 text-white/35">
           {neutralEligible
             ? "자동: 중립(파스아)이 나올지 아무도 모릅니다. 방장은 강제로 켜거나 끌 수 있어요."
-            : "중립은 8인부터 등장할 수 있어요. 그 전까지는 자동(미등장)입니다."}
+            : `중립은 ${GOMDORI_RULES.neutral.minPlayers}인부터 등장할 수 있어요. 그 전까지는 자동(미등장)입니다.`}
         </p>
       </div>
 
