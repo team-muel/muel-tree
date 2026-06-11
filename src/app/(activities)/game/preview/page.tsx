@@ -177,14 +177,17 @@ function PreviewSection({
         }`}
       >
         <div className="flex-1">{children}</div>
-        <StatusDock
-          status={toneKey}
-          dayNumber={toneKey === "lobby" || toneKey === "role_assign" ? undefined : 2}
-          phaseEndsAt={null}
-          myRole={toneKey === "lobby" || toneKey === "role_assign" ? undefined : "romaz"}
-          myFaction="angel"
-          inline
-        />
+        {/* 실제 GameFrame 과 동일 — 로비엔 독이 뜨지 않는다 (정보 중복 + 시트 충돌). */}
+        {toneKey !== "lobby" ? (
+          <StatusDock
+            status={toneKey}
+            dayNumber={toneKey === "role_assign" ? undefined : 2}
+            phaseEndsAt={null}
+            myRole={toneKey === "role_assign" ? undefined : "romaz"}
+            myFaction="angel"
+            inline
+          />
+        ) : null}
       </div>
     </section>
   );

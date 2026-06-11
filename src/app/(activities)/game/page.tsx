@@ -445,20 +445,27 @@ function GameFrame({
     <main
       className={`relative flex h-full w-full overflow-y-auto px-4 pb-20 pt-5 text-white transition-colors duration-700 sm:px-6 ${bg}`}
     >
-      <StatusDock
-        status={status}
-        dayNumber={dayNumber}
-        phaseEndsAt={phaseEndsAt ?? null}
-        myRole={myRole}
-        myFaction={myFaction}
-      />
+      {/* 로비는 독을 띄우지 않는다 — 화면 자체가 상태("대기 중")를 말하고 있어
+          정보 중복인 데다, 모바일에서 시트 peek 과 하단 자리를 다퉜다. */}
+      {status !== "lobby" ? (
+        <StatusDock
+          status={status}
+          dayNumber={dayNumber}
+          phaseEndsAt={phaseEndsAt ?? null}
+          myRole={myRole}
+          myFaction={myFaction}
+        />
+      ) : null}
       {status === "night" || status === "night_suspect" ? <NightSky /> : null}
       {status === "role_assign" || status === "ended" || status === "lobby" || status === "landing" ? (
         <NightSky subtle />
       ) : null}
+      {/* 래퍼에 z 금지: z 를 주면 스태킹 컨텍스트가 생겨 내부 fixed 레이어
+          (시트/창 z-40)가 독(z-30) 아래로 깔린다 — 독이 시트 peek 을 덮던 버그.
+          NightSky 위 페인트는 DOM 순서(래퍼가 뒤)로 보장된다. */}
       <div
         key={status ?? "static"}
-        className="relative z-10 m-auto flex w-full justify-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500"
+        className="relative m-auto flex w-full justify-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500"
       >
         {children}
       </div>
