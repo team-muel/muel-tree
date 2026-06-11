@@ -95,6 +95,7 @@ function renderPhasePreview(key: string): React.ReactNode {
           players={MOCK_PLAYERS}
           events={MOCK_EVENTS.dayAfterDeath}
           myPlayer={ME}
+          phaseEndsAt={new Date(Date.now() + 90_000).toISOString()}
         />
       );
     case "vote":
@@ -185,6 +186,8 @@ function PreviewSection({
             phaseEndsAt={null}
             myRole={toneKey === "role_assign" ? undefined : "romaz"}
             myFaction="angel"
+            myName={ME.displayName}
+            myAvatarUrl={ME.avatarUrl}
             inline
           />
         ) : null}

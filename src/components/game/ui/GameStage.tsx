@@ -17,6 +17,7 @@
 import type { PlayerSummary } from "@/lib/game/api";
 import type { Mood } from "@/config/design-tokens";
 import { PlayerToken } from "@/components/game/ui/PlayerToken";
+import { StageTimerOrb } from "@/components/game/ui/StageTimerOrb";
 
 const ROAM_VARIANTS = ["gomdori-roam-a", "gomdori-roam-b", "gomdori-roam-c"] as const;
 
@@ -40,8 +41,10 @@ export function GameStage({
   selectedGlow,
   disabled = false,
   onSelect,
+  onInspect,
   roam = false,
   chrome = true,
+  timerOrbEndsAt,
   subFor,
   className,
 }: {
@@ -57,10 +60,17 @@ export function GameStage({
   selectedGlow?: string;
   disabled?: boolean;
   onSelect?: (userId: string) => void;
+  /** 보조 인터랙션(R3 준비) — 롱프레스/우클릭으로 그 인물의 직업 추측 시트를 연다. */
+  onInspect?: (userId: string) => void;
   /** 생존 토큰이 무대를 배회한다 (로비·랜딩 전용 — 지목 무대에선 사용 금지). */
   roam?: boolean;
   /** false 면 토큰 카드 없이 캐릭터(아바타+이름)만 무대에 선다. */
   chrome?: boolean;
+  /**
+   * 주어지면 무대 위에 차고 노는 타이머 오브(StageTimerOrb)를 띄운다.
+   * 지목 무대(selectable)에선 조준 방해를 막기 위해 자동으로 끈다.
+   */
+  timerOrbEndsAt?: string | null;
   /** 토큰 보조 라벨 주입 (예: 로비 = 방장/준비/대기). 없으면 기본(나/사망). */
   subFor?: (p: PlayerSummary, isMe: boolean) => React.ReactNode;
   className?: string;
@@ -96,15 +106,19 @@ export function GameStage({
                 chrome={chrome}
                 selected={selectedId === p.userId}
                 selectedGlow={selectedGlow}
+                pickable={canPick}
                 disabled={selectable ? !canPick : false}
                 sub={subFor ? subFor(p, isMe) : isMe ? "나" : !p.alive ? "사망" : undefined}
                 onClick={canPick ? () => onSelect?.(p.userId) : undefined}
+                onInspect={onInspect && !isMe ? () => onInspect(p.userId) : undefined}
                 idleDelayMs={(index % 7) * 420}
               />
             </div>
           );
         })}
       </div>
+      {/* 차고 노는 타이머 — 지목 무대에선 끈다(조준 안정). */}
+      {!selectable && timerOrbEndsAt ? <StageTimerOrb endsAt={timerOrbEndsAt} /> : null}
     </div>
   );
 }

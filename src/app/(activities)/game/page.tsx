@@ -115,6 +115,15 @@ function GameShell({ session }: { session: ActivitySession }) {
     };
   }, [channelId, guildId, session.accessToken, session.hasDiscordAuth]);
 
+  // 매치가 바뀌거나(만들기/참가) 떠날 때 이전 매치의 잔여 상태를 비운다 —
+  // 새 방에 옛 플레이어·이벤트·페이즈가 남아 "새 방이 아니라 기존 요소가 잔류"하는
+  // 문제를 차단. matchId 가 고정인 페이즈 전환(lobby→night 등)에는 발화하지 않는다.
+  useEffect(() => {
+    setPlayers([]);
+    setEvents([]);
+    setCurrentPhase(null);
+  }, [matchId]);
+
   useEffect(() => {
     if (!gameJwt || !matchId) return;
 
@@ -335,7 +344,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "night_resolve") {
     return (
-      <GameFrame status="night_resolve" myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} dayNumber={currentPhase?.phaseNumber}>
+      <GameFrame status="night_resolve" myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} myName={myPlayer?.displayName} myAvatarUrl={myPlayer?.avatarUrl} dayNumber={currentPhase?.phaseNumber}>
         <StatusBlock
           title="밤의 결과를 정리 중..."
           detail="잠시 후 아침이 밝습니다."
@@ -354,7 +363,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "night_suspect") {
     return (
-      <GameFrame status="night_suspect" phaseEndsAt={phaseEndsAt} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} dayNumber={currentPhase?.phaseNumber}>
+      <GameFrame status="night_suspect" phaseEndsAt={phaseEndsAt} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} myName={myPlayer?.displayName} myAvatarUrl={myPlayer?.avatarUrl} dayNumber={currentPhase?.phaseNumber}>
         <SuspicionPhase match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} events={events} />
       </GameFrame>
     );
@@ -362,7 +371,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "night") {
     return (
-      <GameFrame status="night" phaseEndsAt={phaseEndsAt} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} dayNumber={currentPhase?.phaseNumber}>
+      <GameFrame status="night" phaseEndsAt={phaseEndsAt} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} myName={myPlayer?.displayName} myAvatarUrl={myPlayer?.avatarUrl} dayNumber={currentPhase?.phaseNumber}>
         <NightPhase match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} events={events} />
       </GameFrame>
     );
@@ -378,15 +387,15 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "day") {
     return (
-      <GameFrame status="day" phaseEndsAt={phaseEndsAt} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} dayNumber={currentPhase?.phaseNumber}>
-        <DayPhase match={match} players={players} events={events} myPlayer={myPlayer} />
+      <GameFrame status="day" phaseEndsAt={phaseEndsAt} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} myName={myPlayer?.displayName} myAvatarUrl={myPlayer?.avatarUrl} dayNumber={currentPhase?.phaseNumber}>
+        <DayPhase match={match} players={players} events={events} myPlayer={myPlayer} phaseEndsAt={phaseEndsAt} />
       </GameFrame>
     );
   }
 
   if (match.status === "vote") {
     return (
-      <GameFrame status="vote" phaseEndsAt={phaseEndsAt} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} dayNumber={currentPhase?.phaseNumber}>
+      <GameFrame status="vote" phaseEndsAt={phaseEndsAt} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} myName={myPlayer?.displayName} myAvatarUrl={myPlayer?.avatarUrl} dayNumber={currentPhase?.phaseNumber}>
         <VotePhase match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} events={events} />
       </GameFrame>
     );
@@ -394,7 +403,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "verdict") {
     return (
-      <GameFrame status="verdict" phaseEndsAt={phaseEndsAt} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} dayNumber={currentPhase?.phaseNumber}>
+      <GameFrame status="verdict" phaseEndsAt={phaseEndsAt} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} myName={myPlayer?.displayName} myAvatarUrl={myPlayer?.avatarUrl} dayNumber={currentPhase?.phaseNumber}>
         <VerdictPhase players={players} events={events} />
       </GameFrame>
     );
@@ -425,6 +434,8 @@ function GameFrame({
   phaseEndsAt,
   myRole,
   myFaction,
+  myName,
+  myAvatarUrl,
   dayNumber,
 }: {
   children: React.ReactNode;
@@ -432,6 +443,8 @@ function GameFrame({
   phaseEndsAt?: string | null;
   myRole?: string;
   myFaction?: string;
+  myName?: string;
+  myAvatarUrl?: string | null;
   dayNumber?: number;
 }) {
   const tone = status ? PHASE_TONES[status as keyof typeof PHASE_TONES] : undefined;
@@ -454,6 +467,8 @@ function GameFrame({
           phaseEndsAt={phaseEndsAt ?? null}
           myRole={myRole}
           myFaction={myFaction}
+          myName={myName}
+          myAvatarUrl={myAvatarUrl}
         />
       ) : null}
       {status === "night" || status === "night_suspect" ? <NightSky /> : null}
