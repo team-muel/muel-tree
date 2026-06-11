@@ -11,7 +11,7 @@
  * alive 플래그가 뒤집히는 순간 자동 재생), 선택 = 광휘 전환. reduced-motion 존중.
  */
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import type { Mood } from "@/config/design-tokens";
 
 function initialOf(name: string): string {
@@ -31,6 +31,7 @@ export function PlayerToken({
   sub,
   onClick,
   onInspect,
+  movable = false,
   idleDelayMs,
   chrome = true,
 }: {
@@ -52,6 +53,11 @@ export function PlayerToken({
    * 직업 추측 시트를 여는 자리. 지금은 호출부가 주입하지 않아 비활성(스캐폴딩).
    */
   onInspect?: () => void;
+  /**
+   * true 면 토큰을 커서/터치로 끌어 무대 위 위치를 옮길 수 있다 (사소한 장난 — 순수
+   * 시각). 드래그=이동 / 짧은 탭=onClick(지목) / 롱프레스=onInspect 로 제스처 분리.
+   */
+  movable?: boolean;
   /** Feign식 idle 부유의 위상차(ms). 생존 토큰만 숨쉰다. undefined = 부유 없음. */
   idleDelayMs?: number;
   /**
@@ -81,45 +87,94 @@ export function PlayerToken({
   // chromeless 는 카드가 없는 대신 아바타가 한 단계 크다 — 무대 위 존재감.
   const avatarSize = chrome ? "h-12 w-12" : "h-14 w-14";
 
-  // 보조 인터랙션(R3): 롱프레스(450ms)·우클릭 = onInspect. 짧은 탭은 onClick(지목)로
-  // 그대로 흘려, 두 채널이 절대 겹치지 않게 한다. firedRef 로 롱프레스 직후 click 억제.
-  const pressTimer = useRef<number | null>(null);
-  const fired = useRef(false);
-  const startPress = () => {
-    if (!onInspect) return;
-    fired.current = false;
-    pressTimer.current = window.setTimeout(() => {
-      fired.current = true;
-      onInspect();
-    }, 450);
-  };
-  const endPress = () => {
-    if (pressTimer.current != null) {
-      clearTimeout(pressTimer.current);
-      pressTimer.current = null;
+  // 통합 제스처 상태머신 — 한 포인터 위에 세 채널을 안전히 얹는다.
+  //   짧은 탭         → onClick (지목)
+  //   롱프레스(450ms) → onInspect (정체 추측 시트)  / 우클릭도 동일
+  //   끌기(movable)   → 위치 이동 (offset)
+  // 이동·롱프레스가 발화하면 그 포인터의 click 은 소비(지목으로 새지 않게).
+  const DRAG_THRESHOLD = 6;
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [dragging, setDragging] = useState(false);
+  const press = useRef<{ x: number; y: number; base: { x: number; y: number }; moved: boolean; drag: boolean } | null>(null);
+  const longTimer = useRef<number | null>(null);
+  const consumed = useRef(false); // 이번 포인터에서 click 을 막을지
+
+  const clearLong = () => {
+    if (longTimer.current != null) {
+      clearTimeout(longTimer.current);
+      longTimer.current = null;
     }
+  };
+  const interactive = Boolean(onClick || onInspect || movable);
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (!interactive) return;
+    consumed.current = false;
+    press.current = { x: e.clientX, y: e.clientY, base: offset, moved: false, drag: false };
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      /* capture 미지원 — 무시 */
+    }
+    if (onInspect) {
+      clearLong();
+      longTimer.current = window.setTimeout(() => {
+        if (press.current && !press.current.moved) {
+          consumed.current = true;
+          onInspect();
+        }
+      }, 450);
+    }
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    const p = press.current;
+    if (!p) return;
+    const dx = e.clientX - p.x;
+    const dy = e.clientY - p.y;
+    if (!p.moved && Math.abs(dx) + Math.abs(dy) > DRAG_THRESHOLD) {
+      p.moved = true;
+      clearLong(); // 움직였으면 롱프레스(검사) 취소
+      if (movable) {
+        p.drag = true;
+        setDragging(true);
+      }
+    }
+    if (p.drag && movable) {
+      setOffset({ x: p.base.x + dx, y: p.base.y + dy });
+    }
+  };
+  const onPointerEnd = () => {
+    const p = press.current;
+    clearLong();
+    if (p?.drag) consumed.current = true; // 끌었으면 지목으로 흘리지 않음
+    if (p) setDragging(false);
+    press.current = null;
   };
   const handleContextMenu = (e: React.MouseEvent) => {
     if (!onInspect) return;
     e.preventDefault();
+    consumed.current = true;
     onInspect();
   };
-  const inspectHandlers = onInspect
+  const interactiveHandlers = interactive
     ? {
-        onPointerDown: startPress,
-        onPointerUp: endPress,
-        onPointerLeave: endPress,
-        onPointerCancel: endPress,
+        onPointerDown,
+        onPointerMove,
+        onPointerUp: onPointerEnd,
+        onPointerCancel: onPointerEnd,
         onContextMenu: handleContextMenu,
       }
     : {};
   const handleClick = () => {
-    if (fired.current) {
-      fired.current = false; // 롱프레스가 소비함 — 지목으로 흘리지 않는다.
+    if (consumed.current) {
+      consumed.current = false; // 이동/롱프레스가 소비 — 지목 무시
       return;
     }
     onClick?.();
   };
+  const moved = offset.x !== 0 || offset.y !== 0;
+  const offsetStyle = moved ? { transform: `translate(${offset.x}px, ${offset.y}px)` } : undefined;
+  const movableCursor = movable ? (dragging ? "cursor-grabbing" : "cursor-grab") : "";
 
   const body = (
     <>
@@ -163,8 +218,11 @@ export function PlayerToken({
   if (!onClick) {
     return (
       <div
-        {...inspectHandlers}
-        className={`flex flex-col items-center text-center transition-all duration-500 ${frame} ${enter}`}
+        {...interactiveHandlers}
+        style={offsetStyle}
+        className={`relative flex flex-col items-center text-center transition-all duration-500 ${frame} ${enter} ${
+          movable ? `touch-none ${movableCursor}` : ""
+        } ${dragging ? "z-30" : ""}`}
       >
         {body}
       </div>
@@ -175,9 +233,12 @@ export function PlayerToken({
     <button
       type="button"
       onClick={handleClick}
-      {...inspectHandlers}
+      {...interactiveHandlers}
+      style={offsetStyle}
       disabled={disabled}
-      className={`flex w-full flex-col items-center text-center transition-all duration-300 ${frame} ${enter} ${
+      className={`relative flex w-full flex-col items-center text-center transition-all duration-300 ${frame} ${enter} ${
+        movable ? `touch-none ${movableCursor}` : ""
+      } ${dragging ? "z-30" : ""} ${
         selected && chrome ? selectedGlow : pickable && chrome && !disabled ? pickFx : ""
       } ${disabled && !selected ? "cursor-not-allowed opacity-40" : ""}`}
     >

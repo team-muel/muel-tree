@@ -14,10 +14,13 @@
  * chrome=false 와 함께 쓰면 카드 없이 캐릭터만 서 있는 무대가 된다.
  */
 
+import { useState } from "react";
 import type { PlayerSummary } from "@/lib/game/api";
 import type { Mood } from "@/config/design-tokens";
 import { PlayerToken } from "@/components/game/ui/PlayerToken";
 import { StageTimerOrb } from "@/components/game/ui/StageTimerOrb";
+import { PlayerInspectSheet } from "@/components/game/ui/PlayerInspectSheet";
+import { useInspectGuesses } from "@/lib/game/inspect";
 
 const ROAM_VARIANTS = ["gomdori-roam-a", "gomdori-roam-b", "gomdori-roam-c"] as const;
 
@@ -42,6 +45,9 @@ export function GameStage({
   disabled = false,
   onSelect,
   onInspect,
+  inspectable = false,
+  matchId,
+  movable = false,
   roam = false,
   chrome = true,
   timerOrbEndsAt,
@@ -60,8 +66,17 @@ export function GameStage({
   selectedGlow?: string;
   disabled?: boolean;
   onSelect?: (userId: string) => void;
-  /** 보조 인터랙션(R3 준비) — 롱프레스/우클릭으로 그 인물의 직업 추측 시트를 연다. */
+  /** 외부 검사 핸들러 override — 없고 inspectable 이면 GameStage 내장 시트가 열린다. */
   onInspect?: (userId: string) => void;
+  /**
+   * true 면 무대가 직접 "정체 추측" 인터랙션을 소유한다 — 비지목 무대는 탭, 지목
+   * 무대는 롱프레스/우클릭으로 그 인물의 진영·직업 추측 시트(로컬 저장)를 연다.
+   */
+  inspectable?: boolean;
+  /** 추측 저장 범위 키 (없으면 "preview"). */
+  matchId?: string | null;
+  /** true 면 토큰을 끌어 무대 위 위치를 옮길 수 있다 (지목 무대에선 자동 비활성). */
+  movable?: boolean;
   /** 생존 토큰이 무대를 배회한다 (로비·랜딩 전용 — 지목 무대에선 사용 금지). */
   roam?: boolean;
   /** false 면 토큰 카드 없이 캐릭터(아바타+이름)만 무대에 선다. */
@@ -76,6 +91,17 @@ export function GameStage({
   className?: string;
 }) {
   const light = mood === "light";
+
+  // 정체 추측(R3) — 무대가 직접 소유. inspectable 일 때만 활성.
+  const [inspectId, setInspectId] = useState<string | null>(null);
+  const { guesses, save } = useInspectGuesses(matchId);
+  const inspectActive = inspectable || Boolean(onInspect);
+  const openInspect = (uid: string) => {
+    if (onInspect) onInspect(uid);
+    else setInspectId(uid);
+  };
+  const inspectTarget = inspectId ? players.find((p) => p.userId === inspectId) ?? null : null;
+  const canDrag = movable && !selectable;
 
   return (
     <div className={`relative w-full ${className ?? ""}`}>
@@ -108,9 +134,18 @@ export function GameStage({
                 selectedGlow={selectedGlow}
                 pickable={canPick}
                 disabled={selectable ? !canPick : false}
+                movable={canDrag}
                 sub={subFor ? subFor(p, isMe) : isMe ? "나" : !p.alive ? "사망" : undefined}
-                onClick={canPick ? () => onSelect?.(p.userId) : undefined}
-                onInspect={onInspect && !isMe ? () => onInspect(p.userId) : undefined}
+                onClick={
+                  selectable
+                    ? canPick
+                      ? () => onSelect?.(p.userId)
+                      : undefined
+                    : inspectActive && !isMe
+                      ? () => openInspect(p.userId)
+                      : undefined
+                }
+                onInspect={inspectActive && !isMe ? () => openInspect(p.userId) : undefined}
                 idleDelayMs={(index % 7) * 420}
               />
             </div>
@@ -119,6 +154,17 @@ export function GameStage({
       </div>
       {/* 차고 노는 타이머 — 지목 무대에선 끈다(조준 안정). */}
       {!selectable && timerOrbEndsAt ? <StageTimerOrb endsAt={timerOrbEndsAt} /> : null}
+      {/* 정체 추측 시트 — 무대가 직접 연다(외부 onInspect override 시엔 호출부 책임). */}
+      {!onInspect && inspectTarget ? (
+        <PlayerInspectSheet
+          open
+          onClose={() => setInspectId(null)}
+          name={inspectTarget.displayName}
+          avatarUrl={inspectTarget.avatarUrl}
+          initial={guesses[inspectTarget.userId]}
+          onSave={(g) => save(inspectTarget.userId, g)}
+        />
+      ) : null}
     </div>
   );
 }

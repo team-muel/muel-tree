@@ -12,7 +12,7 @@
  * 데스크톱은 사이드 블록 DOM 만 렌더된다 (Discord platform=mobile 신호 반영).
  */
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDisplay } from "@/lib/game/display";
 
 function clamp(v: number, lo: number, hi: number): number {
@@ -24,6 +24,8 @@ export function BottomSheet({
   children,
   defaultOpen = false,
   peek = "dock",
+  badge,
+  onOpenChange,
   className,
 }: {
   title: string;
@@ -34,12 +36,24 @@ export function BottomSheet({
    * 독과 공존하는 화면). "edge" = 화면 바닥(bottom-0 — 독이 없는 로비).
    */
   peek?: "dock" | "edge";
+  /** 접힘 상태(모바일) 핸들에 뜨는 미열람 수 — 0/undefined 면 숨김. */
+  badge?: number;
+  /** 펼침/접힘 변화 통지 — 소비자가 미열람 카운트를 리셋하는 데 쓴다. */
+  onOpenChange?: (open: boolean) => void;
   className?: string;
 }) {
   const { layout } = useDisplay();
   const [open, setOpen] = useState(defaultOpen);
   const [pull, setPull] = useState(0);
   const startYRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    onOpenChange?.(open);
+    // onOpenChange 미메모이즈 호출부 허용 — open 만 의존.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  const showBadge = !open && typeof badge === "number" && badge > 0;
 
   const onPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
     startYRef.current = e.clientY;
@@ -110,7 +124,14 @@ export function BottomSheet({
               >
                 <span aria-hidden="true" className="h-1 w-10 rounded-full bg-white/25" />
                 <span className="flex w-full items-center justify-between text-sm">
-                  <span className="font-semibold text-white">{title}</span>
+                  <span className="flex items-center gap-2">
+                    <span className="font-semibold text-white">{title}</span>
+                    {showBadge ? (
+                      <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[0.625rem] font-bold leading-none text-white">
+                        {badge! > 9 ? "9+" : badge}
+                      </span>
+                    ) : null}
+                  </span>
                   <span className="text-xs text-white/40">{open ? "내리기" : "올리기"}</span>
                 </span>
               </button>
