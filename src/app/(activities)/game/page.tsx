@@ -246,6 +246,20 @@ function GameShell({ session }: { session: ActivitySession }) {
     }
   }
 
+  // 로비 나가기: 풀 리로드 없이 앱 상태를 랜딩(로비 선택 화면)으로 되돌린다.
+  async function returnToLanding() {
+    setMatch(null);
+    setBoot({ status: "landing" });
+    if (gameJwt && channelId) {
+      try {
+        const existing = await resolveMatch({ discordChannelId: channelId, instanceId }, gameJwt);
+        setLandingMatch(existing);
+      } catch {
+        // 재조회 실패 시 직전 landingMatch 로 랜딩 화면 유지.
+      }
+    }
+  }
+
   async function joinGame() {
     if (!gameJwt || !landingMatch) return;
     setBoot({ status: "joining" });
@@ -346,7 +360,7 @@ function GameShell({ session }: { session: ActivitySession }) {
   if (match.status === "lobby") {
     return (
       <GameFrame status="lobby">
-        <LobbyPhase session={session} match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} />
+        <LobbyPhase session={session} match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} onLeave={returnToLanding} />
       </GameFrame>
     );
   }

@@ -50,6 +50,7 @@ function renderPhasePreview(key: string): React.ReactNode {
           players={MOCK_PLAYERS}
           myPlayer={ME}
           gameJwt="preview"
+          onLeave={() => {}}
         />
       );
     case "role_assign":

@@ -28,6 +28,7 @@ type LobbyPhaseProps = {
   players: PlayerSummary[];
   myPlayer: PlayerSummary | null;
   gameJwt: string;
+  onLeave: () => void | Promise<void>;
 };
 
 function Info({ label, value }: { label: string; value: string }) {
@@ -60,7 +61,7 @@ function hostName(players: PlayerSummary[], hostUserId: string | null): string {
   return players.find((player) => player.userId === hostUserId)?.displayName ?? "-";
 }
 
-export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: LobbyPhaseProps) {
+export function LobbyPhase({ session, match, players, myPlayer, gameJwt, onLeave }: LobbyPhaseProps) {
   const [readyPending, setReadyPending] = useState(false);
   const [startPending, setStartPending] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -139,7 +140,9 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt }: Lobby
     setLeavePending(true);
     try {
       await leaveMatch(match.id, gameJwt);
-      if (typeof window !== "undefined") window.location.reload();
+      // Discord Activity의 프록시 iframe에서 location.reload()는 SDK 컨텍스트를
+      // 잃어 로비로 못 돌아간다. 풀 리로드 대신 앱 상태만 랜딩으로 되돌린다.
+      await onLeave();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "나가기 실패");
       setLeavePending(false);
