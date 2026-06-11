@@ -24,6 +24,7 @@ import { GOMDORI_ROLES } from "@/config/gomdori-roles";
 import { GOMDORI_RULES } from "@/config/gomdori-rules";
 import { GameStage } from "@/components/game/ui/GameStage";
 import { BottomSheet } from "@/components/game/ui/BottomSheet";
+import { SettingsSheet } from "@/components/game/ui/SettingsSheet";
 import { useDisplay } from "@/lib/game/display";
 
 type LobbyPhaseProps = {
@@ -75,6 +76,7 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
   const [leavePending, setLeavePending] = useState(false);
   const [copied, setCopied] = useState(false);
   const [neutralPending, setNeutralPending] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const { layout } = useDisplay();
   const hostLabel = useMemo(() => hostName(players, match.hostUserId), [match.hostUserId, players]);
@@ -214,6 +216,20 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
         </div>
       ) : null}
 
+      <button
+        type="button"
+        onClick={() => setSettingsOpen(true)}
+        className="flex w-full items-center justify-between rounded-md border border-white/10 bg-black/20 px-3 py-2.5 text-sm text-white/70 transition-colors hover:bg-white/[0.06]"
+      >
+        <span>설정 · 규칙 · 직업</span>
+        <span aria-hidden="true" className="text-white/40">⚙</span>
+      </button>
+    </>
+  );
+
+  // 톱니 창 — 설정(중립)·규칙·직업·참가자 관리. 본문에서 빼낸 무거운 묶음.
+  const settingsContent = (
+    <>
       <div className="rounded-md border border-white/10 bg-black/20 p-3">
         <div className="text-xs uppercase tracking-widest text-white/35">게임 설정</div>
         <div className="mt-2 flex items-center justify-between gap-2">
@@ -324,8 +340,18 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
             <p className="text-xs uppercase tracking-[0.18em] text-white/35">Gomdori Mafia</p>
             <h1 className="mt-1 text-2xl font-semibold text-white">로비</h1>
           </div>
-          <div className="rounded-md border border-emerald-300/20 bg-emerald-300/10 px-3 py-1 text-xs text-emerald-100">
-            대기 중
+          <div className="flex items-center gap-2">
+            <div className="rounded-md border border-emerald-300/20 bg-emerald-300/10 px-3 py-1 text-xs text-emerald-100">
+              대기 중
+            </div>
+            <button
+              type="button"
+              onClick={() => setSettingsOpen(true)}
+              aria-label="설정 · 규칙 · 직업 열기"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/12 text-white/55 transition-colors hover:bg-white/[0.08] hover:text-white"
+            >
+              <span aria-hidden="true">⚙</span>
+            </button>
           </div>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -426,7 +452,10 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
     return (
       <div className="flex w-full max-w-xl flex-col p-4 pb-20">
         {mainPanel}
-        <BottomSheet title="친구 부르기 · 게임 안내" peek="edge">{sheetContent}</BottomSheet>
+        <BottomSheet title="친구 부르기" peek="edge">{sheetContent}</BottomSheet>
+        <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} title="설정 · 규칙 · 직업">
+          {settingsContent}
+        </SettingsSheet>
       </div>
     );
   }
@@ -434,7 +463,10 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
   return (
     <div className="grid w-full max-w-6xl grid-cols-[1.6fr_0.9fr] items-start gap-5 p-5 pb-10">
       {mainPanel}
-      <BottomSheet title="친구 부르기 · 게임 안내" peek="edge">{sheetContent}</BottomSheet>
+      <BottomSheet title="친구 부르기" peek="edge">{sheetContent}</BottomSheet>
+      <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} title="설정 · 규칙 · 직업">
+        {settingsContent}
+      </SettingsSheet>
     </div>
   );
 }

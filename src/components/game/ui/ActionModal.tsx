@@ -33,9 +33,11 @@ export function ActionModal({
   const eyebrowInk = light ? "text-amber-800" : "text-white/45";
 
   return (
+    // 하단 고정 — 데스크톱도 중앙이 아니라 독 위에 안착시켜 무대(테이블)를 가리지 않는다.
+    // (사용자 요구 2026-06-11: 투표창이 중앙에 박혀 무대를 덮던 문제.)
     <div
-      className={`pointer-events-none fixed inset-0 z-40 flex items-end justify-center px-4 sm:items-center sm:pb-4 ${
-        raised ? "pb-32" : "pb-20"
+      className={`pointer-events-none fixed inset-0 z-40 flex items-end justify-center px-4 ${
+        raised ? "pb-32 sm:pb-32" : "pb-20 sm:pb-24"
       }`}
     >
       <div

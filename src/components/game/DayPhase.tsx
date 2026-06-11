@@ -17,9 +17,11 @@ type DayPhaseProps = {
   players: PlayerSummary[];
   events: Array<{ id: string; event_type: string; payload?: Record<string, unknown> }>;
   myPlayer: PlayerSummary | null;
+  /** 토론 페이즈 종료 시각 — 무대 위 차고 노는 타이머 오브에 쓰인다. */
+  phaseEndsAt?: string | null;
 };
 
-export function DayPhase({ players, events, myPlayer }: DayPhaseProps) {
+export function DayPhase({ players, events, myPlayer, phaseEndsAt }: DayPhaseProps) {
   const deathEvent = events.find((e) => {
     if (e.event_type === "player_died") return true;
     return e.event_type === "player_eliminated" && e.payload?.cause === "night_kill";
@@ -63,7 +65,12 @@ export function DayPhase({ players, events, myPlayer }: DayPhaseProps) {
             생존 {players.filter((p) => p.alive).length}명
           </span>
         </div>
-        <GameStage players={players} myUserId={myPlayer?.userId} mood="light" />
+        <GameStage
+          players={players}
+          myUserId={myPlayer?.userId}
+          mood="light"
+          timerOrbEndsAt={phaseEndsAt}
+        />
       </div>
 
       {isDead ? (
