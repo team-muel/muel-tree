@@ -61,6 +61,26 @@ export const GOMDORI_RULES = {
     angels: "aliveDemons === 0",
     demons: "aliveDemons >= aliveAngels",
   },
+
+  /**
+   * 인원 범위 — 원본 기준 8~12 (사용자 확정 2026-06-11: "5인 게임은 의도한 결과
+   * 아님"). backend(match-start 검증) 동기. 로비 시작 조건·구성 미리보기·중립
+   * 등장 자격(최소 인원과 동일)의 단일 출처. 중립 auto 등장 확률은 서버 전용
+   * (muel-bot _shared/game.ts NEUTRAL_SPAWN_CHANCE) — 참여자는 존재를 알 수 없다.
+   */
+  playerCount: {
+    min: 8,
+    max: 12,
+  },
+
+  /**
+   * 게임 길이 안전망 (M2-5 교착 방지). backend 동기.
+   * maxDays 일차의 판결까지 승부가 나지 않으면 우세 판정(카운트 비교, 동률은
+   * 악마 — canon §30)으로 종착. game_ended payload 에 timeout: true 가 실린다.
+   */
+  gameLength: {
+    maxDays: 15,
+  },
 } as const;
 
 export type GomdoriRules = typeof GOMDORI_RULES;
