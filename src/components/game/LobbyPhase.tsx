@@ -81,17 +81,20 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
 
   const isHost = myPlayer?.isHost;
   const total = players.length;
-  const enoughPlayers = total >= 5;
-  const notTooMany = total <= 12;
+  // 인원 범위는 원본 기준 8~12 — 룰 매니페스트 단일 출처 (2026-06-11 확정).
+  const minPlayers = GOMDORI_RULES.playerCount.min;
+  const maxPlayers = GOMDORI_RULES.playerCount.max;
+  const enoughPlayers = total >= minPlayers;
+  const notTooMany = total <= maxPlayers;
   const nonHost = players.filter((p) => !p.isHost);
   const readyCount = nonHost.filter((p) => p.ready).length;
   const everyoneReady = nonHost.every((p) => p.ready);
   const canStart = enoughPlayers && notTooMany && everyoneReady;
 
   // 중립(파스아) 등장 모드 (M3-1, 결정 잠금 #2). auto = 존재를 알 수 없는 확률 등장.
-  // 자격 인원 미만은 모드와 무관하게 등장하지 않는다 — 기준은 룰 매니페스트 단일 출처.
+  // 등장 자격(8인+)은 최소 시작 인원과 일치 — playerCount.min 단일 출처.
   const neutralMode = resolveNeutralMode(match.settings);
-  const neutralEligible = total >= GOMDORI_RULES.neutral.minPlayers;
+  const neutralEligible = total >= minPlayers;
 
   // 인원별 진영 구성 미리보기 (match-start generateRoles 와 동기화: 악마팀 항상 2 =
   // 악마 변종 1 + 조력자 1, 나머지는 천사 풀 추첨. 중립은 등장 시 천사 슬롯 1 대체).
@@ -175,7 +178,7 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
   const sheetContent = (
     <>
       <div>
-        <p className="text-sm text-white/45">5명부터 시작할 수 있어요. 같은 채널 친구를 초대하세요.</p>
+        <p className="text-sm text-white/45">{minPlayers}명부터 시작할 수 있어요. 같은 채널 친구를 초대하세요.</p>
         <button
           type="button"
           onClick={copyInvite}
@@ -249,7 +252,7 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
         <p className="mt-1.5 text-xs leading-5 text-white/35">
           {neutralEligible
             ? "자동: 중립(파스아)이 나올지 아무도 모릅니다. 방장은 강제로 켜거나 끌 수 있어요."
-            : `중립은 ${GOMDORI_RULES.neutral.minPlayers}인부터 등장할 수 있어요. 그 전까지는 자동(미등장)입니다.`}
+            : `중립은 ${minPlayers}인부터 등장할 수 있어요. 그 전까지는 자동(미등장)입니다.`}
         </p>
       </div>
 
@@ -310,7 +313,7 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
     ? `악마 ${composition.demons} · 천사 ${composition.angels}${
         composition.neutral === "one" ? " · 중립 1" : composition.neutral === "unknown" ? " · 중립 ?" : ""
       }`
-    : "5명 모이면 공개";
+    : `${minPlayers}명 모이면 공개`;
 
   const mainPanel = (
     <section className="flex min-w-0 flex-col">
@@ -355,8 +358,8 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
       <div className="mx-auto w-full max-w-sm">
         {isHost ? (
           <ul className="mb-4 space-y-1.5 text-sm" aria-label="시작 조건">
-            <Requirement met={enoughPlayers} label={`5명 이상 (${total}/5)`} />
-            <Requirement met={notTooMany} label="12명 이하" />
+            <Requirement met={enoughPlayers} label={`${minPlayers}명 이상 (${total}/${minPlayers})`} />
+            <Requirement met={notTooMany} label={`${maxPlayers}명 이하`} />
             <Requirement met={everyoneReady} label={`참가자 전원 준비 (${readyCount}/${nonHost.length})`} />
           </ul>
         ) : null}

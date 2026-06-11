@@ -63,15 +63,14 @@ export const GOMDORI_RULES = {
   },
 
   /**
-   * 중립(파스아) 등장 정책 (결정 잠금 #2 — 확률 등장). backend 동기.
-   * - minPlayers: 등장 자격 최소 인원 (중립은 천사 슬롯 1 대체).
-   * - autoSpawnChance: 모드 "auto"(기본)의 등장 확률 — 참여자는 존재를 알 수 없다.
-   *   호스트는 로비 설정(match-settings)으로 "on"/"off" 강제 가능.
-   *   판정 권위는 서버(muel-bot _shared/neutral.ts) — 이 값은 표시/안내용 동기 사본.
+   * 인원 범위 — 원본 기준 8~12 (사용자 확정 2026-06-11: "5인 게임은 의도한 결과
+   * 아님"). backend(match-start 검증) 동기. 로비 시작 조건·구성 미리보기·중립
+   * 등장 자격(최소 인원과 동일)의 단일 출처. 중립 auto 등장 확률은 서버 전용
+   * (muel-bot _shared/game.ts NEUTRAL_SPAWN_CHANCE) — 참여자는 존재를 알 수 없다.
    */
-  neutral: {
-    minPlayers: 8,
-    autoSpawnChance: 1 / 3,
+  playerCount: {
+    min: 8,
+    max: 12,
   },
 
   /**
