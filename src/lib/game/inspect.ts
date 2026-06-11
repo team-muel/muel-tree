@@ -35,16 +35,17 @@ function read(matchId?: string | null): InspectGuessMap {
 }
 
 /** matchId 범위의 추측 맵 + 저장기. localStorage 백엔드(없으면 메모리). */
-export function useInspectGuesses(matchId?: string | null) {
+export function useInspectGuesses(matchId?: string | null, enabled = true) {
   const [guesses, setGuesses] = useState<InspectGuessMap>({});
 
   // 마운트/매치변경 시 로드.
   useEffect(() => {
-    setGuesses(read(matchId));
-  }, [matchId]);
+    setGuesses(enabled ? read(matchId) : {});
+  }, [enabled, matchId]);
 
   const save = useCallback(
     (userId: string, guess: InspectGuess) => {
+      if (!enabled) return;
       setGuesses((prev) => {
         const next = { ...prev, [userId]: guess };
         if (typeof window !== "undefined") {
@@ -57,7 +58,7 @@ export function useInspectGuesses(matchId?: string | null) {
         return next;
       });
     },
-    [matchId],
+    [enabled, matchId],
   );
 
   return { guesses, save };

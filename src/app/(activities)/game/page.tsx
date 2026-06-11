@@ -408,8 +408,8 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "night") {
     return (
-      <GameFrame status="night" phaseEndsAt={phaseEndsAt} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} myName={myPlayer?.displayName} myAvatarUrl={myPlayer?.avatarUrl} dayNumber={currentPhase?.phaseNumber}>
-        <NightPhase match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} events={events} />
+      <GameFrame status="night" phaseEndsAt={phaseEndsAt} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} myName={myPlayer?.displayName} myAvatarUrl={myPlayer?.avatarUrl} dayNumber={currentPhase?.phaseNumber} hideStatusDock>
+        <NightPhase match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} events={events} phaseEndsAt={phaseEndsAt} dayNumber={currentPhase?.phaseNumber} />
       </GameFrame>
     );
   }
@@ -474,6 +474,7 @@ function GameFrame({
   myName,
   myAvatarUrl,
   dayNumber,
+  hideStatusDock = false,
 }: {
   children: React.ReactNode;
   status?: string;
@@ -483,6 +484,7 @@ function GameFrame({
   myName?: string;
   myAvatarUrl?: string | null;
   dayNumber?: number;
+  hideStatusDock?: boolean;
 }) {
   const tone = status ? PHASE_TONES[status as keyof typeof PHASE_TONES] : undefined;
   const bg = tone?.bg ?? "bg-[#11131a]";
@@ -497,7 +499,7 @@ function GameFrame({
     >
       {/* 로비는 독을 띄우지 않는다 — 화면 자체가 상태("대기 중")를 말하고 있어
           정보 중복인 데다, 모바일에서 시트 peek 과 하단 자리를 다퉜다. */}
-      {status !== "lobby" ? (
+      {status !== "lobby" && !hideStatusDock ? (
         <StatusDock
           status={status}
           dayNumber={dayNumber}

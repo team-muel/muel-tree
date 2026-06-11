@@ -42,6 +42,9 @@ export function StatusDock({
   myName,
   myAvatarUrl,
   inline = false,
+  profilePanel,
+  expanded,
+  onExpandedChange,
 }: {
   status?: string;
   dayNumber?: number;
@@ -54,9 +57,22 @@ export function StatusDock({
   myAvatarUrl?: string | null;
   /** true 면 fixed 대신 흐름 내 렌더 (preview 작업대용). */
   inline?: boolean;
+  /** 펼친 프로필 영역을 페이즈별 상호작용 패널로 대체한다. */
+  profilePanel?: React.ReactNode;
+  /** 제공되면 펼침 상태를 외부에서 제어한다. */
+  expanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [internalExpanded, setInternalExpanded] = useState(false);
   const state = status ? STATE_LINE[status] : undefined;
+  const isControlled = expanded !== undefined;
+  const expandedValue = expanded ?? internalExpanded;
+  const setExpandedValue = (next: boolean) => {
+    if (!isControlled) {
+      setInternalExpanded(next);
+    }
+    onExpandedChange?.(next);
+  };
 
   // 직업 노출 페이즈에서만 프로필 클러스터를 켠다 (로비·배정·종료 제외).
   const showProfile =
@@ -68,7 +84,7 @@ export function StatusDock({
     FACTION_COLORS[(myFaction ?? "neutral") as keyof typeof FACTION_COLORS]?.accent ??
     "text-white/70";
 
-  const open = expanded && showProfile;
+  const open = expandedValue && showProfile;
 
   return (
     <div
@@ -81,7 +97,7 @@ export function StatusDock({
       <div className="pointer-events-auto w-full max-w-2xl">
         {open ? (
           <div className="mb-2 rounded-2xl border border-white/12 border-t-white/20 bg-[#100e18]/95 p-4 shadow-[0_8px_32px_rgba(0,0,0,0.45)] backdrop-blur-xl motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-200">
-            <MyRolePanel role={myRole as string} faction={myFaction} />
+            {profilePanel ?? <MyRolePanel role={myRole as string} faction={myFaction} />}
           </div>
         ) : null}
 
@@ -90,7 +106,7 @@ export function StatusDock({
             <>
               <button
                 type="button"
-                onClick={() => setExpanded((v) => !v)}
+                onClick={() => setExpandedValue(!expandedValue)}
                 aria-expanded={open}
                 aria-label="내 직업 보기"
                 className="flex shrink-0 items-center gap-2 rounded-xl px-1 py-0.5 transition-colors hover:bg-white/[0.06]"

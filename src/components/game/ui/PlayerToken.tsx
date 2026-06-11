@@ -39,6 +39,7 @@ export function PlayerToken({
   isGuessingEdit = false,
   onToggleGuessingEdit,
   votedStamp = false,
+  suspicionStamp = false,
   abilityStamp = false,
 }: {
   name: string;
@@ -76,6 +77,7 @@ export function PlayerToken({
   isGuessingEdit?: boolean;
   onToggleGuessingEdit?: () => void;
   votedStamp?: boolean;
+  suspicionStamp?: boolean;
   abilityStamp?: boolean;
 }) {
   const light = mood === "light";
@@ -187,13 +189,26 @@ export function PlayerToken({
   const moved = offset.x !== 0 || offset.y !== 0;
   const offsetStyle = moved ? { transform: `translate(${offset.x}px, ${offset.y}px)` } : undefined;
   const movableCursor = movable ? (dragging ? "cursor-grabbing" : "cursor-grab") : "";
+  const guessFx =
+    guess === "demon"
+      ? "ring-2 ring-black/70 shadow-[0_0_22px_rgba(0,0,0,0.55)]"
+      : guess === "angel"
+        ? "ring-2 ring-white/70 shadow-[0_0_22px_rgba(255,255,255,0.28)]"
+        : "";
 
   const body = (
     <>
       {/* 낙인 (Stamps) */}
-      {votedStamp && (
-        <span className="absolute -top-1.5 -left-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-rose-600 text-white text-xs font-bold border border-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.6)] animate-bounce z-10">
-          🗳️
+      {(votedStamp || suspicionStamp) && (
+        <span
+          className={`absolute -top-1.5 -left-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full border text-xs font-bold text-white shadow-[0_0_12px_rgba(99,102,241,0.45)] ${
+            votedStamp
+              ? "border-rose-400 bg-rose-600 shadow-[0_0_12px_rgba(244,63,94,0.6)]"
+              : "border-indigo-300 bg-indigo-600"
+          }`}
+          aria-label={votedStamp ? "투표 대상" : "의심 대상"}
+        >
+          {votedStamp ? "표" : "?"}
         </span>
       )}
       {abilityStamp && (
@@ -303,7 +318,7 @@ export function PlayerToken({
         style={offsetStyle}
         className={`relative flex flex-col items-center text-center transition-all duration-500 ${frame} ${enter} ${
           movable ? `touch-none ${movableCursor}` : ""
-        } ${dragging ? "z-30" : ""}`}
+        } ${dragging ? "z-30" : ""} ${guessFx}`}
       >
         {body}
       </div>
@@ -321,7 +336,7 @@ export function PlayerToken({
         movable ? `touch-none ${movableCursor}` : ""
       } ${dragging ? "z-30" : ""} ${
         selected && chrome ? selectedGlow : pickable && chrome && !disabled ? pickFx : ""
-      } ${disabled && !selected ? "cursor-not-allowed opacity-40" : ""}`}
+      } ${guessFx} ${disabled && !selected ? "cursor-not-allowed opacity-40" : ""}`}
     >
       {body}
     </button>

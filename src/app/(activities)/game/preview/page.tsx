@@ -89,6 +89,8 @@ function renderPhasePreview(
           players={players}
           myPlayer={me}
           gameJwt="preview"
+          dayNumber={2}
+          statusDockInline
         />
       );
     case "night_suspect":
@@ -177,7 +179,7 @@ function PreviewSection({
 }) {
   const tone = PHASE_TONES[toneKey as keyof typeof PHASE_TONES];
   const moodLabel = tone?.mood === "light" ? "낮 무드" : "밤 무드";
-  const showDock = toneKey !== "lobby";
+  const showDock = toneKey !== "lobby" && toneKey !== "night";
   const hideRole = toneKey === "role_assign";
   return (
     <section className="overflow-hidden rounded-lg border border-white/10 bg-black/30">

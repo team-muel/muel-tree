@@ -1,17 +1,16 @@
 "use client";
 
 /**
- * SuspicionPhase — 밤 의심 투표. 심야 무대 위에서 지목 + 창으로 확정
- * (투표와 동일한 Feign 구조, 인디고 광휘). 로직 동일.
+ * SuspicionPhase — 밤 의심 투표. 투표와 같은 즉시 지목 + 개인 낙인 흐름.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
 import { submitAction } from "@/lib/game/api";
+import { getGameSupabase } from "@/lib/game/client";
 import { GLOW } from "@/config/design-tokens";
 import { Button } from "@/components/game/ui/Button";
 import { GameStage } from "@/components/game/ui/GameStage";
-import { ActionModal } from "@/components/game/ui/ActionModal";
 import { BottomSheet } from "@/components/game/ui/BottomSheet";
 import { SpectatorFeed } from "@/components/game/ui/SpectatorFeed";
 
@@ -33,14 +32,56 @@ export function SuspicionPhase({ match, players, myPlayer, gameJwt, events }: Su
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    const actorUserId = myPlayer?.userId;
+    if (!match.id || !gameJwt || !actorUserId) return;
+
+    let cancelled = false;
+    const supabase = getGameSupabase(gameJwt);
+
+    async function restoreSuspicionVote() {
+      const { data: phaseData, error: phaseError } = await supabase
+        .schema("mafia")
+        .from("match_phases")
+        .select("id")
+        .eq("match_id", match.id)
+        .is("ended_at", null)
+        .order("phase_number", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (cancelled || phaseError || !phaseData) return;
+
+      const { data: actionData, error: actionError } = await supabase
+        .schema("mafia")
+        .from("match_actions")
+        .select("target_user_id")
+        .eq("phase_id", phaseData.id)
+        .eq("actor_user_id", actorUserId)
+        .eq("action_type", "suspect")
+        .maybeSingle();
+
+      if (cancelled || actionError || !actionData) return;
+
+      setSelectedTarget(actionData.target_user_id);
+      setSubmitted(true);
+    }
+
+    restoreSuspicionVote();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [match.id, gameJwt, myPlayer?.userId]);
+
   const isDead = myPlayer && !myPlayer.alive;
 
-  const submit = async (targetId: string | null) => {
+  const handleSuspicionVote = async (targetId: string | null) => {
     setIsSubmitting(true);
     setError(null);
     try {
       await submitAction(match.id, "suspect", targetId, gameJwt);
-      if (targetId) setSelectedTarget(targetId);
+      setSelectedTarget(targetId);
       setSubmitted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "의심 투표 실패");
@@ -76,55 +117,49 @@ export function SuspicionPhase({ match, players, myPlayer, gameJwt, events }: Su
         matchId={match.id}
         excludeSelf
         selectedId={selectedTarget}
+        suspicionTargetId={selectedTarget}
         selectedGlow={GLOW.selectNight}
-        disabled={submitted}
-        onSelect={(id) => !submitted && setSelectedTarget(id)}
+        disabled={isSubmitting}
+        onSelect={(id) => {
+          if (!isSubmitting) {
+            handleSuspicionVote(id);
+          }
+        }}
       />
 
-      <ActionModal
-        eyebrow="의심 투표"
-        title={
-          submitted
-            ? selectedTarget
-              ? "의심 완료"
-              : "기권 완료"
-            : selectedName
-              ? `${selectedName}님이 수상한가요?`
-              : "이 밤, 누가 가장 수상한가요"
-        }
-        mood="dark"
-        footer={
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Button
-              type="button"
-              variant="indigo"
-              onClick={() => submit(selectedTarget)}
-              disabled={!selectedTarget || isSubmitting || submitted}
-              className="w-full"
-            >
-              {submitted && selectedTarget ? "의심 완료" : isSubmitting ? "전송 중..." : "의심 확정"}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => submit(null)}
-              disabled={isSubmitting || submitted}
-              className="w-full"
-            >
-              {submitted && !selectedTarget ? "기권 완료" : "기권하기"}
-            </Button>
-          </div>
-        }
-      >
-        <p className="mt-1 text-sm text-indigo-200/50">
-          최다 의심자는 전원에게 공개되고 이번 밤 능력을 쓸 수 없습니다. 확신이 없으면 기권하세요.
+      <div className="mx-auto mt-6 w-full max-w-md rounded-2xl border border-indigo-200/15 bg-[#15131e]/90 p-5 text-center text-white shadow-sm backdrop-blur-md">
+        <div className="text-xs font-semibold uppercase tracking-widest text-indigo-200/55">
+          의심 투표
+        </div>
+        <h2 className="mt-1 text-lg font-semibold">
+          {selectedTarget !== null && submitted
+            ? `${selectedName}님에게 의심 낙인을 찍었습니다.`
+            : selectedTarget === null && submitted
+              ? "기권했습니다."
+              : "무대 위 인물을 클릭해 의심 낙인을 찍으세요."}
+        </h2>
+        <p className="mt-1 text-xs leading-relaxed text-indigo-100/45">
+          최다 의심자는 전원에게 공개되고 이번 밤 능력을 쓸 수 없습니다. 대상을 다시 클릭하면 교체됩니다.
         </p>
+
+        <div className="mt-4 flex justify-center">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => handleSuspicionVote(null)}
+            disabled={isSubmitting}
+            className="w-full max-w-[200px] border-indigo-200/20 text-indigo-100/70 hover:bg-indigo-200/10"
+          >
+            {selectedTarget === null && submitted ? "기권 완료 ✓" : "기권하기"}
+          </Button>
+        </div>
+
         {error ? (
           <p role="alert" className="mt-2 text-sm text-rose-300">
             {error}
           </p>
         ) : null}
-      </ActionModal>
+      </div>
     </div>
   );
 }

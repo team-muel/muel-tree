@@ -43,6 +43,8 @@ export function GameStage({
   selectedGlow,
   disabled = false,
   onSelect,
+  onInspect,
+  inspectable = false,
   matchId,
   movable = false,
   roam = false,
@@ -51,6 +53,7 @@ export function GameStage({
   subFor,
   className,
   votedTargetId = null,
+  suspicionTargetId = null,
   abilityTargetId = null,
 }: {
   players: PlayerSummary[];
@@ -89,16 +92,26 @@ export function GameStage({
   subFor?: (p: PlayerSummary, isMe: boolean) => React.ReactNode;
   className?: string;
   votedTargetId?: string | null;
+  suspicionTargetId?: string | null;
   abilityTargetId?: string | null;
 }) {
   const light = mood === "light";
 
   // 정체 추측(R3) — 무대 위 클릭 선택기 구성
   const [activeGuessEditUserId, setActiveGuessEditUserId] = useState<string | null>(null);
-  const { guesses, save } = useInspectGuesses(matchId);
+  const guessEnabled = inspectable && Boolean(matchId);
+  const { guesses, save } = useInspectGuesses(matchId, guessEnabled);
 
   const toggleGuessEdit = (uid: string) => {
+    if (!guessEnabled) return;
     setActiveGuessEditUserId(activeGuessEditUserId === uid ? null : uid);
+  };
+  const inspectPlayer = (uid: string) => {
+    if (onInspect) {
+      onInspect(uid);
+      return;
+    }
+    toggleGuessEdit(uid);
   };
 
   const canDrag = movable && !selectable;
@@ -106,7 +119,7 @@ export function GameStage({
   return (
     <div
       className={`relative w-full ${className ?? ""}`}
-      onClick={() => setActiveGuessEditUserId(null)}
+      onClick={() => guessEnabled && setActiveGuessEditUserId(null)}
     >
       {/* 무대 바닥 — 은은한 타원 광 */}
       <div
@@ -121,7 +134,14 @@ export function GameStage({
           const eligible = canSelect ? canSelect(p) : p.alive && !(excludeSelf && isMe);
           const canPick = selectable && !disabled && eligible && Boolean(onSelect);
           const drift = roam && p.alive ? roamMotion(index) : null;
-          const userGuess = guesses[p.userId]?.faction === "demon" ? "demon" : guesses[p.userId]?.faction === "angel" ? "angel" : null;
+          const canInspectPlayer = inspectable && !isMe && (Boolean(onInspect) || guessEnabled);
+          const userGuess = guessEnabled
+            ? guesses[p.userId]?.faction === "demon"
+              ? "demon"
+              : guesses[p.userId]?.faction === "angel"
+                ? "angel"
+                : null
+            : null;
 
           return (
             <div
@@ -143,21 +163,22 @@ export function GameStage({
                 movable={canDrag}
                 sub={subFor ? subFor(p, isMe) : isMe ? "나" : !p.alive ? "사망" : undefined}
                 guess={userGuess}
-                onGuessChange={(g) => save(p.userId, { faction: g ?? "", role: "", memo: "" })}
+                onGuessChange={guessEnabled ? (g) => save(p.userId, { faction: g ?? "", role: "", memo: "" }) : undefined}
                 isGuessingEdit={activeGuessEditUserId === p.userId}
                 onToggleGuessingEdit={() => setActiveGuessEditUserId(null)}
                 votedStamp={p.userId === votedTargetId}
+                suspicionStamp={p.userId === suspicionTargetId}
                 abilityStamp={p.userId === abilityTargetId}
                 onClick={
                   selectable
                     ? (canPick || isMe)
                       ? () => onSelect?.(p.userId)
                       : undefined
-                    : !isMe
-                      ? () => toggleGuessEdit(p.userId)
+                    : canInspectPlayer
+                      ? () => inspectPlayer(p.userId)
                       : undefined
                 }
-                onInspect={!isMe ? () => toggleGuessEdit(p.userId) : undefined}
+                onInspect={canInspectPlayer ? () => inspectPlayer(p.userId) : undefined}
                 idleDelayMs={(index % 7) * 420}
               />
             </div>
