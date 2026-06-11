@@ -8,10 +8,7 @@
  * - 이 채널에 모인 사람들이 Discord 아바타 토큰으로 무대 위를 배회하며 (Feign 최소구조),
  * - 행동(만들기/참가)이 무대 아래 선다.
  *
- * 레이아웃: useDisplay().layout 으로 모바일/데스크톱 *별도 구조* 렌더.
- * - 데스크톱: 와이드 패널 — 아트 헤더, 무대, 2열 액션.
- * - 모바일: 세로 흐름 — 컴팩트 아트, 무대가 가운데 호흡, 풀폭 액션 스택.
- * 로직(만들기/참가 판정)은 기존과 동일 — 구조만 개편.
+ * 2026-06-12 2차 개편: 복수 테이블 리스트형 방 선택 기능 추가.
  */
 
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
@@ -22,11 +19,12 @@ import { GOMDORI_RULES } from "@/config/gomdori-rules";
 import { useDisplay } from "@/lib/game/display";
 
 type LandingScreenProps = {
-  existing: MatchSummary | null;
+  openMatches: MatchSummary[];
+  playerCounts: Record<string, number>;
   participants: InstanceParticipant[];
   myUserId?: string | null;
   onCreate: () => void;
-  onJoin: () => void;
+  onJoin: (matchId: string) => void;
 };
 
 /** Activity 인스턴스 참가자 → 무대 토큰. 매치 전이므로 전원 생존·비호스트 취급. */
@@ -72,7 +70,7 @@ function RosterStage({
   if (stagePlayers.length === 0) {
     return (
       <div className="rounded-md border border-white/10 bg-black/20 px-4 py-6 text-center text-sm text-white/40">
-        아직 무대가 비어 있어요 — 음성 채널에서 Activity를 연 사람이 여기 모입니다.
+        아직 무대가 비어 있어요 — 음성 채널에서 Activity를 연 사람이 여기 모립니다.
       </div>
     );
   }
@@ -95,35 +93,55 @@ function RosterStage({
   );
 }
 
-function Actions({
-  existing,
-  onCreate,
+function MatchListPanel({
+  openMatches,
+  playerCounts,
   onJoin,
-  stacked = false,
 }: {
-  existing: MatchSummary | null;
-  onCreate: () => void;
-  onJoin: () => void;
-  stacked?: boolean;
+  openMatches: MatchSummary[];
+  playerCounts: Record<string, number>;
+  onJoin: (matchId: string) => void;
 }) {
-  const joinable = existing != null && existing.status === "lobby";
+  if (openMatches.length === 0) {
+    return (
+      <div className="rounded-xl border border-white/5 bg-black/10 px-4 py-8 text-center text-sm text-white/30">
+        현재 대기 중인 게임방이 없습니다. 첫 번째 방을 만들어보세요!
+      </div>
+    );
+  }
+
   return (
-    <div className={`grid gap-3 ${stacked ? "grid-cols-1" : "grid-cols-2"}`}>
-      <button
-        type="button"
-        onClick={onCreate}
-        className="h-14 rounded-lg bg-emerald-300 text-base font-semibold text-slate-950 transition-colors hover:bg-emerald-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
-      >
-        게임 만들기
-      </button>
-      <button
-        type="button"
-        onClick={onJoin}
-        disabled={existing == null}
-        className="h-14 rounded-lg border border-white/15 bg-white/[0.06] text-base font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 disabled:cursor-not-allowed disabled:text-white/30 disabled:hover:bg-white/[0.06]"
-      >
-        {joinable ? "참가하기" : existing != null ? "진행 중인 게임 참가" : "열린 게임 없음"}
-      </button>
+    <div className="space-y-2">
+      <div className="text-xs font-semibold uppercase tracking-widest text-white/35 px-1">
+        대기 중인 게임방 ({openMatches.length})
+      </div>
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 max-h-48 overflow-y-auto pr-1">
+        {openMatches.map((m) => {
+          const count = playerCounts[m.id] || 0;
+          return (
+            <div
+              key={m.id}
+              className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] p-4 transition hover:bg-white/[0.08]"
+            >
+              <div className="min-w-0 flex-1 pr-3">
+                <div className="truncate text-sm font-semibold text-white">
+                  {m.tableLabel || "마피아 게임방"}
+                </div>
+                <div className="mt-1 text-xs text-white/45">
+                  참가 인원: {count} / {m.maxPlayers}명
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => onJoin(m.id)}
+                className="shrink-0 rounded-lg bg-emerald-400 hover:bg-emerald-300 px-4 py-2 text-xs font-bold text-slate-950 transition"
+              >
+                참가
+              </button>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -142,13 +160,30 @@ function FlowStrip() {
 }
 
 export function LandingScreen({
-  existing,
+  openMatches,
+  playerCounts,
   participants,
   myUserId,
   onCreate,
   onJoin,
 }: LandingScreenProps) {
   const { layout } = useDisplay();
+
+  const mainPanel = (
+    <div className="flex flex-col gap-4">
+      <RosterStage participants={participants} myUserId={myUserId} />
+      <MatchListPanel openMatches={openMatches} playerCounts={playerCounts} onJoin={onJoin} />
+      <div className="flex flex-col gap-3">
+        <button
+          type="button"
+          onClick={onCreate}
+          className="w-full h-12 rounded-lg bg-emerald-300 text-sm font-semibold text-slate-950 transition hover:bg-emerald-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+        >
+          새 게임방 만들기
+        </button>
+      </div>
+    </div>
+  );
 
   if (layout === "mobile") {
     // 모바일: 세로 흐름 — 아트는 컴팩트, 무대가 가운데서 호흡, 액션은 풀폭 스택.
@@ -164,8 +199,7 @@ export function LandingScreen({
           />
           <TitleLockup compact />
         </div>
-        <RosterStage participants={participants} myUserId={myUserId} />
-        <Actions existing={existing} onCreate={onCreate} onJoin={onJoin} stacked />
+        {mainPanel}
         <p className="text-center text-xs leading-5 text-white/40">
           이 음성 채널에서 함께 플레이합니다.
         </p>
@@ -188,8 +222,7 @@ export function LandingScreen({
         <TitleLockup />
       </div>
       <div className="space-y-5 p-7 pt-5">
-        <RosterStage participants={participants} myUserId={myUserId} />
-        <Actions existing={existing} onCreate={onCreate} onJoin={onJoin} />
+        {mainPanel}
         <div className="flex items-center justify-between gap-3 border-t border-white/10 pt-4">
           <p className="text-xs text-white/40">이 음성 채널에서 함께 플레이합니다.</p>
           <FlowStrip />

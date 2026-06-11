@@ -60,6 +60,8 @@ export type MatchSummary = {
   endedAt: string | null;
   // 로비 게임 설정(jsonb 패스스루). 예: { neutral: "auto" | "on" | "off" }.
   settings: Record<string, unknown>;
+  tableLabel?: string;
+  engineState?: Record<string, unknown> | null;
 };
 
 // 중립(파스아) 등장 모드 (M3-1, 결정 잠금 #2). 서버 resolveNeutralMode 와 동일 규칙:
@@ -212,6 +214,28 @@ export async function sendChat(
   return postJson<{ matchId: string; message: string }, { success: boolean }>(
     "match-chat",
     { matchId, message },
+    { gameJwt },
+  );
+}
+
+export async function listMatches(
+  discordChannelId: string,
+  gameJwt: string,
+): Promise<{ matches: MatchSummary[]; playerCounts: Record<string, number> }> {
+  return postJson<{ discordChannelId: string }, { matches: MatchSummary[]; playerCounts: Record<string, number> }>(
+    "match-list",
+    { discordChannelId },
+    { gameJwt },
+  );
+}
+
+export async function sendHeartbeat(
+  matchId: string,
+  gameJwt: string,
+): Promise<{ success: boolean }> {
+  return postJson<{ matchId: string }, { success: boolean }>(
+    "match-heartbeat",
+    { matchId },
     { gameJwt },
   );
 }

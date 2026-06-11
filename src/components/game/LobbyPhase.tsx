@@ -77,6 +77,7 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
   const [copied, setCopied] = useState(false);
   const [neutralPending, setNeutralPending] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [selectedCodexFaction, setSelectedCodexFaction] = useState<"angel" | "demon" | "neutral">("angel");
 
   const { layout } = useDisplay();
   const hostLabel = useMemo(() => hostName(players, match.hostUserId), [match.hostUserId, players]);
@@ -221,7 +222,7 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
         onClick={() => setSettingsOpen(true)}
         className="flex w-full items-center justify-between rounded-md border border-white/10 bg-black/20 px-3 py-2.5 text-sm text-white/70 transition-colors hover:bg-white/[0.06]"
       >
-        <span>설정 · 규칙 · 직업</span>
+        <span>설정 · 규칙 · 도감</span>
         <span aria-hidden="true" className="text-white/40">⚙</span>
       </button>
     </>
@@ -282,19 +283,60 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
         </ul>
       </div>
 
-      <details className="rounded-md border border-white/10 bg-black/20 p-3">
-        <summary className="cursor-pointer text-xs uppercase tracking-widest text-white/35">직업 안내</summary>
-        <ul className="mt-2 space-y-1.5 text-xs leading-5 text-white/55">
+      <div className="rounded-md border border-white/10 bg-black/20 p-3">
+        <div className="text-xs uppercase tracking-widest text-white/35 mb-2">도감 (직업 안내)</div>
+        
+        {/* 진영 선택 탭 */}
+        <div className="flex gap-1 mb-3">
+          {(
+            [
+              { id: "angel", label: "천사" },
+              { id: "demon", label: "악마" },
+              { id: "neutral", label: "중립" },
+            ] as const
+          ).map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => setSelectedCodexFaction(f.id)}
+              className={`flex-1 py-1 rounded text-xs font-bold transition-colors ${
+                selectedCodexFaction === f.id
+                  ? f.id === "angel"
+                    ? "bg-amber-400/20 text-amber-200 border border-amber-300/30"
+                    : f.id === "demon"
+                      ? "bg-rose-400/20 text-rose-200 border border-rose-300/30"
+                      : "bg-violet-400/20 text-violet-200 border border-violet-300/30"
+                  : "border border-white/10 text-white/60 hover:bg-white/[0.04]"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        {/* 탭 내용 */}
+        <ul className="space-y-2 text-xs leading-5 text-white/65 max-h-48 overflow-y-auto pr-1">
           {Object.entries(GOMDORI_ROLES)
-            // 레거시(시민/의사/경찰/조력자 일반)·변환 산물(전향자/타락자)은 배정 풀 아님 — 안내에서 제외.
-            .filter(([id]) => !["citizen", "doctor", "police", "helper", "converted", "corrupted"].includes(id))
+            .filter(([id, r]) => {
+              const isExcluded = ["citizen", "doctor", "police", "helper", "converted", "corrupted"].includes(id);
+              return !isExcluded && r.faction === selectedCodexFaction;
+            })
             .map(([id, r]) => (
-              <li key={id}>
-                <span className="text-white/80">{r.label}</span> — {r.reveal}
+              <li key={id} className="border-b border-white/5 pb-1.5 last:border-b-0 last:pb-0">
+                <span className={`font-semibold ${
+                  selectedCodexFaction === "angel"
+                    ? "text-amber-200"
+                    : selectedCodexFaction === "demon"
+                      ? "text-rose-200"
+                      : "text-violet-200"
+                }`}>
+                  {r.label}
+                </span>{" "}
+                — {r.reveal}
               </li>
             ))}
         </ul>
-      </details>
+      </div>
 
       {isHost && nonHost.length > 0 ? (
         <div className="rounded-md border border-white/10 bg-black/20 p-3">
@@ -347,7 +389,7 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
             <button
               type="button"
               onClick={() => setSettingsOpen(true)}
-              aria-label="설정 · 규칙 · 직업 열기"
+              aria-label="설정 · 규칙 · 도감 열기"
               className="flex h-8 w-8 items-center justify-center rounded-full border border-white/12 text-white/55 transition-colors hover:bg-white/[0.08] hover:text-white"
             >
               <span aria-hidden="true">⚙</span>
@@ -453,7 +495,7 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
       <div className="flex w-full max-w-xl flex-col p-4 pb-20">
         {mainPanel}
         <BottomSheet title="친구 부르기" peek="edge">{sheetContent}</BottomSheet>
-        <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} title="설정 · 규칙 · 직업">
+        <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} title="설정 · 규칙 · 도감">
           {settingsContent}
         </SettingsSheet>
       </div>
@@ -464,7 +506,7 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
     <div className="grid w-full max-w-6xl grid-cols-[1.6fr_0.9fr] items-start gap-5 p-5 pb-10">
       {mainPanel}
       <BottomSheet title="친구 부르기" peek="edge">{sheetContent}</BottomSheet>
-      <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} title="설정 · 규칙 · 직업">
+      <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} title="설정 · 규칙 · 도감">
         {settingsContent}
       </SettingsSheet>
     </div>

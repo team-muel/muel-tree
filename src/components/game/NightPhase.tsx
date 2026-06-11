@@ -1,12 +1,14 @@
 "use client";
 
 /**
- * NightPhase — 밤도 무대다 (무대화, 2026-06-11).
+ * NightPhase — 밤도 무대다 (무대화).
  *
- * 능력 지정 = 무대(GameStage) 위 인물 직접 지목 + 창(ActionModal)에서 확정.
- * 다중 능력(팬텀 봉인·일식, 말렌 빙의, 베스토 변신)은 창 안의 능력 칩으로 전환 —
- * 각 능력은 독립 제출(기존 SecondaryAbility 의미 보존). 악마 채팅은 BottomSheet
- * (데스크톱 사이드 / 모바일 하단 시트). 서버 로직·복원·조사 결과 처리 동일.
+ * 2026-06-12 개편:
+ * - ActionModal 대신 자신의 프로필/능력 선택 패널을 In-flow 카드로 통합.
+ * - 자신의 프로필을 클릭하면 능력 목록이 토글됨.
+ * - 능력을 선택한 상태에서 주민을 지정하면 즉시 능력 대상 낙인(Stamp)을 찍고 백엔드로 제출.
+ * - 먼저 주민을 지목하면, 자신의 프로필/능력 리스트가 열려 능력을 선택하게 하고 선택 완료 시 즉시 낙인을 찍고 전송.
+ * - 교체 가능.
  */
 
 import { useState, useEffect, useRef } from "react";
@@ -17,9 +19,7 @@ import { GOMDORI_RULES } from "@/config/gomdori-rules";
 import { GLOW } from "@/config/design-tokens";
 import { roleLabel, roleMeta, isDemonTeamRole } from "@/config/gomdori-roles";
 import { SpectatorFeed } from "@/components/game/ui/SpectatorFeed";
-import { Button } from "@/components/game/ui/Button";
 import { GameStage } from "@/components/game/ui/GameStage";
-import { ActionModal } from "@/components/game/ui/ActionModal";
 import { BottomSheet } from "@/components/game/ui/BottomSheet";
 
 type NightPhaseProps = {
@@ -45,7 +45,7 @@ type NightAbility = {
   emptyNote?: string;
 };
 
-/** 직업 → 밤 능력 목록 (manifest 기반, 의미는 기존 NightPhase 분기와 동일). */
+/** 직업 → 밤 능력 목록 */
 function buildAbilities(role: string | null | undefined, myUserId: string | null | undefined): NightAbility[] {
   if (!role) return [];
   const meta = roleMeta(role);
@@ -118,12 +118,9 @@ function buildAbilities(role: string | null | undefined, myUserId: string | null
 }
 
 export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightPhaseProps) {
-  // 의심 투표 결과(W1): events 는 최신순이라 첫 suspicion_revealed 가 이번 밤 것.
+  // 의심 투표 결과(W1)
   const suspicionEvent = (events ?? []).find((e) => e.event_type === "suspicion_revealed");
   const suspectedUserId = (suspicionEvent?.payload?.user_id as string | null | undefined) ?? null;
-  const suspectedName = suspectedUserId
-    ? players.find((p) => p.userId === suspectedUserId)?.displayName ?? null
-    : null;
   const iAmSuspected = !!suspectedUserId && suspectedUserId === myPlayer?.userId;
 
   const role = myPlayer?.role;
@@ -136,17 +133,19 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
 
   const [selectedMap, setSelectedMap] = useState<Record<string, string | null>>({});
   const [doneMap, setDoneMap] = useState<Record<string, boolean>>({});
-  const [confirming, setConfirming] = useState(false);
   const [isFirstNight, setIsFirstNight] = useState(false);
   const [busy, setBusy] = useState(false);
   const [investigationResult, setInvestigationResult] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
+  // 자신의 프로필 패널 토글 및 선 지목 저장용 상태
+  const [showMyProfile, setShowMyProfile] = useState(false);
+  const [pendingTarget, setPendingTarget] = useState<string | null>(null);
+
   const [chatMessage, setChatMessage] = useState("");
   const [chats, setChats] = useState<ChatRow[]>([]);
   const [chatError, setChatError] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
-  // 악마챗 미열람 배지 — 시트가 닫혀 있는 동안 들어온 메시지 수.
   const [chatOpen, setChatOpen] = useState(false);
   const [seenChats, setSeenChats] = useState(0);
   const unreadChats = chatOpen ? 0 : Math.max(0, chats.length - seenChats);
@@ -262,7 +261,6 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chats]);
 
-  // 시트가 열려 있는 동안 들어온 메시지는 즉시 본 것으로 — 닫힌 동안의 증가분만 배지.
   useEffect(() => {
     if (chatOpen) setSeenChats(chats.length);
   }, [chatOpen, chats.length]);
@@ -281,13 +279,14 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
     }
   };
 
+  // 능력 즉시 제출 함수
   const handleSubmit = async (ability: NightAbility, target: string | null) => {
     setBusy(true);
     setActionError(null);
     try {
       const res = await submitAction(match.id, ability.actionType, target, gameJwt);
       setDoneMap((m) => ({ ...m, [ability.actionType]: true }));
-      setConfirming(false);
+      setSelectedMap((m) => ({ ...m, [ability.actionType]: target }));
       if (res.investigationResult) {
         setInvestigationResult(res.investigationResult);
       }
@@ -296,6 +295,12 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
     } finally {
       setBusy(false);
     }
+  };
+
+  const handleSelfSubmit = async (ability: NightAbility) => {
+    if (!myPlayer) return;
+    await handleSubmit(ability, null);
+    setSelectedMap((m) => ({ ...m, [ability.actionType]: myPlayer.userId }));
   };
 
   const demonChat = role && isDemonTeamRole(role) && myPlayer?.alive;
@@ -352,45 +357,6 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
     </div>
   );
 
-  const shell = (modal: React.ReactNode, opts?: { selectable?: boolean }) => (
-    <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center p-5 pb-24">
-      <GameStage
-        players={players}
-        myUserId={myPlayer?.userId}
-        mood="dark"
-        inspectable
-        matchId={match.id}
-        selectable={opts?.selectable ?? false}
-        canSelect={opts?.selectable && current ? current.eligible : undefined}
-        selectedId={currentType ? selectedMap[currentType] ?? null : null}
-        selectedGlow={GLOW.selectNight}
-        disabled={busy || (currentType ? doneMap[currentType] : false)}
-        onSelect={(id) => {
-          if (!currentType) return;
-          if (doneMap[currentType]) return;
-          setSelectedMap((m) => ({ ...m, [currentType]: id }));
-          setConfirming(false);
-        }}
-      />
-      {modal}
-      {demonChat ? (
-        <BottomSheet title="악마의 속삭임" badge={unreadChats} onOpenChange={setChatOpen}>
-          {chatPanel}
-        </BottomSheet>
-      ) : null}
-    </div>
-  );
-
-  // --- 특수 상태들 (무대는 유지, 창만 바뀐다) ---
-
-  if (isFirstNight) {
-    return shell(
-      <ActionModal eyebrow="밤" title={GOMDORI_RULES.firstNight.silentMessage} mood="dark">
-        <p className="mt-2 text-sm text-white/40">첫 밤에는 능력을 사용할 수 없습니다. 아침을 기다리세요.</p>
-      </ActionModal>,
-    );
-  }
-
   if (!myPlayer || !myPlayer.alive) {
     return (
       <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center p-5 pb-24">
@@ -403,167 +369,177 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
     );
   }
 
-  if (iAmSuspected) {
-    return shell(
-      <ActionModal eyebrow="밤" title="가장 의심받았습니다" mood="dark">
-        <p className="mt-2 text-sm text-white/50">이번 밤에는 능력을 사용할 수 없습니다. 아침을 기다리세요.</p>
-      </ActionModal>,
-    );
-  }
+  // --- 메인 렌더링 쉘 (무대 및 컨트롤 패널 통합) ---
+  const activeTargetId = currentType ? selectedMap[currentType] ?? null : null;
 
-  const SLEEP_ROLES = ["citizen", "rainer", "converted"];
-  if (role && SLEEP_ROLES.includes(role)) {
-    return shell(
-      <ActionModal eyebrow="밤이 되었습니다" title="당신은 잠들었습니다." mood="dark">
-        <p className="mt-2 text-sm text-white/40">아침이 밝을 때까지 기다려주세요.</p>
-      </ActionModal>,
-    );
-  }
+  return (
+    <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center p-5 pb-24">
+      <GameStage
+        players={players}
+        myUserId={myPlayer.userId}
+        mood="dark"
+        inspectable
+        matchId={match.id}
+        selectable={!isFirstNight && !iAmSuspected}
+        canSelect={current ? current.eligible : undefined}
+        selectedId={activeTargetId}
+        abilityTargetId={activeTargetId}
+        selectedGlow={GLOW.selectNight}
+        disabled={busy}
+        onSelect={(id) => {
+          if (id === myPlayer.userId) {
+            if (current && current.eligible(myPlayer)) {
+              // 자신에게 능력 사용이 가능하면 즉시 제출
+              handleSubmit(current, id);
+            } else {
+              setShowMyProfile(!showMyProfile);
+            }
+          } else {
+            // 다른 주민을 지목했을 때
+            if (current) {
+              // 이미 능력이 선택된 상태라면 즉시 제출 및 낙인
+              handleSubmit(current, id);
+            } else {
+              // 능력이 선택되지 않은 상태라면 임시 타겟으로 저장하고 프로필 패널 띄우기
+              setPendingTarget(id);
+              setShowMyProfile(true);
+            }
+          }
+        }}
+      />
 
-  // --- 채팅 전용 조력자 (가인 등 — 밤 능동 없음) ---
-  if (abilities.length === 0) {
-    if (demonChat) {
-      return shell(
-        <ActionModal eyebrow={roleLabel(role)} title={`당신은 ${roleLabel(role)}입니다`} mood="dark" raised>
-          <p className="mt-2 text-sm text-rose-200/60">
-            직접 공격할 수는 없습니다. 채팅으로 악마와 상의하세요.
-          </p>
-        </ActionModal>,
-      );
-    }
-    return shell(
-      <ActionModal eyebrow="밤" title="조용한 밤입니다" mood="dark">
-        <p className="mt-2 text-sm text-white/40">아침이 밝을 때까지 기다려주세요.</p>
-      </ActionModal>,
-    );
-  }
-
-  // --- 능력 행동 (무대 지목 + 창 확정) ---
-
-  const sel = currentType ? selectedMap[currentType] ?? null : null;
-  const done = currentType ? Boolean(doneMap[currentType]) : false;
-  const selName = sel ? players.find((p) => p.userId === sel)?.displayName ?? null : null;
-  const eligibleCount = current ? players.filter(current.eligible).length : 0;
-  const showInvestigation = (role === "police" || role === "dordan") && investigationResult;
-
-  const modalTitle = showInvestigation
-    ? "조사 결과"
-    : done
-      ? "결정 완료"
-      : current?.self
-        ? current.label
-        : selName
-          ? `${selName} — ${current?.label}`
-          : current?.prompt ?? "";
-
-  const footer = showInvestigation ? null : current ? (
-    current.self ? (
-      <Button
-        variant="primary"
-        onClick={() => handleSubmit(current, null)}
-        disabled={busy || done}
-        className="w-full"
-      >
-        {done ? "완료" : busy ? "전송 중..." : current.label}
-      </Button>
-    ) : current.confirm ? (
-      confirming && sel && !done ? (
-        <div className="flex gap-2">
-          <Button variant="primary" onClick={() => handleSubmit(current, sel)} disabled={busy} className="flex-1">
-            {busy ? "전송 중..." : "확정"}
-          </Button>
-          <Button variant="ghost" onClick={() => setConfirming(false)} disabled={busy} className="flex-1">
-            취소
-          </Button>
-        </div>
-      ) : (
-        <Button
-          variant="primary"
-          onClick={() => setConfirming(true)}
-          disabled={!sel || busy || done || eligibleCount === 0}
-          className="w-full"
-        >
-          {done ? "결정 완료" : current.label}
-        </Button>
-      )
-    ) : (
-      <Button
-        variant="primary"
-        onClick={() => handleSubmit(current, sel)}
-        disabled={!sel || busy || done}
-        className="w-full"
-      >
-        {done ? "완료" : busy ? "전송 중..." : current.label}
-      </Button>
-    )
-  ) : null;
-
-  return shell(
-    <ActionModal eyebrow={roleLabel(role)} title={modalTitle} mood="dark" raised={Boolean(demonChat)} footer={footer}>
-      {abilities.length > 1 ? (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {abilities.map((a) => (
-            <button
-              key={a.actionType}
-              type="button"
-              onClick={() => {
-                setActiveType(a.actionType);
-                setConfirming(false);
-                setActionError(null);
-              }}
-              className={`rounded-full border px-3 py-1 text-xs transition ${
-                a.actionType === currentType
-                  ? "border-rose-400/50 bg-rose-400/15 text-rose-100"
-                  : "border-white/15 bg-white/[0.04] text-white/60 hover:bg-white/[0.08]"
-              }`}
-            >
-              {a.label}
-              {doneMap[a.actionType] ? " ✓" : ""}
-            </button>
-          ))}
-        </div>
-      ) : null}
-
-      {showInvestigation ? (
-        <div
-          className={`mt-4 rounded-xl border p-5 text-center ${
-            investigationResult === "demon"
-              ? "border-rose-400/25 bg-rose-950/40"
-              : "border-emerald-400/25 bg-emerald-950/40"
-          }`}
-        >
-          <div
-            className={`text-xl font-bold ${
-              investigationResult === "demon" ? "text-rose-300" : "text-emerald-300"
-            }`}
+      {/* 내 프로필 및 능력 선택 패널 (In-flow) */}
+      <div className="mt-6 w-full max-w-md mx-auto rounded-2xl border p-5 shadow-sm bg-[#15131e]/90 backdrop-blur-md border-white/10 text-white">
+        <div className="flex items-center justify-between">
+          <div className="text-xs font-semibold uppercase tracking-widest text-white/45">
+            내 프로필 & 밤의 능력
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowMyProfile(!showMyProfile)}
+            className="text-xs bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded transition"
           >
-            {investigationResult === "demon" ? "악마입니다!" : "악마가 아닙니다."}
+            {showMyProfile ? "접기" : "자세히 보기"}
+          </button>
+        </div>
+
+        <div className="mt-3 flex items-center gap-3 text-left">
+          <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-white/15 bg-white/[0.06] text-sm font-semibold text-white">
+            {myPlayer.avatarUrl ? (
+              <img src={myPlayer.avatarUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              (myPlayer.displayName.trim()[0] ?? "?").toUpperCase()
+            )}
+          </span>
+          <div>
+            <div className="text-sm font-semibold">{myPlayer.displayName}</div>
+            <div className="text-xs text-white/50">{roleLabel(role)} ({myPlayer.alive ? "생존" : "사망"})</div>
           </div>
         </div>
-      ) : (
-        <>
-          <p className="mt-2 text-sm text-white/50">{current?.prompt}</p>
-          {suspectedName ? (
-            <p className="mt-2 rounded-md border border-amber-400/15 bg-amber-950/25 px-3 py-1.5 text-xs text-amber-200/80">
-              의심 지목: <span className="font-semibold">{suspectedName}</span> — 이번 밤 능력 불가
-            </p>
-          ) : null}
-          {current && !current.self && eligibleCount === 0 ? (
-            <p className="mt-3 text-sm text-white/40">{current.emptyNote ?? "지목할 수 있는 대상이 없습니다."}</p>
-          ) : null}
-          {confirming && selName && !done ? (
-            <p className="mt-3 rounded-md border border-amber-400/20 bg-amber-950/25 px-3 py-2 text-sm text-amber-100">
-              <span className="font-semibold">{selName}</span> — 제출하면 되돌릴 수 없어요.
-            </p>
-          ) : null}
-          {actionError ? (
-            <p role="alert" className="mt-3 text-sm text-rose-300">
-              {actionError}
-            </p>
-          ) : null}
-        </>
-      )}
-    </ActionModal>,
-    { selectable: !done && !showInvestigation },
+
+        {isFirstNight ? (
+          <div className="mt-4 border-t border-white/10 pt-4 text-center text-sm text-white/40">
+            {GOMDORI_RULES.firstNight.silentMessage}
+          </div>
+        ) : iAmSuspected ? (
+          <div className="mt-4 border-t border-white/10 pt-4 text-center text-sm text-rose-300">
+            의심자로 지목받아 이번 밤 능력을 사용할 수 없습니다.
+          </div>
+        ) : (
+          <>
+            {/* 능력 선택 영역 */}
+            {(showMyProfile || !currentType) && (
+              <div className="mt-4 border-t border-white/10 pt-4 text-left">
+                <div className="text-xs font-semibold text-white/45 mb-2">능력 선택 및 작동</div>
+                {abilities.length === 0 ? (
+                  <p className="text-xs text-white/40">오늘 밤 사용할 수 있는 능력이 없습니다.</p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {abilities.map((a) => {
+                      const isSelected = a.actionType === currentType;
+                      const isDone = doneMap[a.actionType];
+                      return (
+                        <div
+                          key={a.actionType}
+                          className={`w-full rounded-xl border p-3 text-left transition flex items-center justify-between ${
+                            isSelected
+                              ? "border-rose-500/50 bg-rose-500/10 text-rose-100"
+                              : "border-white/10 bg-white/[0.02] text-white/70 hover:bg-white/[0.06]"
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveType(a.actionType);
+                              setActionError(null);
+                              if (a.self) {
+                                handleSelfSubmit(a);
+                              } else if (pendingTarget) {
+                                handleSubmit(a, pendingTarget);
+                                setPendingTarget(null);
+                              }
+                            }}
+                            className="flex-1 text-left focus:outline-none"
+                          >
+                            <div className="text-xs font-semibold">{a.label}</div>
+                            <div className="text-[10px] text-white/40 mt-0.5">{a.prompt}</div>
+                          </button>
+
+                          {a.self ? (
+                            <button
+                              type="button"
+                              disabled={busy || isDone}
+                              onClick={() => handleSelfSubmit(a)}
+                              className="ml-2 shrink-0 rounded bg-rose-500/20 px-2.5 py-1 text-xs font-semibold text-rose-300 hover:bg-rose-500/35 transition"
+                            >
+                              {isDone ? "완료 ✓" : "사용"}
+                            </button>
+                          ) : (
+                            isDone && <span className="text-xs text-emerald-400 shrink-0 ml-2">완료 ✓</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 현재 상태 정보 영역 */}
+            <div className="mt-4 border-t border-white/10 pt-3 text-center text-xs text-white/55">
+              {investigationResult ? (
+                <div className={`rounded-xl border p-3 text-center ${
+                  investigationResult === "demon" ? "border-rose-400/20 bg-rose-950/20 text-rose-300" : "border-emerald-400/20 bg-emerald-950/20 text-emerald-300"
+                }`}>
+                  조사 결과: <span className="font-bold">{investigationResult === "demon" ? "악마입니다!" : "악마가 아닙니다."}</span>
+                </div>
+              ) : currentType && selectedMap[currentType] ? (
+                <p>
+                  지목 대상: <span className="font-bold text-rose-300">{players.find(p => p.userId === selectedMap[currentType])?.displayName}님</span> (낙인 완료, 교체 가능)
+                </p>
+              ) : pendingTarget ? (
+                <p>
+                  선택한 주민: <span className="font-bold text-amber-300">{players.find(p => p.userId === pendingTarget)?.displayName}님</span> — 능력을 골라 낙인을 찍으세요.
+                </p>
+              ) : (
+                <p>무대 위의 캐릭터를 지목하거나, 나를 눌러 능력을 먼저 선택해 낙인을 찍으세요.</p>
+              )}
+            </div>
+
+            {actionError ? (
+              <p role="alert" className="mt-2 text-xs text-rose-400 text-center">
+                {actionError}
+              </p>
+            ) : null}
+          </>
+        )}
+      </div>
+
+      {demonChat ? (
+        <BottomSheet title="악마의 속삭임" badge={unreadChats} onOpenChange={setChatOpen}>
+          {chatPanel}
+        </BottomSheet>
+      ) : null}
+    </div>
   );
 }

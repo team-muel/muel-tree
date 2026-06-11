@@ -120,7 +120,15 @@ function renderPhasePreview(
         />
       );
     case "verdict":
-      return <VerdictPhase players={players} events={MOCK_EVENTS.verdictExecuted} />;
+      return (
+        <VerdictPhase
+          match={{ ...MOCK_MATCH, status: "verdict" }}
+          players={players}
+          myPlayer={me}
+          gameJwt="preview"
+          events={MOCK_EVENTS.verdictExecuted}
+        />
+      );
     case "ended":
       return (
         <ResultPhase
@@ -318,7 +326,8 @@ export default function GamePreviewPage() {
           >
             <div className="m-auto flex w-full justify-center p-6">
               <LandingScreen
-                existing={{ ...MOCK_MATCH, status: "lobby" }}
+                openMatches={[{ ...MOCK_MATCH, status: "lobby" }]}
+                playerCounts={{ [MOCK_MATCH.id]: 3 }}
                 participants={MOCK_PARTICIPANTS}
                 myUserId={me.userId}
                 onCreate={() => {}}

@@ -19,7 +19,6 @@ import type { PlayerSummary } from "@/lib/game/api";
 import type { Mood } from "@/config/design-tokens";
 import { PlayerToken } from "@/components/game/ui/PlayerToken";
 import { StageTimerOrb } from "@/components/game/ui/StageTimerOrb";
-import { PlayerInspectSheet } from "@/components/game/ui/PlayerInspectSheet";
 import { useInspectGuesses } from "@/lib/game/inspect";
 
 const ROAM_VARIANTS = ["gomdori-roam-a", "gomdori-roam-b", "gomdori-roam-c"] as const;
@@ -44,8 +43,6 @@ export function GameStage({
   selectedGlow,
   disabled = false,
   onSelect,
-  onInspect,
-  inspectable = false,
   matchId,
   movable = false,
   roam = false,
@@ -53,6 +50,8 @@ export function GameStage({
   timerOrbEndsAt,
   subFor,
   className,
+  votedTargetId = null,
+  abilityTargetId = null,
 }: {
   players: PlayerSummary[];
   myUserId?: string | null;
@@ -89,22 +88,26 @@ export function GameStage({
   /** 토큰 보조 라벨 주입 (예: 로비 = 방장/준비/대기). 없으면 기본(나/사망). */
   subFor?: (p: PlayerSummary, isMe: boolean) => React.ReactNode;
   className?: string;
+  votedTargetId?: string | null;
+  abilityTargetId?: string | null;
 }) {
   const light = mood === "light";
 
-  // 정체 추측(R3) — 무대가 직접 소유. inspectable 일 때만 활성.
-  const [inspectId, setInspectId] = useState<string | null>(null);
+  // 정체 추측(R3) — 무대 위 클릭 선택기 구성
+  const [activeGuessEditUserId, setActiveGuessEditUserId] = useState<string | null>(null);
   const { guesses, save } = useInspectGuesses(matchId);
-  const inspectActive = inspectable || Boolean(onInspect);
-  const openInspect = (uid: string) => {
-    if (onInspect) onInspect(uid);
-    else setInspectId(uid);
+
+  const toggleGuessEdit = (uid: string) => {
+    setActiveGuessEditUserId(activeGuessEditUserId === uid ? null : uid);
   };
-  const inspectTarget = inspectId ? players.find((p) => p.userId === inspectId) ?? null : null;
+
   const canDrag = movable && !selectable;
 
   return (
-    <div className={`relative w-full ${className ?? ""}`}>
+    <div
+      className={`relative w-full ${className ?? ""}`}
+      onClick={() => setActiveGuessEditUserId(null)}
+    >
       {/* 무대 바닥 — 은은한 타원 광 */}
       <div
         aria-hidden="true"
@@ -118,11 +121,14 @@ export function GameStage({
           const eligible = canSelect ? canSelect(p) : p.alive && !(excludeSelf && isMe);
           const canPick = selectable && !disabled && eligible && Boolean(onSelect);
           const drift = roam && p.alive ? roamMotion(index) : null;
+          const userGuess = guesses[p.userId]?.faction === "demon" ? "demon" : guesses[p.userId]?.faction === "angel" ? "angel" : null;
+
           return (
             <div
               key={p.userId}
               style={drift?.style}
               className={`w-[5.5rem] sm:w-[6.5rem] ${drift?.className ?? ""}`}
+              onClick={(e) => e.stopPropagation()} // stage 클릭 시 해제되는 흐름 방지
             >
               <PlayerToken
                 name={p.displayName}
@@ -133,19 +139,25 @@ export function GameStage({
                 selected={selectedId === p.userId}
                 selectedGlow={selectedGlow}
                 pickable={canPick}
-                disabled={selectable ? !canPick : false}
+                disabled={selectable ? (!canPick && !isMe) : false}
                 movable={canDrag}
                 sub={subFor ? subFor(p, isMe) : isMe ? "나" : !p.alive ? "사망" : undefined}
+                guess={userGuess}
+                onGuessChange={(g) => save(p.userId, { faction: g ?? "", role: "", memo: "" })}
+                isGuessingEdit={activeGuessEditUserId === p.userId}
+                onToggleGuessingEdit={() => setActiveGuessEditUserId(null)}
+                votedStamp={p.userId === votedTargetId}
+                abilityStamp={p.userId === abilityTargetId}
                 onClick={
                   selectable
-                    ? canPick
+                    ? (canPick || isMe)
                       ? () => onSelect?.(p.userId)
                       : undefined
-                    : inspectActive && !isMe
-                      ? () => openInspect(p.userId)
+                    : !isMe
+                      ? () => toggleGuessEdit(p.userId)
                       : undefined
                 }
-                onInspect={inspectActive && !isMe ? () => openInspect(p.userId) : undefined}
+                onInspect={!isMe ? () => toggleGuessEdit(p.userId) : undefined}
                 idleDelayMs={(index % 7) * 420}
               />
             </div>
@@ -154,17 +166,6 @@ export function GameStage({
       </div>
       {/* 차고 노는 타이머 — 지목 무대에선 끈다(조준 안정). */}
       {!selectable && timerOrbEndsAt ? <StageTimerOrb endsAt={timerOrbEndsAt} /> : null}
-      {/* 정체 추측 시트 — 무대가 직접 연다(외부 onInspect override 시엔 호출부 책임). */}
-      {!onInspect && inspectTarget ? (
-        <PlayerInspectSheet
-          open
-          onClose={() => setInspectId(null)}
-          name={inspectTarget.displayName}
-          avatarUrl={inspectTarget.avatarUrl}
-          initial={guesses[inspectTarget.userId]}
-          onSave={(g) => save(inspectTarget.userId, g)}
-        />
-      ) : null}
     </div>
   );
 }

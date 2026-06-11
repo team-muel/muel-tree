@@ -11,6 +11,8 @@ import {
   joinMatch,
   leaveMatch,
   resolveMatch,
+  listMatches,
+  sendHeartbeat,
   type MatchSummary,
   type PlayerSummary,
 } from "@/lib/game/api";
@@ -57,7 +59,8 @@ function GameShell({ session }: { session: ActivitySession }) {
   const [gameJwt, setGameJwt] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [match, setMatch] = useState<MatchSummary | null>(null);
-  const [landingMatch, setLandingMatch] = useState<MatchSummary | null>(null);
+  const [openMatches, setOpenMatches] = useState<MatchSummary[]>([]);
+  const [playerCounts, setPlayerCounts] = useState<Record<string, number>>({});
   const [players, setPlayers] = useState<PlayerSummary[]>([]);
   const [events, setEvents] = useState<Array<{ id: string; event_type: string; created_at: string; payload?: Record<string, unknown> }>>([]);
   const [currentPhase, setCurrentPhase] = useState<{ phaseType: string; phaseNumber: number; expectedEndedAt: string | null; endedAt: string | null } | null>(null);
@@ -111,8 +114,17 @@ function GameShell({ session }: { session: ActivitySession }) {
           auth.gameJwt,
         );
         if (cancelled) return;
-        setLandingMatch(existing);
-        setBoot({ status: "landing" });
+
+        if (existing) {
+          setMatch(existing);
+          setBoot({ status: "ready" });
+        } else {
+          const listRes = await listMatches(channelId, auth.gameJwt);
+          if (cancelled) return;
+          setOpenMatches(listRes.matches);
+          setPlayerCounts(listRes.playerCounts);
+          setBoot({ status: "landing" });
+        }
       } catch (error) {
         if (cancelled) return;
         setBoot({
@@ -127,7 +139,7 @@ function GameShell({ session }: { session: ActivitySession }) {
     return () => {
       cancelled = true;
     };
-  }, [channelId, guildId, session.accessToken, session.hasDiscordAuth]);
+  }, [channelId, guildId, instanceId, session.accessToken, session.hasDiscordAuth]);
 
   // 매치가 바뀌거나(만들기/참가) 떠날 때 이전 매치의 잔여 상태를 비운다 —
   // 새 방에 옛 플레이어·이벤트·페이즈가 남아 "새 방이 아니라 기존 요소가 잔류"하는
@@ -248,6 +260,19 @@ function GameShell({ session }: { session: ActivitySession }) {
     };
   }, [gameJwt, matchId]);
 
+  // 30초 주기 heartbeat 전송
+  useEffect(() => {
+    if (!gameJwt || !matchId) return;
+
+    void sendHeartbeat(matchId, gameJwt).catch(() => {});
+
+    const interval = setInterval(() => {
+      void sendHeartbeat(matchId, gameJwt).catch(() => {});
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [gameJwt, matchId]);
+
   // Activity 종료/이탈 시 로비 잔류 방지(best-effort). 백엔드가 로비일 때만 제거.
   useEffect(() => {
     if (!gameJwt || !matchId) return;
@@ -280,24 +305,21 @@ function GameShell({ session }: { session: ActivitySession }) {
     setBoot({ status: "landing" });
     if (gameJwt && channelId) {
       try {
-        const existing = await resolveMatch({ discordChannelId: channelId, instanceId }, gameJwt);
-        setLandingMatch(existing);
+        const listRes = await listMatches(channelId, gameJwt);
+        setOpenMatches(listRes.matches);
+        setPlayerCounts(listRes.playerCounts);
       } catch {
-        // 재조회 실패 시 직전 landingMatch 로 랜딩 화면 유지.
+        // 재조회 실패 시 화면 유지
       }
     }
   }
 
-  async function joinGame() {
-    if (!gameJwt || !landingMatch) return;
+  async function joinGame(targetMatchId: string) {
+    if (!gameJwt) return;
     setBoot({ status: "joining" });
     try {
-      if (landingMatch.status === "lobby") {
-        const joined = await joinMatch(landingMatch.id, gameJwt);
-        setMatch(joined.match);
-      } else {
-        setMatch(landingMatch);
-      }
+      const joined = await joinMatch(targetMatchId, gameJwt);
+      setMatch(joined.match);
       setBoot({ status: "ready" });
     } catch (error) {
       setBoot({ status: "error", message: error instanceof Error ? error.message : "참가에 실패했습니다." });
@@ -324,7 +346,8 @@ function GameShell({ session }: { session: ActivitySession }) {
     return (
       <GameFrame status="landing">
         <LandingScreen
-          existing={landingMatch}
+          openMatches={openMatches}
+          playerCounts={playerCounts}
           participants={session.instanceParticipants}
           myUserId={session.discordUser?.id ?? null}
           onCreate={createGame}
@@ -418,7 +441,7 @@ function GameShell({ session }: { session: ActivitySession }) {
   if (match.status === "verdict") {
     return (
       <GameFrame status="verdict" phaseEndsAt={phaseEndsAt} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} myName={myPlayer?.displayName} myAvatarUrl={myPlayer?.avatarUrl} dayNumber={currentPhase?.phaseNumber}>
-        <VerdictPhase players={players} events={events} />
+        <VerdictPhase match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} events={events} />
       </GameFrame>
     );
   }
@@ -567,6 +590,11 @@ function mapMatchRow(row: Record<string, unknown>): MatchSummary {
       row.settings && typeof row.settings === "object" && !Array.isArray(row.settings)
         ? (row.settings as Record<string, unknown>)
         : {},
+    tableLabel: typeof row.table_label === "string" ? row.table_label : "",
+    engineState:
+      row.engine_state && typeof row.engine_state === "object" && !Array.isArray(row.engine_state)
+        ? (row.engine_state as Record<string, unknown>)
+        : null,
   };
 }
 

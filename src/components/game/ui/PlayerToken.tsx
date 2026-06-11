@@ -34,6 +34,12 @@ export function PlayerToken({
   movable = false,
   idleDelayMs,
   chrome = true,
+  guess = null,
+  onGuessChange,
+  isGuessingEdit = false,
+  onToggleGuessingEdit,
+  votedStamp = false,
+  abilityStamp = false,
 }: {
   name: string;
   avatarUrl?: string | null;
@@ -65,6 +71,12 @@ export function PlayerToken({
    * Feign 식 캐릭터 표현 (로비·랜딩의 배회 무대용). 지목 무대는 true(카드) 유지.
    */
   chrome?: boolean;
+  guess?: "angel" | "demon" | null;
+  onGuessChange?: (g: "angel" | "demon" | null) => void;
+  isGuessingEdit?: boolean;
+  onToggleGuessingEdit?: () => void;
+  votedStamp?: boolean;
+  abilityStamp?: boolean;
 }) {
   const light = mood === "light";
   const ink = light ? "text-[#2b2118]" : "text-white";
@@ -178,6 +190,60 @@ export function PlayerToken({
 
   const body = (
     <>
+      {/* 낙인 (Stamps) */}
+      {votedStamp && (
+        <span className="absolute -top-1.5 -left-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-rose-600 text-white text-xs font-bold border border-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.6)] animate-bounce z-10">
+          🗳️
+        </span>
+      )}
+      {abilityStamp && (
+        <span className="absolute -top-1.5 -right-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-purple-600 text-white text-xs font-bold border border-purple-400 shadow-[0_0_12px_rgba(168,85,247,0.6)] animate-pulse z-10">
+          ⚡
+        </span>
+      )}
+
+      {/* 영구 추측 그라데이션 스타일 */}
+      {guess === "demon" && (
+        <>
+          <div className="absolute top-0 inset-x-0 h-4 bg-gradient-to-b from-black/80 to-transparent rounded-t-xl border-t border-black/40 pointer-events-none" />
+          <div className="absolute bottom-0 inset-x-0 h-4 bg-gradient-to-t from-black/80 to-transparent rounded-b-xl border-b border-black/40 pointer-events-none" />
+        </>
+      )}
+      {guess === "angel" && (
+        <>
+          <div className="absolute top-0 inset-x-0 h-4 bg-gradient-to-b from-white/30 to-transparent rounded-t-xl border-t border-white/20 pointer-events-none" />
+          <div className="absolute bottom-0 inset-x-0 h-4 bg-gradient-to-t from-white/30 to-transparent rounded-b-xl border-b border-white/20 pointer-events-none" />
+        </>
+      )}
+
+      {/* 추측 에디터 (Black/White 유리색 그라데이션 버튼) */}
+      {isGuessingEdit && (
+        <>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onGuessChange?.("demon");
+              onToggleGuessingEdit?.();
+            }}
+            className="absolute top-0 inset-x-0 h-[45%] bg-gradient-to-b from-black/95 to-black/70 backdrop-blur-md text-white text-[10px] font-bold flex items-center justify-center rounded-t-xl border-t border-black/50 cursor-pointer hover:from-black hover:to-black/85 transition z-20"
+          >
+            악마 (Black)
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onGuessChange?.("angel");
+              onToggleGuessingEdit?.();
+            }}
+            className="absolute bottom-0 inset-x-0 h-[45%] bg-gradient-to-t from-white/95 to-white/70 backdrop-blur-md text-slate-900 text-[10px] font-bold flex items-center justify-center rounded-b-xl border-b border-white/50 cursor-pointer hover:from-white hover:to-white/85 transition z-20"
+          >
+            천사 (White)
+          </button>
+        </>
+      )}
+
       <span
         style={idleFloat ? { animationDelay: `${idleDelayMs}ms` } : undefined}
         className={`relative inline-flex ${avatarSize} items-center justify-center overflow-hidden rounded-full border text-base font-semibold backdrop-blur-sm transition-all duration-500 ${tokenBase} ${ink} ${
@@ -199,6 +265,21 @@ export function PlayerToken({
             ✕
           </span>
         ) : null}
+
+        {/* 추측 초기화 X 단추 (프로필 중앙 오버레이) */}
+        {guess && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onGuessChange?.(null);
+            }}
+            className="absolute inset-0 flex items-center justify-center bg-black/60 hover:bg-black/80 rounded-full text-white text-xs font-bold transition z-20 cursor-pointer"
+            aria-label="추측 초기화"
+          >
+            ✕
+          </button>
+        )}
       </span>
       <span
         className={`block w-full truncate text-sm font-medium transition-colors duration-500 ${alive ? ink : inkFaint}`}

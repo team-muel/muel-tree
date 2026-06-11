@@ -1,10 +1,8 @@
 "use client";
 
 /**
- * VotePhase — 투표. 페이지 전환 없이 **무대 위에서 지목 + 창(ActionModal)으로 확정**
- * (사용자 요구 2026-06-11 / Feign 구조). 황혼 무대는 그대로 보이고,
- * 무대 위 인물을 탭하면 황혼 광휘 — 창에서 확정/기권.
- * 로직(복원 useEffect·제출) 동일.
+ * VotePhase — 투표. 페이지 전환 없이 무대 위에서 즉시 투표 + 낙인 표시 (교체 가능).
+ * - ActionModal 대신 인플로우(In-flow) 패널로 자연스럽게 배치.
  */
 
 import { useState, useEffect } from "react";
@@ -14,7 +12,6 @@ import { getGameSupabase } from "@/lib/game/client";
 import { GLOW } from "@/config/design-tokens";
 import { Button } from "@/components/game/ui/Button";
 import { GameStage } from "@/components/game/ui/GameStage";
-import { ActionModal } from "@/components/game/ui/ActionModal";
 import { BottomSheet } from "@/components/game/ui/BottomSheet";
 import { SpectatorFeed } from "@/components/game/ui/SpectatorFeed";
 
@@ -83,9 +80,7 @@ export function VotePhase({ match, players, myPlayer, gameJwt, events }: VotePha
     try {
       await submitAction(match.id, "vote", targetId, gameJwt);
       setSubmitted(true);
-      if (targetId) {
-        setSelectedTarget(targetId);
-      }
+      setSelectedTarget(targetId);
     } catch (err) {
       setVoteError(err instanceof Error ? err.message : "투표 실패");
     } finally {
@@ -111,7 +106,7 @@ export function VotePhase({ match, players, myPlayer, gameJwt, events }: VotePha
 
   return (
     <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center p-5 pb-24">
-      {/* 무대 — 직접 지목 */}
+      {/* 무대 — 즉시 지목 투표 및 낙인 연동 */}
       <GameStage
         players={players}
         myUserId={myPlayer?.userId}
@@ -120,54 +115,49 @@ export function VotePhase({ match, players, myPlayer, gameJwt, events }: VotePha
         inspectable
         matchId={match.id}
         selectedId={selectedTarget}
+        votedTargetId={selectedTarget}
         selectedGlow={GLOW.selectDusk}
-        disabled={submitted}
-        onSelect={(id) => !submitted && setSelectedTarget(id)}
+        disabled={isSubmitting}
+        onSelect={(id) => {
+          if (!isSubmitting) {
+            handleVote(id);
+          }
+        }}
       />
 
-      {/* 창 — 확정/기권 */}
-      <ActionModal
-        eyebrow="투표 시간"
-        title={
-          submitted
-            ? selectedTarget
-              ? "투표 완료"
-              : "기권 완료"
-            : selectedName
-              ? `${selectedName}님을 처형대에 올릴까요?`
-              : "무대 위 인물을 지목하세요"
-        }
-        mood="light"
-        footer={
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Button
-              variant="amber"
-              onClick={() => handleVote(selectedTarget)}
-              disabled={!selectedTarget || isSubmitting || submitted}
-              className="w-full"
-            >
-              {submitted && selectedTarget ? "투표 완료" : isSubmitting ? "전송 중..." : "투표 확정"}
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => handleVote(null)}
-              disabled={isSubmitting || submitted}
-              className="w-full border-[#2b2118]/25 text-[#5c4d3c] hover:bg-[#2b2118]/5"
-            >
-              {submitted && !selectedTarget ? "기권 완료" : "기권하기"}
-            </Button>
-          </div>
-        }
-      >
-        <p className="mt-1 text-sm text-[#5c4d3c]">
-          가장 많은 표를 받은 사람이 처형됩니다. 확신이 없으면 기권하세요.
+      {/* 투표 안내 패널 (In-flow) */}
+      <div className="mt-6 w-full max-w-md mx-auto rounded-2xl border p-5 shadow-sm bg-white/70 backdrop-blur-md border-[#2b2118]/15 text-[#2b2118] text-center">
+        <div className="text-xs font-semibold uppercase tracking-widest text-amber-800">
+          투표 시간
+        </div>
+        <h2 className="mt-1 text-lg font-semibold">
+          {selectedTarget !== null && submitted
+            ? `${selectedName}님에게 투표했습니다.`
+            : selectedTarget === null && submitted
+              ? "기권했습니다."
+              : "무대 위 인물을 클릭하여 투표하세요."}
+        </h2>
+        <p className="mt-1 text-xs text-[#5c4d3c] leading-relaxed">
+          가장 많은 표를 받은 사람이 처형대에 오릅니다. 언제든지 대상을 클릭해 바꿀 수 있으며, 기권하려면 아래 단추를 누르세요.
         </p>
+
+        <div className="mt-4 flex justify-center">
+          <Button
+            variant="ghost"
+            onClick={() => handleVote(null)}
+            disabled={isSubmitting}
+            className="w-full max-w-[200px] border-[#2b2118]/25 text-[#5c4d3c] hover:bg-[#2b2118]/5"
+          >
+            {selectedTarget === null && submitted ? "기권 완료 ✓" : "기권하기"}
+          </Button>
+        </div>
+
         {voteError ? (
-          <p role="alert" className="mt-2 text-sm text-rose-700">
+          <p role="alert" className="mt-3 text-sm text-rose-700">
             {voteError}
           </p>
         ) : null}
-      </ActionModal>
+      </div>
     </div>
   );
 }
