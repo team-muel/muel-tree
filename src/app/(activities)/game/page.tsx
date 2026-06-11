@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ActivityLayout, type ActivitySession } from "@/components/ActivityLayout";
 import { getActivity } from "@/config/activities";
 import { GOMDORI_RULES } from "@/config/gomdori-rules";
@@ -68,6 +68,20 @@ function GameShell({ session }: { session: ActivitySession }) {
   const matchId = match?.id ?? null;
   const myPlayer = players.find((player) => player.userId === userId) ?? null;
   const phaseEndsAt = currentPhase && !currentPhase.endedAt ? currentPhase.expectedEndedAt : null;
+
+  // 로비 유령 정리(시각) — 채널을 떠났는데 무대에 남는 사람. Discord 라이브 참가자
+  // (instanceParticipants, subscribe 로 실시간 갱신)에 없는 플레이어는 로비에서 가린다.
+  // 가드: 참가자 목록이 비었거나 내가 그 안에 없으면(SDK 신호 불안정) 필터하지 않는다
+  // — 실유저 오제거 방지. 자신·방장은 항상 유지. (인게임에선 적용 안 함 — 이탈자도 게임
+  // 참가자라 정체·생존이 유효하다. 방치 매치 DB 정리는 백엔드 후속.)
+  const presentIds = useMemo(
+    () => new Set((session.instanceParticipants ?? []).map((p) => p.id)),
+    [session.instanceParticipants],
+  );
+  const lobbyPlayers = useMemo(() => {
+    if (presentIds.size === 0 || !userId || !presentIds.has(userId)) return players;
+    return players.filter((p) => p.userId === userId || p.isHost || presentIds.has(p.userId));
+  }, [players, presentIds, userId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -380,7 +394,7 @@ function GameShell({ session }: { session: ActivitySession }) {
   if (match.status === "lobby") {
     return (
       <GameFrame status="lobby">
-        <LobbyPhase session={session} match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} onLeave={returnToLanding} />
+        <LobbyPhase session={session} match={match} players={lobbyPlayers} myPlayer={myPlayer} gameJwt={gameJwt} onLeave={returnToLanding} />
       </GameFrame>
     );
   }
