@@ -146,6 +146,10 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
   const [chats, setChats] = useState<ChatRow[]>([]);
   const [chatError, setChatError] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  // 악마챗 미열람 배지 — 시트가 닫혀 있는 동안 들어온 메시지 수.
+  const [chatOpen, setChatOpen] = useState(false);
+  const [seenChats, setSeenChats] = useState(0);
+  const unreadChats = chatOpen ? 0 : Math.max(0, chats.length - seenChats);
 
   useEffect(() => {
     if (!match.id || !gameJwt) return;
@@ -258,6 +262,11 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chats]);
 
+  // 시트가 열려 있는 동안 들어온 메시지는 즉시 본 것으로 — 닫힌 동안의 증가분만 배지.
+  useEffect(() => {
+    if (chatOpen) setSeenChats(chats.length);
+  }, [chatOpen, chats.length]);
+
   const handleSendChat = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatMessage.trim()) return;
@@ -349,6 +358,8 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
         players={players}
         myUserId={myPlayer?.userId}
         mood="dark"
+        inspectable
+        matchId={match.id}
         selectable={opts?.selectable ?? false}
         canSelect={opts?.selectable && current ? current.eligible : undefined}
         selectedId={currentType ? selectedMap[currentType] ?? null : null}
@@ -362,7 +373,11 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
         }}
       />
       {modal}
-      {demonChat ? <BottomSheet title="악마의 속삭임">{chatPanel}</BottomSheet> : null}
+      {demonChat ? (
+        <BottomSheet title="악마의 속삭임" badge={unreadChats} onOpenChange={setChatOpen}>
+          {chatPanel}
+        </BottomSheet>
+      ) : null}
     </div>
   );
 
@@ -379,7 +394,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events }: NightP
   if (!myPlayer || !myPlayer.alive) {
     return (
       <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center p-5 pb-24">
-        <GameStage players={players} myUserId={myPlayer?.userId} mood="dark" />
+        <GameStage players={players} myUserId={myPlayer?.userId} mood="dark" inspectable matchId={match.id} movable />
         <BottomSheet title="관전 피드">
           <p className="text-sm text-white/55">당신은 사망했습니다. 다른 플레이어들의 행동을 지켜보세요.</p>
           <SpectatorFeed events={events} players={players} />

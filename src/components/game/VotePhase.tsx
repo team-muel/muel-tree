@@ -100,7 +100,7 @@ export function VotePhase({ match, players, myPlayer, gameJwt, events }: VotePha
   if (isDead) {
     return (
       <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center p-5 pb-24">
-        <GameStage players={players} myUserId={myPlayer?.userId} mood="light" />
+        <GameStage players={players} myUserId={myPlayer?.userId} mood="light" inspectable matchId={match.id} movable />
         <BottomSheet title="관전 피드">
           <p className="text-sm text-white/55">당신은 사망하여 투표권이 없습니다. 투표를 지켜보세요.</p>
           <SpectatorFeed events={events} players={players} />
@@ -117,6 +117,8 @@ export function VotePhase({ match, players, myPlayer, gameJwt, events }: VotePha
         myUserId={myPlayer?.userId}
         mood="light"
         selectable
+        inspectable
+        matchId={match.id}
         selectedId={selectedTarget}
         selectedGlow={GLOW.selectDusk}
         disabled={submitted}

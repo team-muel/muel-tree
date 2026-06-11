@@ -21,7 +21,7 @@ type DayPhaseProps = {
   phaseEndsAt?: string | null;
 };
 
-export function DayPhase({ players, events, myPlayer, phaseEndsAt }: DayPhaseProps) {
+export function DayPhase({ match, players, events, myPlayer, phaseEndsAt }: DayPhaseProps) {
   const deathEvent = events.find((e) => {
     if (e.event_type === "player_died") return true;
     return e.event_type === "player_eliminated" && e.payload?.cause === "night_kill";
@@ -69,6 +69,9 @@ export function DayPhase({ players, events, myPlayer, phaseEndsAt }: DayPhasePro
           players={players}
           myUserId={myPlayer?.userId}
           mood="light"
+          inspectable
+          matchId={match.id}
+          movable
           timerOrbEndsAt={phaseEndsAt}
         />
       </div>
