@@ -150,7 +150,7 @@ export function RoleAssignPhase({ players, myPlayer, events, matchId, gameJwt }:
         <div className={`gomdori-role-burst absolute left-1/2 top-10 h-36 w-36 -translate-x-1/2 rounded-full blur-3xl ${factionColor.bgSoft}`} />
         <div className="relative">
           <Badge className={`${factionColor.border} ${factionColor.bgSoft} ${factionColor.accent}`}>
-            <span aria-hidden="true" className="mr-2 font-mono text-[10px]">{factionCopy.mark}</span>
+            <span aria-hidden="true" className="mr-2 font-mono text-[0.625rem]">{factionCopy.mark}</span>
             {factionCopy.label}
           </Badge>
 

@@ -12,10 +12,26 @@
 
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
 import type { ActivitySession } from "@/components/ActivityLayout";
+import type { InstanceParticipant } from "@/lib/discord";
 
 const NOW = new Date().toISOString();
 
 export const MOCK_USER_ID = "preview-self";
+
+/**
+ * Discord 아바타 *형태*의 목 이미지 — data-URI SVG 실루엣.
+ * 실제 CDN 해시는 목 유저로는 못 만들므로, PlayerToken 의 <img> 렌더 경로
+ * (아바타가 있을 때의 무대 형상)를 작업대에서 그대로 검증하기 위한 대체물.
+ */
+function mockAvatar(bg: string): string {
+  const svg =
+    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'>` +
+    `<rect width='96' height='96' fill='${bg}'/>` +
+    `<circle cx='48' cy='37' r='17' fill='rgba(255,255,255,0.92)'/>` +
+    `<ellipse cx='48' cy='84' rx='28' ry='22' fill='rgba(255,255,255,0.92)'/>` +
+    `</svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
 
 export const MOCK_SESSION: ActivitySession = {
   discordUser: {
@@ -47,12 +63,16 @@ export const MOCK_MATCH: MatchSummary = {
   settings: {},
 };
 
+/**
+ * 목 플레이어 8인 — 전원 아바타 *형태* 보유 (Discord 아바타가 있는 실전과 동일한
+ * 무대 형상). 시미아만 사망 상태 — "죽음은 빈자리가 아니라 쓰러진 토큰" 확인용.
+ */
 export const MOCK_PLAYERS: PlayerSummary[] = [
   {
     matchId: "preview-match",
     userId: MOCK_USER_ID,
     displayName: "당신",
-    avatarUrl: null,
+    avatarUrl: mockAvatar("#4f46e5"),
     alive: true,
     ready: true,
     isHost: true,
@@ -65,7 +85,7 @@ export const MOCK_PLAYERS: PlayerSummary[] = [
     matchId: "preview-match",
     userId: "p-seika",
     displayName: "세이카",
-    avatarUrl: null,
+    avatarUrl: mockAvatar("#b45309"),
     alive: true,
     ready: true,
     isHost: false,
@@ -78,7 +98,7 @@ export const MOCK_PLAYERS: PlayerSummary[] = [
     matchId: "preview-match",
     userId: "p-pin",
     displayName: "핀",
-    avatarUrl: null,
+    avatarUrl: mockAvatar("#047857"),
     alive: true,
     ready: true,
     isHost: false,
@@ -91,7 +111,7 @@ export const MOCK_PLAYERS: PlayerSummary[] = [
     matchId: "preview-match",
     userId: "p-simia",
     displayName: "시미아",
-    avatarUrl: null,
+    avatarUrl: mockAvatar("#be123c"),
     alive: false,
     ready: true,
     isHost: false,
@@ -104,7 +124,7 @@ export const MOCK_PLAYERS: PlayerSummary[] = [
     matchId: "preview-match",
     userId: "p-eff",
     displayName: "에프",
-    avatarUrl: null,
+    avatarUrl: mockAvatar("#7c3aed"),
     alive: true,
     ready: true,
     isHost: false,
@@ -113,7 +133,54 @@ export const MOCK_PLAYERS: PlayerSummary[] = [
     role: "helper",
     faction: "demon",
   },
+  {
+    matchId: "preview-match",
+    userId: "p-maya",
+    displayName: "마야",
+    avatarUrl: mockAvatar("#0e7490"),
+    alive: true,
+    ready: false,
+    isHost: false,
+    joinedAt: NOW,
+    lastSeenAt: null,
+    role: "citizen",
+    faction: "angel",
+  },
+  {
+    matchId: "preview-match",
+    userId: "p-sol",
+    displayName: "솔",
+    avatarUrl: mockAvatar("#c2410c"),
+    alive: true,
+    ready: true,
+    isHost: false,
+    joinedAt: NOW,
+    lastSeenAt: null,
+    role: "citizen",
+    faction: "angel",
+  },
+  {
+    matchId: "preview-match",
+    userId: "p-seyaka",
+    displayName: "세야카",
+    avatarUrl: mockAvatar("#475569"),
+    alive: true,
+    ready: false,
+    isHost: false,
+    joinedAt: NOW,
+    lastSeenAt: null,
+    role: "citizen",
+    faction: "angel",
+  },
 ];
+
+/** 랜딩 무대용 — Activity 인스턴스 참가자 목 (avatar 에 data-URI 직접). */
+export const MOCK_PARTICIPANTS: InstanceParticipant[] = MOCK_PLAYERS.slice(0, 6).map((p) => ({
+  id: p.userId,
+  username: p.displayName,
+  global_name: p.displayName,
+  avatar: p.avatarUrl,
+}));
 
 export type MockEvent = {
   id: string;

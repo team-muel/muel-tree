@@ -28,7 +28,19 @@ export type InstanceParticipant = {
   username: string;
   global_name?: string | null;
   nickname?: string;
+  /** Discord 아바타 해시 (CDN URL 아님). 프리뷰 목 데이터는 data:/http URL 을 직접 넣는다. */
+  avatar?: string | null;
 };
+
+/**
+ * Activity 참가자의 아바타 이미지 URL.
+ * Discord CDN 은 Activity CSP 허용 대상 — 매치 토큰(avatar_url)과 같은 경로.
+ */
+export function participantAvatarUrl(p: InstanceParticipant, size = 128): string | null {
+  if (!p.avatar) return null;
+  if (p.avatar.startsWith("data:") || p.avatar.startsWith("http")) return p.avatar;
+  return `https://cdn.discordapp.com/avatars/${p.id}/${p.avatar}.png?size=${size}`;
+}
 
 type SdkParticipants = {
   commands: { getInstanceConnectedParticipants: () => Promise<unknown> };

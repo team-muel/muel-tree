@@ -93,6 +93,69 @@ body {
   animation: gomdori-stage-idle 3.4s ease-in-out infinite;
 }
 
+/* 무대 배회 — 토큰이 제자리 주변을 느리게 돌아다닌다 (Feign 식 어슬렁).
+   변형 a/b/c 를 인덱스로 섞고, duration/delay 는 인라인 style 로 토큰별 어긋남.
+   진폭은 ±12px 이하 — flex 슬롯(gap)과 충돌하지 않는 선. */
+@keyframes gomdori-roam-a {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(10px, -4px);
+  }
+  55% {
+    transform: translate(-7px, 3px);
+  }
+  80% {
+    transform: translate(-12px, -3px);
+  }
+}
+
+@keyframes gomdori-roam-b {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  30% {
+    transform: translate(-9px, 4px);
+  }
+  60% {
+    transform: translate(11px, -2px);
+  }
+  85% {
+    transform: translate(5px, 5px);
+  }
+}
+
+@keyframes gomdori-roam-c {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  35% {
+    transform: translate(6px, 5px);
+  }
+  65% {
+    transform: translate(-11px, -4px);
+  }
+  90% {
+    transform: translate(8px, -5px);
+  }
+}
+
+.gomdori-roam-a {
+  animation: gomdori-roam-a 18s ease-in-out infinite;
+}
+
+.gomdori-roam-b {
+  animation: gomdori-roam-b 21s ease-in-out infinite;
+}
+
+.gomdori-roam-c {
+  animation: gomdori-roam-c 24s ease-in-out infinite;
+}
+
 /* 페이즈 스윕 — 밤/아침이 무대를 가로질러 덮였다 걷히는 전환막 (Feign 전환 구조). */
 @keyframes gomdori-phase-sweep {
   0% {
@@ -172,6 +235,9 @@ body {
   .gomdori-role-burst,
   .gomdori-emblem-rise,
   .gomdori-stage-idle,
+  .gomdori-roam-a,
+  .gomdori-roam-b,
+  .gomdori-roam-c,
   .gomdori-spotlight,
   .gomdori-illust-drift {
     animation: none;

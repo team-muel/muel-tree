@@ -1,9 +1,11 @@
 "use client";
 
 /**
- * LobbyPhase — 로비도 무대다 (Feign 구조). 참가자가 토큰으로 무대에 모이고,
- * "친구 부르기"는 데스크톱=우측 패널 / 모바일=하단에서 올라오는 시트 (BottomSheet).
- * 로직(준비/시작/강퇴/나가기/초대 복사) 동일 — 배치만 오버홀 (2026-06-11).
+ * LobbyPhase — 로비도 무대다 (Feign 구조). 참가자가 아바타 토큰으로 무대를
+ * 배회하고(roam), 정보는 인게임 공표 배너와 같은 문법의 헤더 + 칩으로.
+ * "친구 부르기"는 데스크톱=우측 패널 / 모바일=하단 시트 (BottomSheet 가
+ * useDisplay().layout 으로 구조 분기). 모바일은 세로 단일 흐름의 별도 구조.
+ * 로직(준비/시작/강퇴/나가기/초대 복사) 동일 — 배치만 오버홀 (2026-06-11 2차).
  */
 
 import type { MatchSummary, NeutralMode, PlayerSummary } from "@/lib/game/api";
@@ -21,6 +23,7 @@ import type { ActivitySession } from "@/components/ActivityLayout";
 import { GOMDORI_ROLES } from "@/config/gomdori-roles";
 import { GameStage } from "@/components/game/ui/GameStage";
 import { BottomSheet } from "@/components/game/ui/BottomSheet";
+import { useDisplay } from "@/lib/game/display";
 
 type LobbyPhaseProps = {
   session: ActivitySession;
@@ -31,12 +34,12 @@ type LobbyPhaseProps = {
   onLeave: () => void | Promise<void>;
 };
 
-function Info({ label, value }: { label: string; value: string }) {
+function Chip({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-white/10 bg-black/20 px-3 py-2.5">
-      <div className="text-xs text-white/35">{label}</div>
-      <div className="mt-0.5 truncate text-sm text-white/80">{value}</div>
-    </div>
+    <span className="inline-flex max-w-full items-baseline gap-1.5 rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs">
+      <span className="shrink-0 text-white/35">{label}</span>
+      <span className="truncate text-white/80">{value}</span>
+    </span>
   );
 }
 
@@ -45,7 +48,7 @@ function Requirement({ met, label }: { met: boolean; label: string }) {
     <li className="flex items-center gap-2">
       <span
         aria-hidden="true"
-        className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] ${
+        className={`flex h-4 w-4 items-center justify-center rounded-full text-[0.625rem] ${
           met ? "bg-emerald-400/20 text-emerald-300" : "bg-white/5 text-white/30"
         }`}
       >
@@ -61,7 +64,8 @@ function hostName(players: PlayerSummary[], hostUserId: string | null): string {
   return players.find((player) => player.userId === hostUserId)?.displayName ?? "-";
 }
 
-export function LobbyPhase({ session, match, players, myPlayer, gameJwt, onLeave }: LobbyPhaseProps) {
+// session 은 시그니처 호환을 위해 props 에 남아 있다 (내 정보는 myPlayer/무대 토큰이 표시).
+export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: LobbyPhaseProps) {
   const [readyPending, setReadyPending] = useState(false);
   const [startPending, setStartPending] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -71,7 +75,7 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt, onLeave
   const [copied, setCopied] = useState(false);
   const [neutralPending, setNeutralPending] = useState(false);
 
-  const userName = session.discordUser?.username ?? "-";
+  const { layout } = useDisplay();
   const hostLabel = useMemo(() => hostName(players, match.hostUserId), [match.hostUserId, players]);
 
   const isHost = myPlayer?.isHost;
@@ -295,10 +299,23 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt, onLeave
     </>
   );
 
-  return (
-    <div className="grid w-full max-w-5xl grid-cols-1 gap-5 p-5 pb-24 lg:grid-cols-[1.5fr_0.8fr]">
-      <section className="rounded-2xl border border-white/10 border-t-white/20 bg-[#15131e]/90 p-5 backdrop-blur-md">
-        <div className="flex items-start justify-between gap-4">
+  // 무대 토큰 보조 라벨 — 캡션 목록을 대체한다 (정보가 캐릭터 발밑에 선다).
+  const stageSub = (p: PlayerSummary, isMe: boolean): React.ReactNode => {
+    const role = p.isHost ? "방장" : p.ready ? "준비" : "대기";
+    return isMe ? `나 · ${role}` : role;
+  };
+
+  const compositionLabel = composition
+    ? `악마 ${composition.demons} · 천사 ${composition.angels}${
+        composition.neutral === "one" ? " · 중립 1" : composition.neutral === "unknown" ? " · 중립 ?" : ""
+      }`
+    : "5명 모이면 공개";
+
+  const mainPanel = (
+    <section className="flex min-w-0 flex-col">
+      {/* 헤더 배너 — 인게임 공표 배너와 같은 문법 */}
+      <div className="rounded-2xl border border-white/10 border-t-white/20 bg-[#15131e]/90 p-5 backdrop-blur-md">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-xs uppercase tracking-[0.18em] text-white/35">Gomdori Mafia</p>
             <h1 className="mt-1 text-2xl font-semibold text-white">로비</h1>
@@ -307,113 +324,111 @@ export function LobbyPhase({ session, match, players, myPlayer, gameJwt, onLeave
             대기 중
           </div>
         </div>
-
-        <div className="mt-5 grid grid-cols-2 gap-2.5 text-sm sm:grid-cols-4">
-          <Info label="참가자" value={`${total} / ${match.maxPlayers}`} />
-          <Info label="방장" value={hostLabel} />
-          <Info label="내 이름" value={userName} />
-          <Info
-            label="구성"
-            value={
-              composition
-                ? `악마 ${composition.demons} · 천사 ${composition.angels}${
-                    composition.neutral === "one" ? " · 중립 1" : composition.neutral === "unknown" ? " · 중립 ?" : ""
-                  }`
-                : "5명 모이면 공개"
-            }
-          />
-          <Info label="준비" value={`${readyCount} / ${nonHost.length}`} />
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Chip label="참가" value={`${total} / ${match.maxPlayers}`} />
+          <Chip label="준비" value={`${readyCount} / ${nonHost.length}`} />
+          <Chip label="방장" value={hostLabel} />
+          <Chip label="구성" value={compositionLabel} />
         </div>
+      </div>
 
-        {/* 무대 — 모인 사람들 */}
-        <div className="mt-4">
-          {total === 0 ? (
-            <div className="rounded-md border border-white/10 px-3 py-6 text-center text-sm text-white/40">
-              참가자를 불러오는 중입니다.
-            </div>
-          ) : (
-            <GameStage
-              players={stagePlayers.map((p) => ({
-                ...p,
-                displayName: p.displayName,
-              }))}
-              myUserId={myPlayer?.userId}
-              mood="dark"
-            />
-          )}
-          <div className="mt-1 flex flex-wrap justify-center gap-x-4 gap-y-1 text-[11px] text-white/35">
-            {players.map((p) => (
-              <span key={p.userId}>
-                {p.displayName} — {p.isHost ? "방장" : p.ready ? "준비 완료" : "대기 중"}
-              </span>
-            ))}
+      {/* 무대 — 모인 사람들이 아바타로 배회한다 (Feign 최소구조) */}
+      <div className="py-4">
+        {total === 0 ? (
+          <div className="rounded-md border border-white/10 px-3 py-6 text-center text-sm text-white/40">
+            참가자를 불러오는 중입니다.
           </div>
-        </div>
+        ) : (
+          <GameStage
+            players={stagePlayers}
+            myUserId={myPlayer?.userId}
+            mood="dark"
+            roam
+            chrome={false}
+            subFor={stageSub}
+          />
+        )}
+      </div>
 
-        <div className="mt-5">
-          {isHost ? (
-            <ul className="mb-4 space-y-1.5 text-sm" aria-label="시작 조건">
-              <Requirement met={enoughPlayers} label={`5명 이상 (${total}/5)`} />
-              <Requirement met={notTooMany} label="12명 이하" />
-              <Requirement met={everyoneReady} label={`참가자 전원 준비 (${readyCount}/${nonHost.length})`} />
-            </ul>
-          ) : null}
+      {/* 액션 — 무대 아래 중앙 */}
+      <div className="mx-auto w-full max-w-sm">
+        {isHost ? (
+          <ul className="mb-4 space-y-1.5 text-sm" aria-label="시작 조건">
+            <Requirement met={enoughPlayers} label={`5명 이상 (${total}/5)`} />
+            <Requirement met={notTooMany} label="12명 이하" />
+            <Requirement met={everyoneReady} label={`참가자 전원 준비 (${readyCount}/${nonHost.length})`} />
+          </ul>
+        ) : null}
 
-          {!isHost ? (
-            <Button
-              type="button"
-              variant="primary"
-              disabled={!gameJwt || !myPlayer || readyPending}
-              onClick={async () => {
-                if (!gameJwt || !myPlayer || !match.id) return;
-                setReadyPending(true);
-                try {
-                  await setReady(match.id, !myPlayer.ready, gameJwt);
-                } finally {
-                  setReadyPending(false);
-                }
-              }}
-              className="mb-3 w-full"
-            >
-              {myPlayer?.ready ? "준비 해제" : "준비 완료"}
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="amber"
-              disabled={!gameJwt || !myPlayer || startPending || !canStart}
-              onClick={async () => {
-                if (!gameJwt || !myPlayer || !match.id) return;
-                setActionError(null);
-                setStartPending(true);
-                try {
-                  await startMatch(match.id, gameJwt);
-                } catch (err) {
-                  setActionError(err instanceof Error ? err.message : "시작 실패");
-                  setStartPending(false);
-                }
-              }}
-              className="mb-3 w-full"
-            >
-              {startPending ? "시작하는 중..." : canStart ? "게임 시작" : "시작 조건 미충족"}
-            </Button>
-          )}
-
-          <button
+        {!isHost ? (
+          <Button
             type="button"
-            onClick={leave}
-            disabled={leavePending}
-            className="w-full rounded-md border border-white/15 bg-white/[0.04] px-3 py-2 text-sm text-white/60 transition-colors hover:bg-white/[0.08] disabled:opacity-40"
+            variant="primary"
+            disabled={!gameJwt || !myPlayer || readyPending}
+            onClick={async () => {
+              if (!gameJwt || !myPlayer || !match.id) return;
+              setReadyPending(true);
+              try {
+                await setReady(match.id, !myPlayer.ready, gameJwt);
+              } finally {
+                setReadyPending(false);
+              }
+            }}
+            className="mb-3 w-full"
           >
-            {leavePending ? "..." : "나가기"}
-          </button>
+            {myPlayer?.ready ? "준비 해제" : "준비 완료"}
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            variant="amber"
+            disabled={!gameJwt || !myPlayer || startPending || !canStart}
+            onClick={async () => {
+              if (!gameJwt || !myPlayer || !match.id) return;
+              setActionError(null);
+              setStartPending(true);
+              try {
+                await startMatch(match.id, gameJwt);
+              } catch (err) {
+                setActionError(err instanceof Error ? err.message : "시작 실패");
+                setStartPending(false);
+              }
+            }}
+            className="mb-3 w-full"
+          >
+            {startPending ? "시작하는 중..." : canStart ? "게임 시작" : "시작 조건 미충족"}
+          </Button>
+        )}
 
-          {actionError ? (
-            <p role="alert" className="mt-3 text-sm text-rose-300">{actionError}</p>
-          ) : null}
-        </div>
-      </section>
+        <button
+          type="button"
+          onClick={leave}
+          disabled={leavePending}
+          className="w-full rounded-md border border-white/15 bg-white/[0.04] px-3 py-2 text-sm text-white/60 transition-colors hover:bg-white/[0.08] disabled:opacity-40"
+        >
+          {leavePending ? "..." : "나가기"}
+        </button>
 
+        {actionError ? (
+          <p role="alert" className="mt-3 text-sm text-rose-300">{actionError}</p>
+        ) : null}
+      </div>
+    </section>
+  );
+
+  // 모바일: 세로 단일 흐름 + 하단 시트 / 데스크톱: 무대 + 우측 패널 — 별도 구조.
+  if (layout === "mobile") {
+    return (
+      <div className="flex w-full max-w-xl flex-col p-4 pb-24">
+        {mainPanel}
+        <BottomSheet title="친구 부르기 · 게임 안내">{sheetContent}</BottomSheet>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid w-full max-w-6xl grid-cols-[1.6fr_0.9fr] items-start gap-5 p-5 pb-24">
+      {mainPanel}
       <BottomSheet title="친구 부르기 · 게임 안내">{sheetContent}</BottomSheet>
     </div>
   );

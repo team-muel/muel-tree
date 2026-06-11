@@ -29,6 +29,7 @@ export function PlayerToken({
   sub,
   onClick,
   idleDelayMs,
+  chrome = true,
 }: {
   name: string;
   avatarUrl?: string | null;
@@ -43,6 +44,11 @@ export function PlayerToken({
   onClick?: () => void;
   /** Feign식 idle 부유의 위상차(ms). 생존 토큰만 숨쉰다. undefined = 부유 없음. */
   idleDelayMs?: number;
+  /**
+   * false 면 카드 테두리·배경 없이 아바타+이름만 — 무대 바닥에 "서 있는"
+   * Feign 식 캐릭터 표현 (로비·랜딩의 배회 무대용). 지목 무대는 true(카드) 유지.
+   */
+  chrome?: boolean;
 }) {
   const light = mood === "light";
   const ink = light ? "text-[#2b2118]" : "text-white";
@@ -57,12 +63,14 @@ export function PlayerToken({
   const deadFx = "motion-safe:rotate-12 motion-safe:translate-y-0.5 opacity-45 grayscale";
 
   const idleFloat = alive && idleDelayMs !== undefined;
+  // chromeless 는 카드가 없는 대신 아바타가 한 단계 크다 — 무대 위 존재감.
+  const avatarSize = chrome ? "h-12 w-12" : "h-14 w-14";
 
   const body = (
     <>
       <span
         style={idleFloat ? { animationDelay: `${idleDelayMs}ms` } : undefined}
-        className={`relative inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border text-base font-semibold backdrop-blur-sm transition-all duration-500 ${tokenBase} ${ink} ${
+        className={`relative inline-flex ${avatarSize} items-center justify-center overflow-hidden rounded-full border text-base font-semibold backdrop-blur-sm transition-all duration-500 ${tokenBase} ${ink} ${
           selected ? selectedGlow : ""
         } ${!alive ? deadFx : ""} ${idleFloat ? "gomdori-stage-idle" : ""}`}
       >
@@ -87,17 +95,20 @@ export function PlayerToken({
       >
         {name}
       </span>
-      {sub ? <span className={`block text-[10px] uppercase tracking-wider ${inkFaint}`}>{sub}</span> : null}
+      {sub ? <span className={`block text-[0.625rem] uppercase tracking-wider ${inkFaint}`}>{sub}</span> : null}
     </>
   );
 
   const enter =
     "motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-300";
+  const frame = chrome
+    ? `gap-2 rounded-xl border p-3 ${cardBase}`
+    : "gap-1.5 p-1";
 
   if (!onClick) {
     return (
       <div
-        className={`flex flex-col items-center gap-2 rounded-xl border p-3 text-center transition-all duration-500 ${cardBase} ${enter}`}
+        className={`flex flex-col items-center text-center transition-all duration-500 ${frame} ${enter}`}
       >
         {body}
       </div>
@@ -109,8 +120,8 @@ export function PlayerToken({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex w-full flex-col items-center gap-2 rounded-xl border p-3 text-center transition-all duration-300 ${cardBase} ${enter} ${
-        selected ? selectedGlow : ""
+      className={`flex w-full flex-col items-center text-center transition-all duration-300 ${frame} ${enter} ${
+        selected && chrome ? selectedGlow : ""
       } ${disabled && !selected ? "cursor-not-allowed opacity-40" : ""}`}
     >
       {body}

@@ -58,7 +58,7 @@ export function StatusDock({
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-2">
             {dayNumber ? (
-              <span className="shrink-0 font-mono text-[10px] text-white/40">{dayNumber}일차</span>
+              <span className="shrink-0 font-mono text-[0.625rem] text-white/40">{dayNumber}일차</span>
             ) : null}
             <span className="shrink-0 text-sm font-semibold text-white">{state.label}</span>
             <span className="truncate text-xs text-white/50">{state.line}</span>

@@ -45,7 +45,7 @@ export function PhaseTimer({
       }`}
     >
       {label ? (
-        <span className="text-[10px] uppercase tracking-widest opacity-60">{label}</span>
+        <span className="text-[0.625rem] uppercase tracking-widest opacity-60">{label}</span>
       ) : null}
       <span aria-hidden="true">{display}</span>
     </div>

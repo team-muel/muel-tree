@@ -41,7 +41,7 @@ export function VerdictPhase({ players, events }: VerdictPhaseProps) {
       </h2>
 
       {/* 중앙 스포트라이트 — 처형대 */}
-      <div className="relative mt-2 flex min-h-[180px] w-full max-w-md flex-col items-center justify-end pb-4">
+      <div className="relative mt-2 flex min-h-[11.25rem] w-full max-w-md flex-col items-center justify-end pb-4">
         <div
           aria-hidden="true"
           className={`gomdori-spotlight pointer-events-none absolute inset-x-[18%] top-0 bottom-2 [clip-path:polygon(38%_0,62%_0,100%_100%,0_100%)] ${
@@ -51,7 +51,7 @@ export function VerdictPhase({ players, events }: VerdictPhaseProps) {
           }`}
         />
         {executedPlayer ? (
-          <div className="relative w-[112px] motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-700">
+          <div className="relative w-[7rem] motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-700">
             <PlayerToken
               name={executedPlayer.displayName}
               avatarUrl={executedPlayer.avatarUrl}

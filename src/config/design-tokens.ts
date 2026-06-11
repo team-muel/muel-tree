@@ -104,6 +104,12 @@ export const FACTION_COLORS = {
  * bg 는 GameFrame(main)에 적용되는 클래스 문자열 (그라디언트 포함).
  */
 export const PHASE_TONES = {
+  /** 진입(랜딩) — 로비와 같은 따뜻한 심야. StatusDock 은 뜨지 않는다. */
+  landing: {
+    bg: "bg-gradient-to-b from-[#121019] via-[#0f0d16] to-[#0b0a11]",
+    accent: "text-white/40",
+    mood: "dark",
+  },
   lobby: {
     bg: "bg-gradient-to-b from-[#121019] via-[#0f0d16] to-[#0b0a11]",
     accent: "text-white/40",
