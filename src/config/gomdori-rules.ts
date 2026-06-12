@@ -17,7 +17,7 @@ export const GOMDORI_RULES = {
   phases: {
     roleAssign: { key: "role_assign", label: "직업 배정", detail: "비밀리에 역할 전달", durationSec: 8 },
     nightSuspect: { key: "night_suspect", label: "의심", detail: "의심 투표 — 최다 의심자는 그 밤 능력 불가", durationSec: 30 },
-    night: { key: "night", label: "밤", detail: "악마·조력자·의사·경찰 능력 행사", durationSec: 60 },
+    night: { key: "night", label: "밤", detail: "악마와 능력자들이 밤 능력 행사", durationSec: 60 },
     nightResolve: { key: "night_resolve", label: "밤 정리", detail: "능력 결과 처리", durationSec: 3 },
     day: { key: "day", label: "아침", detail: "사건 공개와 토론", durationSec: 180 },
     vote: { key: "vote", label: "투표", detail: "처형 후보 지목", durationSec: 60 },
@@ -31,7 +31,7 @@ export const GOMDORI_RULES = {
   publicFlowSteps: [
     { key: "lobby", label: "로비", detail: "참가자가 모여 매치를 시작" },
     { key: "role_assign", label: "직업 배정", detail: "비밀리에 역할 전달" },
-    { key: "night", label: "밤", detail: "악마·조력자·의사·경찰 능력 행사" },
+    { key: "night", label: "밤", detail: "악마와 능력자들이 밤 능력 행사" },
     { key: "day", label: "아침", detail: "사건 공개와 토론" },
     { key: "vote", label: "투표", detail: "처형 후보 지목" },
     { key: "verdict", label: "판결", detail: "찬반으로 처형 확정" },

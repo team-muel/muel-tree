@@ -11,7 +11,7 @@ import { Badge } from "@/components/game/ui/Badge";
 import { Button } from "@/components/game/ui/Button";
 import { Card } from "@/components/game/ui/Card";
 import { FACTION_COLORS } from "@/config/design-tokens";
-import { roleMeta } from "@/config/gomdori-roles";
+import { factionLabel, roleMeta } from "@/config/gomdori-roles";
 import { RoleEmblem } from "@/components/game/ui/RoleEmblem";
 import { selectRole, type PlayerSummary } from "@/lib/game/api";
 
@@ -25,15 +25,9 @@ type RoleAssignPhaseProps = {
 
 type PendingSelection = { kind?: string; pool?: string[] };
 
-// 직업 라벨·설명은 manifest(gomdori-roles)가 단일 출처 — 로컬 사본(ROLE_COPY)이
-// manifest 와 표류해 같은 직업이 화면마다 다른 이름("악마" vs "대악마")으로 보이던
-// 문제(2026-06-12)를 제거.
-const FACTION_COPY = {
-  angel: { label: "천사팀", mark: "A" },
-  demon: { label: "악마팀", mark: "D" },
-  helper: { label: "악마팀", mark: "D" },
-  neutral: { label: "중립", mark: "N" },
-} as const;
+// 직업·진영 라벨은 manifest(gomdori-roles)가 단일 출처 — 로컬 사본이 manifest 와
+// 표류해 같은 직업이 화면마다 다른 이름("악마" vs "대악마")으로 보이던 문제(2026-06-12) 제거.
+const FACTION_MARKS = { angel: "A", demon: "D", helper: "D", neutral: "N" } as const;
 
 export function RoleAssignPhase({ players, myPlayer, events, matchId, gameJwt }: RoleAssignPhaseProps) {
   const roleEvent = events.find((e) => e.event_type === "role_assigned");
@@ -118,13 +112,16 @@ export function RoleAssignPhase({ players, myPlayer, events, matchId, gameJwt }:
   }
 
   const role = String(roleEvent?.payload?.role ?? myPlayer?.role ?? "");
-  const faction = String(roleEvent?.payload?.faction ?? myPlayer?.faction ?? "neutral") as keyof typeof FACTION_COPY;
+  const faction = String(roleEvent?.payload?.faction ?? myPlayer?.faction ?? "neutral") as keyof typeof FACTION_MARKS;
   const allies = roleEvent?.payload?.allies as Array<{user_id: string, role: string}> | undefined;
   const metaForRole = roleMeta(role);
   const roleCopy = metaForRole
     ? { label: metaForRole.label, detail: metaForRole.reveal }
     : { label: role || "확인 중...", detail: "직업 정보를 불러오고 있습니다." };
-  const factionCopy = FACTION_COPY[faction] ?? FACTION_COPY.neutral;
+  const factionCopy = {
+    label: factionLabel(faction),
+    mark: FACTION_MARKS[faction] ?? FACTION_MARKS.neutral,
+  };
   const factionColor = FACTION_COLORS[faction] ?? FACTION_COLORS.neutral;
   const allyRows = (allies ?? [])
     .map((ally) => ({

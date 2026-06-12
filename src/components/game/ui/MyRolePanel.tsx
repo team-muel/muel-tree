@@ -10,14 +10,8 @@
  */
 
 import { FACTION_COLORS } from "@/config/design-tokens";
-import { roleMeta, roleLabel } from "@/config/gomdori-roles";
+import { factionLabel, roleMeta, roleLabel } from "@/config/gomdori-roles";
 import { RoleEmblem } from "@/components/game/ui/RoleEmblem";
-
-const FACTION_LABEL: Record<string, string> = {
-  angel: "천사팀",
-  demon: "악마팀",
-  neutral: "중립",
-};
 
 export function MyRolePanel({
   role,
@@ -48,7 +42,7 @@ export function MyRolePanel({
           <div className="flex items-center gap-2">
             <span className={`text-lg font-bold ${color.primary}`}>{roleLabel(role)}</span>
             <span className={`rounded-full border px-2 py-0.5 text-[0.625rem] ${color.border} ${color.bgSoft} ${color.accent}`}>
-              {FACTION_LABEL[fac] ?? "중립"}
+              {factionLabel(fac)}
             </span>
           </div>
           {meta?.reveal ? (

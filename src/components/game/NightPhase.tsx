@@ -55,12 +55,15 @@ function buildAbilities(role: string | null | undefined, myUserId: string | null
   const meta = roleMeta(role);
   const aliveNotMe = (p: PlayerSummary) => p.alive && p.userId !== myUserId;
 
+  // 문자열(label/prompt/actionType)은 manifest 단일 출처 — 여기엔 대상 조건만 더한다.
+  if (!meta?.night) return [];
+
   // 치료 계열 — 자기 자신 포함 보호.
   if (role === "doctor" || role === "habreterus") {
     return [{
-      actionType: "doctor_heal",
-      label: meta?.night?.label ?? "치료하기",
-      prompt: meta?.night?.prompt ?? "오늘 밤 공격으로부터 보호할 사람을 고르세요. (자기 자신 포함)",
+      actionType: meta.night.actionType,
+      label: meta.night.label,
+      prompt: meta.night.prompt,
       confirm: true,
       eligible: (p) => p.alive,
     }];
@@ -69,9 +72,9 @@ function buildAbilities(role: string | null | undefined, myUserId: string | null
   // 부활 계열 — 탈락자만 지목.
   if (role === "mizlet" || role === "helen") {
     return [{
-      actionType: meta?.night?.actionType ?? `${role}_revive`,
-      label: meta?.night?.label ?? "되살리기",
-      prompt: meta?.night?.prompt ?? "되살릴 탈락자를 고르세요.",
+      actionType: meta.night.actionType,
+      label: meta.night.label,
+      prompt: meta.night.prompt,
       confirm: true,
       eligible: (p) => !p.alive,
       emptyNote: "아직 되살릴 탈락자가 없습니다.",
@@ -432,8 +435,10 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
 
   const nightProfilePanel = role ? (
     <div className="space-y-4">
-      {/* 능력 목록은 아래 "밤 능력" 상호작용 카드가 담당 — 같은 문자열 2회 반복 방지. */}
-      <MyRolePanel role={role} faction={myPlayer?.faction ?? undefined} showAbilities={false} />
+      {/* 평소엔 아래 "밤 능력" 상호작용 카드가 능력을 담당(같은 문자열 2회 반복 방지).
+          첫 밤은 능력 사용 불가라 그 카드가 없으므로 정적 능력 프리뷰를 켠다 —
+          새 직업을 받은 직후 자기 능력을 읽어볼 유일한 시간. */}
+      <MyRolePanel role={role} faction={myPlayer?.faction ?? undefined} showAbilities={isFirstNight} />
 
       {isFirstNight ? (
         <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center text-sm text-white/45">

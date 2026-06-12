@@ -18,6 +18,7 @@ import { useState } from "react";
 import type { PlayerSummary } from "@/lib/game/api";
 import type { Mood } from "@/config/design-tokens";
 import { PlayerToken } from "@/components/game/ui/PlayerToken";
+import { PlayerInspectSheet } from "@/components/game/ui/PlayerInspectSheet";
 import { StageTimerOrb } from "@/components/game/ui/StageTimerOrb";
 import { useInspectGuesses } from "@/lib/game/inspect";
 
@@ -97,8 +98,12 @@ export function GameStage({
 }) {
   const light = mood === "light";
 
-  // 정체 추측(R3) — 무대 위 클릭 선택기 구성
+  // 정체 추측(R3) — 두 층위.
+  //   탭(비지목 무대)      → 토큰 위 빠른 진영 추측(악마/천사 2버튼)
+  //   롱프레스/우클릭     → 전체 추측 시트(진영+직업+메모, PlayerInspectSheet)
+  // 시트는 그간 컴포넌트만 있고 배선이 안 돼 있었다 (2026-06-12 — 직업 추측 통로 부재).
   const [activeGuessEditUserId, setActiveGuessEditUserId] = useState<string | null>(null);
+  const [sheetUserId, setSheetUserId] = useState<string | null>(null);
   const guessEnabled = inspectable && Boolean(matchId);
   const { guesses, save } = useInspectGuesses(matchId, guessEnabled);
 
@@ -111,8 +116,11 @@ export function GameStage({
       onInspect(uid);
       return;
     }
-    toggleGuessEdit(uid);
+    if (!guessEnabled) return;
+    setActiveGuessEditUserId(null);
+    setSheetUserId(uid);
   };
+  const sheetPlayer = sheetUserId ? players.find((p) => p.userId === sheetUserId) ?? null : null;
 
   const canDrag = movable && !selectable;
 
@@ -175,7 +183,7 @@ export function GameStage({
                       ? () => onSelect?.(p.userId)
                       : undefined
                     : canInspectPlayer
-                      ? () => inspectPlayer(p.userId)
+                      ? () => (onInspect ? onInspect(p.userId) : toggleGuessEdit(p.userId))
                       : undefined
                 }
                 onInspect={canInspectPlayer ? () => inspectPlayer(p.userId) : undefined}
@@ -187,6 +195,18 @@ export function GameStage({
       </div>
       {/* 차고 노는 타이머 — 지목 무대에선 끈다(조준 안정). */}
       {!selectable && timerOrbEndsAt ? <StageTimerOrb endsAt={timerOrbEndsAt} /> : null}
+
+      {/* 전체 추측 시트 — 롱프레스/우클릭으로 진영+직업+메모 추리 (로컬 저장). */}
+      {sheetPlayer ? (
+        <PlayerInspectSheet
+          open
+          onClose={() => setSheetUserId(null)}
+          name={sheetPlayer.displayName}
+          avatarUrl={sheetPlayer.avatarUrl}
+          initial={guesses[sheetPlayer.userId]}
+          onSave={(guess) => save(sheetPlayer.userId, guess)}
+        />
+      ) : null}
     </div>
   );
 }
