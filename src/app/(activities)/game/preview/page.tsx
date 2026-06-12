@@ -82,6 +82,45 @@ function renderPhasePreview(
           gameJwt={null}
         />
       );
+    case "role_select_demon":
+      // 변종 선택(라이브: match-start 가 pendingSelection private 이벤트로 전달,
+      // role_assign 30초 창 안에서 4지선다 → 미선택 시 랜덤 폴백). preview 목
+      // 이벤트에 pendingSelection 이 없어 이 흐름이 안 보이던 것을 보강 (2026-06-12).
+      return (
+        <RoleAssignPhase
+          players={players}
+          myPlayer={me}
+          events={[{
+            id: "e-role-select",
+            event_type: "role_assigned",
+            payload: {
+              role: "demon",
+              faction: "demon",
+              pendingSelection: { kind: "demon", pool: ["demon", "phantom", "malen", "besto"] },
+            },
+          }]}
+          matchId="preview"
+          gameJwt={null}
+        />
+      );
+    case "role_select_helper":
+      return (
+        <RoleAssignPhase
+          players={players}
+          myPlayer={me}
+          events={[{
+            id: "e-helper-select",
+            event_type: "role_assigned",
+            payload: {
+              role: "gain",
+              faction: "demon",
+              pendingSelection: { kind: "helper", pool: ["gain", "luna", "logen", "ellen"] },
+            },
+          }]}
+          matchId="preview"
+          gameJwt={null}
+        />
+      );
     case "night":
       return (
         <NightPhase
@@ -144,11 +183,24 @@ function renderPhasePreview(
   }
 }
 
-/** publicFlowSteps + internal 의심 페이즈(밤 뒤에 끼움) — 작업대 전용 시퀀스. */
+/** publicFlowSteps + internal 페이즈(변종 선택·의심)를 끼운 작업대 전용 시퀀스. */
 const PREVIEW_STEPS: Array<{ key: string; label: string; detail: string }> = (() => {
   const steps: Array<{ key: string; label: string; detail: string }> = [];
   for (const step of GOMDORI_RULES.publicFlowSteps) {
     steps.push(step);
+    if (step.key === "role_assign") {
+      // 악마/조력자 슬롯만 보는 변종 선택 — 같은 role_assign 창의 다른 얼굴.
+      steps.push({
+        key: "role_select_demon",
+        label: "변종 선택 (악마)",
+        detail: "악마 슬롯은 4직업 중 플레이할 변종을 고른다 — 미선택 시 랜덤",
+      });
+      steps.push({
+        key: "role_select_helper",
+        label: "변종 선택 (조력자)",
+        detail: "조력자 슬롯도 4직업 중 선택 — role_assign 30초 창",
+      });
+    }
     if (step.key === "night") {
       steps.push({
         key: "night_suspect",
@@ -342,7 +394,8 @@ export default function GamePreviewPage() {
             <PreviewSection
               key={step.key}
               index={index + 2}
-              toneKey={step.key}
+              // 변종 선택은 role_assign 창의 다른 얼굴 — 같은 톤·독 규칙을 쓴다.
+              toneKey={step.key.startsWith("role_select") ? "role_assign" : step.key}
               title={step.label}
               detail={step.detail}
               me={me}
