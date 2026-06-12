@@ -432,7 +432,8 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
 
   const nightProfilePanel = role ? (
     <div className="space-y-4">
-      <MyRolePanel role={role} faction={myPlayer?.faction ?? undefined} />
+      {/* 능력 목록은 아래 "밤 능력" 상호작용 카드가 담당 — 같은 문자열 2회 반복 방지. */}
+      <MyRolePanel role={role} faction={myPlayer?.faction ?? undefined} showAbilities={false} />
 
       {isFirstNight ? (
         <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center text-sm text-white/45">
@@ -537,7 +538,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
 
   if (!myPlayer || !myPlayer.alive) {
     return (
-      <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center p-5 pb-24">
+      <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center py-5 pb-24">
         <GameStage players={players} myUserId={myPlayer?.userId} mood="dark" inspectable matchId={match.id} movable />
         <BottomSheet title="관전 피드">
           <p className="text-sm text-white/55">당신은 사망했습니다. 다른 플레이어들의 행동을 지켜보세요.</p>
@@ -549,7 +550,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
   }
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center p-5 pb-24">
+    <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center py-5 pb-24">
       <GameStage
         players={players}
         myUserId={myPlayer.userId}

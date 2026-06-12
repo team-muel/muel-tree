@@ -25,17 +25,9 @@ type RoleAssignPhaseProps = {
 
 type PendingSelection = { kind?: string; pool?: string[] };
 
-const ROLE_COPY: Record<string, { label: string; detail: string }> = {
-  citizen: { label: "시민", detail: "토론과 투표로 마을에 숨은 악마를 찾아내세요." },
-  doctor: { label: "의사", detail: "밤마다 한 명을 치료해 악마의 공격을 막을 수 있습니다." },
-  police: { label: "경찰", detail: "밤마다 한 명을 조사해 악마인지 확인할 수 있습니다." },
-  demon: { label: "악마", detail: "밤마다 한 명을 습격하고, 낮에는 정체를 숨기세요." },
-  helper: { label: "조력자", detail: "악마팀을 돕되, 당신의 정체는 끝까지 감추세요." },
-  rainer: { label: "라이너", detail: "수호신 백호로 천사팀 카운트를 늘려 마을을 지킵니다. (밤 능동 능력 없음)" },
-  romaz: { label: "로마즈", detail: "밤마다 용의자를 지목해 다음 투표에서 그 대상의 투표·의심 무게를 키웁니다." },
-  gain: { label: "가인", detail: "악마를 살해·처형 1회로부터 보호하는 조력자. 정체를 감추세요." },
-};
-
+// 직업 라벨·설명은 manifest(gomdori-roles)가 단일 출처 — 로컬 사본(ROLE_COPY)이
+// manifest 와 표류해 같은 직업이 화면마다 다른 이름("악마" vs "대악마")으로 보이던
+// 문제(2026-06-12)를 제거.
 const FACTION_COPY = {
   angel: { label: "천사팀", mark: "A" },
   demon: { label: "악마팀", mark: "D" },
@@ -129,15 +121,16 @@ export function RoleAssignPhase({ players, myPlayer, events, matchId, gameJwt }:
   const faction = String(roleEvent?.payload?.faction ?? myPlayer?.faction ?? "neutral") as keyof typeof FACTION_COPY;
   const allies = roleEvent?.payload?.allies as Array<{user_id: string, role: string}> | undefined;
   const metaForRole = roleMeta(role);
-  const roleCopy = ROLE_COPY[role] ??
-    (metaForRole ? { label: metaForRole.label, detail: metaForRole.reveal } : { label: role || "확인 중...", detail: "직업 정보를 불러오고 있습니다." });
+  const roleCopy = metaForRole
+    ? { label: metaForRole.label, detail: metaForRole.reveal }
+    : { label: role || "확인 중...", detail: "직업 정보를 불러오고 있습니다." };
   const factionCopy = FACTION_COPY[faction] ?? FACTION_COPY.neutral;
   const factionColor = FACTION_COLORS[faction] ?? FACTION_COLORS.neutral;
   const allyRows = (allies ?? [])
     .map((ally) => ({
       ...ally,
       displayName: players.find((player) => player.userId === ally.user_id)?.displayName ?? "알 수 없음",
-      roleLabel: ROLE_COPY[ally.role]?.label ?? roleMeta(ally.role)?.label ?? ally.role,
+      roleLabel: roleMeta(ally.role)?.label ?? ally.role,
     }))
     .filter((ally) => ally.user_id !== myPlayer?.userId);
 

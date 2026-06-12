@@ -276,7 +276,7 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
       <div className="rounded-md border border-white/10 bg-black/20 p-3">
         <div className="text-xs uppercase tracking-widest text-white/35">규칙 요약</div>
         <ul className="mt-2 space-y-1 text-xs leading-5 text-white/55">
-          <li>· 밤: 악마는 처치, 의사·경찰·로마즈는 능력 사용</li>
+          <li>· 밤: 악마는 처치, 능력자는 각자 밤 능력 사용</li>
           <li>· 아침: 토론 후 투표로 한 명을 지목·처형</li>
           <li>· 천사 승리: 악마를 모두 찾아 제거</li>
           <li>· 악마 승리: 악마 수가 천사 수 이상</li>
@@ -492,7 +492,7 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
   // 로비엔 StatusDock 이 없으므로(GameFrame) 시트 peek 은 화면 바닥(edge)에 붙는다.
   if (layout === "mobile") {
     return (
-      <div className="flex w-full max-w-xl flex-col p-4 pb-20">
+      <div className="flex w-full max-w-xl flex-col py-4 pb-20">
         {mainPanel}
         <BottomSheet title="친구 부르기" peek="edge">{sheetContent}</BottomSheet>
         <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} title="설정 · 규칙 · 도감">
@@ -503,7 +503,7 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
   }
 
   return (
-    <div className="grid w-full max-w-6xl grid-cols-[1.6fr_0.9fr] items-start gap-5 p-5 pb-10">
+    <div className="grid w-full max-w-6xl grid-cols-[1.6fr_0.9fr] items-start gap-5 py-5 pb-10">
       {mainPanel}
       <BottomSheet title="친구 부르기" peek="edge">{sheetContent}</BottomSheet>
       <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} title="설정 · 규칙 · 도감">

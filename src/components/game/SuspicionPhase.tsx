@@ -96,7 +96,7 @@ export function SuspicionPhase({ match, players, myPlayer, gameJwt, events }: Su
 
   if (isDead) {
     return (
-      <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center p-5 pb-24">
+      <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center py-5 pb-24">
         <GameStage players={players} myUserId={myPlayer?.userId} mood="dark" inspectable matchId={match.id} movable />
         <BottomSheet title="관전 피드">
           <p className="text-sm text-white/55">사망하여 의심 투표에 참여할 수 없습니다.</p>
@@ -107,7 +107,7 @@ export function SuspicionPhase({ match, players, myPlayer, gameJwt, events }: Su
   }
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center p-5 pb-24">
+    <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center py-5 pb-24">
       <GameStage
         players={players}
         myUserId={myPlayer?.userId}
@@ -136,10 +136,10 @@ export function SuspicionPhase({ match, players, myPlayer, gameJwt, events }: Su
             ? `${selectedName}님에게 의심 낙인을 찍었습니다.`
             : selectedTarget === null && submitted
               ? "기권했습니다."
-              : "무대 위 인물을 클릭해 의심 낙인을 찍으세요."}
+              : "무대 위 인물을 선택해 의심 낙인을 찍으세요."}
         </h2>
         <p className="mt-1 text-xs leading-relaxed text-indigo-100/45">
-          최다 의심자는 전원에게 공개되고 이번 밤 능력을 쓸 수 없습니다. 대상을 다시 클릭하면 교체됩니다.
+          최다 의심자는 전원에게 공개되고 이번 밤 능력을 쓸 수 없습니다. 다른 대상을 선택하면 교체됩니다.
         </p>
 
         <div className="mt-4 flex justify-center">

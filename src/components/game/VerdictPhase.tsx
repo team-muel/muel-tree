@@ -90,7 +90,7 @@ export function VerdictPhase({ match, players, myPlayer, gameJwt }: VerdictPhase
   };
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center gap-4 p-5 pb-24 max-w-5xl mx-auto">
+    <div className="flex h-full w-full flex-col items-center justify-center gap-4 py-5 pb-24 max-w-5xl mx-auto">
       <h2 className="text-sm font-semibold uppercase tracking-widest text-amber-500">
         최후의 반론
       </h2>
@@ -151,7 +151,7 @@ export function VerdictPhase({ match, players, myPlayer, gameJwt }: VerdictPhase
                     : "bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100"
                 }`}
               >
-                {selectedVote === "approve" ? "찬성 완료 ✓" : "찬성 (Approve)"}
+                {selectedVote === "approve" ? "찬성 완료 ✓" : "찬성"}
               </button>
               <button
                 type="button"
@@ -163,7 +163,7 @@ export function VerdictPhase({ match, players, myPlayer, gameJwt }: VerdictPhase
                     : "bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100"
                 }`}
               >
-                {selectedVote === "reject" ? "반대 완료 ✓" : "반대 (Reject)"}
+                {selectedVote === "reject" ? "반대 완료 ✓" : "반대"}
               </button>
             </div>
           </>

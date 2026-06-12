@@ -19,7 +19,20 @@ const FACTION_LABEL: Record<string, string> = {
   neutral: "중립",
 };
 
-export function MyRolePanel({ role, faction }: { role: string; faction?: string }) {
+export function MyRolePanel({
+  role,
+  faction,
+  showAbilities = true,
+}: {
+  role: string;
+  faction?: string;
+  /**
+   * false 면 능력 목록을 생략하고 정체 헤더만 — NightPhase 처럼 같은 패널 안에
+   * *상호작용형* 능력 목록(같은 label·prompt)이 따로 있는 화면에서 같은 문자열이
+   * 2회 반복되던 문제(2026-06-12)의 차단 스위치.
+   */
+  showAbilities?: boolean;
+}) {
   const meta = roleMeta(role);
   const fac = (faction ?? meta?.faction ?? "neutral") as keyof typeof FACTION_COLORS;
   const color = FACTION_COLORS[fac] ?? FACTION_COLORS.neutral;
@@ -44,6 +57,7 @@ export function MyRolePanel({ role, faction }: { role: string; faction?: string 
         </div>
       </div>
 
+      {showAbilities ? (
       <div>
         <div className="text-[0.625rem] font-semibold uppercase tracking-widest text-white/35">
           능력
@@ -73,6 +87,7 @@ export function MyRolePanel({ role, faction }: { role: string; faction?: string 
           </p>
         )}
       </div>
+      ) : null}
     </div>
   );
 }
