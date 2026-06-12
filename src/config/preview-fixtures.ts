@@ -186,6 +186,8 @@ export type MockEvent = {
   id: string;
   event_type: string;
   created_at: string;
+  /** 같은 밤 묶음 판별(morning_report ↔ 개인 밤 피드백) — DayPhase 가 사용. */
+  phase_id?: string;
   payload?: Record<string, unknown>;
 };
 
@@ -206,12 +208,43 @@ export const MOCK_EVENTS: Record<string, MockEvent[]> = {
       payload: { day_number: 1 },
     },
   ],
+  // 아침 공표 + 개인 밤 피드백 시연 — morning_report(집계)와 같은 phase_id 의
+  // 당사자 private 이벤트(라이브에선 RLS 로 본인에게만 도착)를 함께 싣는다.
   dayAfterDeath: [
+    {
+      id: "e-report",
+      event_type: "morning_report",
+      created_at: NOW,
+      phase_id: "ph-night-2",
+      payload: { deaths: ["p-simia"], revivals: ["p-pin"], night_number: 2 },
+    },
+    {
+      id: "e-personal-silenced",
+      event_type: "action_blocked_silenced",
+      created_at: NOW,
+      phase_id: "ph-night-2",
+      payload: { user_id: MOCK_USER_ID },
+    },
+    {
+      id: "e-personal-protected",
+      event_type: "attack_prevented",
+      created_at: NOW,
+      phase_id: "ph-night-2",
+      payload: { user_id: MOCK_USER_ID },
+    },
     {
       id: "e-death",
       event_type: "player_died",
       created_at: NOW,
+      phase_id: "ph-night-2",
       payload: { user_id: "p-simia" },
+    },
+    {
+      id: "e-revive",
+      event_type: "player_revived",
+      created_at: NOW,
+      phase_id: "ph-night-2",
+      payload: { user_id: "p-pin" },
     },
   ],
   verdictExecuted: [
