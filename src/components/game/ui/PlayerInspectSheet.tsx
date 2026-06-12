@@ -9,19 +9,17 @@
  */
 
 import { useEffect, useState } from "react";
-import { GOMDORI_ROLES } from "@/config/gomdori-roles";
+import { ASSIGNABLE_ROLE_IDS, FACTION_LABELS, GOMDORI_ROLES } from "@/config/gomdori-roles";
 import { SettingsSheet } from "@/components/game/ui/SettingsSheet";
 import type { InspectGuess } from "@/lib/game/inspect";
 
-// 추측 후보 직업 — 배정 풀만(레거시·변환 산물 제외).
-const GUESSABLE = Object.entries(GOMDORI_ROLES).filter(
-  ([id]) => !["citizen", "doctor", "police", "helper", "converted", "corrupted"].includes(id),
-);
+// 추측 후보 직업 — 배정 풀만(레거시·변환 산물 제외, manifest 단일 출처).
+const GUESSABLE = ASSIGNABLE_ROLE_IDS.map((id) => [id, GOMDORI_ROLES[id]] as const);
 
 const FACTIONS: Array<{ id: string; label: string; cls: string }> = [
-  { id: "angel", label: "천사팀", cls: "border-amber-300/40 bg-amber-400/15 text-amber-200" },
-  { id: "demon", label: "악마팀", cls: "border-rose-300/40 bg-rose-400/15 text-rose-200" },
-  { id: "neutral", label: "중립", cls: "border-violet-300/40 bg-violet-400/15 text-violet-200" },
+  { id: "angel", label: FACTION_LABELS.angel, cls: "border-amber-300/40 bg-amber-400/15 text-amber-200" },
+  { id: "demon", label: FACTION_LABELS.demon, cls: "border-rose-300/40 bg-rose-400/15 text-rose-200" },
+  { id: "neutral", label: FACTION_LABELS.neutral, cls: "border-violet-300/40 bg-violet-400/15 text-violet-200" },
 ];
 
 export function PlayerInspectSheet({

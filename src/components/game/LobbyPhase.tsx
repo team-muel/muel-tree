@@ -20,11 +20,11 @@ import {
 import { Button } from "@/components/game/ui/Button";
 import { useMemo, useState } from "react";
 import type { ActivitySession } from "@/components/ActivityLayout";
-import { GOMDORI_ROLES } from "@/config/gomdori-roles";
 import { GOMDORI_RULES } from "@/config/gomdori-rules";
 import { GameStage } from "@/components/game/ui/GameStage";
 import { BottomSheet } from "@/components/game/ui/BottomSheet";
 import { SettingsSheet } from "@/components/game/ui/SettingsSheet";
+import { RoleCodex } from "@/components/game/ui/RoleCodex";
 import { useDisplay } from "@/lib/game/display";
 
 type LobbyPhaseProps = {
@@ -77,7 +77,6 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
   const [copied, setCopied] = useState(false);
   const [neutralPending, setNeutralPending] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [selectedCodexFaction, setSelectedCodexFaction] = useState<"angel" | "demon" | "neutral">("angel");
 
   const { layout } = useDisplay();
   const hostLabel = useMemo(() => hostName(players, match.hostUserId), [match.hostUserId, players]);
@@ -283,60 +282,8 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
         </ul>
       </div>
 
-      <div className="rounded-md border border-white/10 bg-black/20 p-3">
-        <div className="text-xs uppercase tracking-widest text-white/35 mb-2">도감 (직업 안내)</div>
-        
-        {/* 진영 선택 탭 */}
-        <div className="flex gap-1 mb-3">
-          {(
-            [
-              { id: "angel", label: "천사" },
-              { id: "demon", label: "악마" },
-              { id: "neutral", label: "중립" },
-            ] as const
-          ).map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setSelectedCodexFaction(f.id)}
-              className={`flex-1 py-1 rounded text-xs font-bold transition-colors ${
-                selectedCodexFaction === f.id
-                  ? f.id === "angel"
-                    ? "bg-amber-400/20 text-amber-200 border border-amber-300/30"
-                    : f.id === "demon"
-                      ? "bg-rose-400/20 text-rose-200 border border-rose-300/30"
-                      : "bg-violet-400/20 text-violet-200 border border-violet-300/30"
-                  : "border border-white/10 text-white/60 hover:bg-white/[0.04]"
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-
-        {/* 탭 내용 */}
-        <ul className="space-y-2 text-xs leading-5 text-white/65 max-h-48 overflow-y-auto pr-1">
-          {Object.entries(GOMDORI_ROLES)
-            .filter(([id, r]) => {
-              const isExcluded = ["citizen", "doctor", "police", "helper", "converted", "corrupted"].includes(id);
-              return !isExcluded && r.faction === selectedCodexFaction;
-            })
-            .map(([id, r]) => (
-              <li key={id} className="border-b border-white/5 pb-1.5 last:border-b-0 last:pb-0">
-                <span className={`font-semibold ${
-                  selectedCodexFaction === "angel"
-                    ? "text-amber-200"
-                    : selectedCodexFaction === "demon"
-                      ? "text-rose-200"
-                      : "text-violet-200"
-                }`}>
-                  {r.label}
-                </span>{" "}
-                — {r.reveal}
-              </li>
-            ))}
-        </ul>
-      </div>
+      {/* 도감 — 재사용 컴포넌트(RoleCodex, manifest 단일 출처). 인게임 프로필과 동일체. */}
+      <RoleCodex />
 
       {isHost && nonHost.length > 0 ? (
         <div className="rounded-md border border-white/10 bg-black/20 p-3">

@@ -13,8 +13,10 @@
 import { useState } from "react";
 import { PhaseTimer } from "@/components/game/PhaseTimer";
 import { FACTION_COLORS } from "@/config/design-tokens";
-import { roleLabel } from "@/config/gomdori-roles";
+import { roleLabel, roleMeta } from "@/config/gomdori-roles";
 import { MyRolePanel } from "@/components/game/ui/MyRolePanel";
+import { SettingsSheet } from "@/components/game/ui/SettingsSheet";
+import { RoleCodex } from "@/components/game/ui/RoleCodex";
 
 const STATE_LINE: Record<string, { label: string; line: string }> = {
   lobby: { label: "로비", line: "참가자를 모으는 중" },
@@ -64,6 +66,8 @@ export function StatusDock({
   onExpandedChange?: (expanded: boolean) => void;
 }) {
   const [internalExpanded, setInternalExpanded] = useState(false);
+  // 도감(전 직업 안내) — 인게임 진입점. 로비 설정 안에만 있던 도감을 내 프로필에서도 연다.
+  const [codexOpen, setCodexOpen] = useState(false);
   const state = status ? STATE_LINE[status] : undefined;
   const isControlled = expanded !== undefined;
   const expandedValue = expanded ?? internalExpanded;
@@ -98,8 +102,23 @@ export function StatusDock({
         {open ? (
           <div className="mb-2 rounded-2xl border border-white/12 border-t-white/20 bg-[#100e18]/95 p-4 shadow-[0_8px_32px_rgba(0,0,0,0.45)] backdrop-blur-xl motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-200">
             {profilePanel ?? <MyRolePanel role={myRole as string} faction={myFaction} />}
+            <button
+              type="button"
+              onClick={() => setCodexOpen(true)}
+              className="mt-3 flex w-full items-center justify-between rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-xs text-white/55 transition-colors hover:bg-white/[0.06] hover:text-white/80"
+            >
+              <span>직업 도감 — 전체 직업·능력 보기</span>
+              <span aria-hidden="true">→</span>
+            </button>
           </div>
         ) : null}
+
+        <SettingsSheet open={codexOpen} onClose={() => setCodexOpen(false)} title="직업 도감">
+          <RoleCodex
+            initialFaction={roleMeta(myRole)?.faction ?? "angel"}
+            highlightRole={myRole}
+          />
+        </SettingsSheet>
 
         <div className="flex items-center gap-3 rounded-2xl border border-white/12 border-t-white/20 bg-[#100e18]/85 px-3 py-2 shadow-[0_8px_32px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:px-4 sm:py-2.5">
           {showProfile ? (

@@ -246,3 +246,21 @@ export function roleLabel(role?: string | null): string {
 export function isDemonTeamRole(role?: string | null): boolean {
   return !!(role && GOMDORI_ROLES[role]?.demonTeam);
 }
+
+// 진영 표기 단일 출처 — 화면 로컬 사본 금지 (2026-06-12 컨벤션, muel-tree#86 후속).
+// helper 는 논리 진영상 악마팀으로 표기한다.
+export const FACTION_LABELS: Record<string, string> = {
+  angel: "천사팀",
+  demon: "악마팀",
+  helper: "악마팀",
+  neutral: "중립",
+};
+
+export function factionLabel(faction?: string | null): string {
+  return FACTION_LABELS[faction ?? ""] ?? "중립";
+}
+
+/** 추측·도감용 배정 풀 직업 목록 (레거시·변환 산물 제외). */
+export const ASSIGNABLE_ROLE_IDS = Object.keys(GOMDORI_ROLES).filter(
+  (id) => !["citizen", "doctor", "police", "helper", "converted", "corrupted"].includes(id),
+);
