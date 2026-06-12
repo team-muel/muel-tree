@@ -5,8 +5,8 @@
  *
  * 사용자 요구 (2026-06-11): Discord 하단 자기 프로필 차용 — 언제든 내 직업과
  * 그 능력·설명을 다시 읽는다. 데이터는 manifest(gomdori-roles) 한 곳에서.
- * 패시브 전용 필드는 아직 없으므로(설계 §데이터 모델 A), 능동 능력은 night/
- * extraNights 로, 그 외(패시브 포함)는 reveal 설명으로 표시한다.
+ * 능동 능력은 night/extraNights, 패시브와 원본 능력 흐름은 표시 전용
+ * manifest 필드(passive/abilitySummary)로 분리한다.
  */
 
 import { FACTION_COLORS } from "@/config/design-tokens";
@@ -45,6 +45,9 @@ export function MyRolePanel({
               {factionLabel(fac)}
             </span>
           </div>
+          {meta?.title ? (
+            <div className="mt-0.5 text-[0.6875rem] font-medium text-white/40">{meta.title}</div>
+          ) : null}
           {meta?.reveal ? (
             <p className="mt-1 text-xs leading-5 text-white/55">{meta.reveal}</p>
           ) : null}
@@ -52,9 +55,28 @@ export function MyRolePanel({
       </div>
 
       {showAbilities ? (
-      <div>
+      <div className="space-y-3">
+        {meta?.passive ? (
+          <section className="rounded-lg border border-white/10 bg-black/20 px-3 py-2">
+            <div className="text-[0.625rem] font-semibold uppercase tracking-widest text-white/35">
+              패시브
+            </div>
+            <p className="mt-1 text-xs leading-5 text-white/55">{meta.passive}</p>
+          </section>
+        ) : null}
+
+        {meta?.abilitySummary ? (
+          <section className="rounded-lg border border-white/10 bg-black/20 px-3 py-2">
+            <div className="text-[0.625rem] font-semibold uppercase tracking-widest text-white/35">
+              능력 요약
+            </div>
+            <p className="mt-1 text-xs leading-5 text-white/55">{meta.abilitySummary}</p>
+          </section>
+        ) : null}
+
+        <div>
         <div className="text-[0.625rem] font-semibold uppercase tracking-widest text-white/35">
-          능력
+          밤에 누를 수 있는 능력
         </div>
         {abilities.length > 0 ? (
           <ul className="mt-2 space-y-2">
@@ -80,6 +102,7 @@ export function MyRolePanel({
             밤 능동 능력이 없습니다. 토론·투표와 패시브로 마을에 기여하세요.
           </p>
         )}
+        </div>
       </div>
       ) : null}
     </div>

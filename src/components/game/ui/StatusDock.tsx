@@ -115,7 +115,7 @@ export function StatusDock({
 
         <SettingsSheet open={codexOpen} onClose={() => setCodexOpen(false)} title="직업 도감">
           <RoleCodex
-            initialFaction={roleMeta(myRole)?.faction ?? "angel"}
+            initialFaction={roleMeta(myRole)?.roster ?? roleMeta(myRole)?.faction ?? "angel"}
             highlightRole={myRole}
           />
         </SettingsSheet>

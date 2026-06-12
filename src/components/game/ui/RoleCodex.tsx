@@ -15,6 +15,7 @@ import { RoleEmblem } from "@/components/game/ui/RoleEmblem";
 const FACTION_TABS = [
   { id: "angel", label: "천사", active: "bg-amber-400/20 text-amber-200 border border-amber-300/30", text: "text-amber-200" },
   { id: "demon", label: "악마", active: "bg-rose-400/20 text-rose-200 border border-rose-300/30", text: "text-rose-200" },
+  { id: "helper", label: "조력자", active: "bg-fuchsia-400/20 text-fuchsia-200 border border-fuchsia-300/30", text: "text-fuchsia-200" },
   { id: "neutral", label: "중립", active: "bg-violet-400/20 text-violet-200 border border-violet-300/30", text: "text-violet-200" },
 ] as const;
 
@@ -37,7 +38,7 @@ export function RoleCodex({
 
   const roles = ASSIGNABLE_ROLE_IDS
     .map((id) => [id, GOMDORI_ROLES[id]] as const)
-    .filter(([, r]) => r.faction === faction);
+    .filter(([, r]) => (r.roster ?? r.faction) === faction);
 
   return (
     <div className="rounded-md border border-white/10 bg-black/20 p-3">
@@ -74,7 +75,18 @@ export function RoleCodex({
               <span className="min-w-0">
                 <span className={`font-semibold ${tab.text}`}>{r.label}</span>
                 {mine ? <span className="ml-1.5 text-[0.625rem] text-white/45">— 나</span> : null}{" "}
+                {r.title ? <span className="text-white/35">({r.title}) </span> : null}
                 <span className="text-white/55">{r.reveal}</span>
+                {r.passive ? (
+                  <span className="mt-0.5 block text-[0.6875rem] text-white/45">
+                    패시브: {r.passive}
+                  </span>
+                ) : null}
+                {r.abilitySummary ? (
+                  <span className="mt-0.5 block text-[0.6875rem] text-white/45">
+                    요약: {r.abilitySummary}
+                  </span>
+                ) : null}
                 {r.night ? (
                   <span className="mt-0.5 block text-[0.6875rem] text-white/40">
                     밤 능력: {r.night.label}
