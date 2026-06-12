@@ -30,6 +30,7 @@ import { PhaseSweep } from "@/components/game/ui/PhaseSweep";
 import { SuspicionPhase } from "@/components/game/SuspicionPhase";
 import { StatusBlock } from "@/components/game/ui/StatusBlock";
 import { LandingScreen } from "@/components/game/LandingScreen";
+import { IllustrationScene } from "@/components/game/ui/IllustrationScene";
 import { DisplayProvider } from "@/lib/game/display";
 
 const GAME_ACTIVITY = getActivity("gomdori-mafia")!;
@@ -329,7 +330,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (!session.hasDiscordAuth) {
     return (
-      <GameFrame>
+      <GameFrame keyArt>
         <OutsideActivityBlock />
       </GameFrame>
     );
@@ -337,7 +338,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (boot.status === "error") {
     return (
-      <GameFrame>
+      <GameFrame keyArt>
         <StatusBlock title="입장 실패" detail={boot.message} />
       </GameFrame>
     );
@@ -360,7 +361,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (boot.status !== "ready" || !match) {
     return (
-      <GameFrame>
+      <GameFrame keyArt>
         <StatusBlock
           title={boot.status === "joining" ? "매치 참가 중" : "게임 인증 중"}
           detail="Gomdori 게임 서버와 Discord 채널을 연결하고 있습니다."
@@ -371,7 +372,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (!gameJwt) {
     return (
-      <GameFrame>
+      <GameFrame keyArt>
         <StatusBlock
           title="게임 인증 실패"
           detail="게임 서버 인증 토큰이 없습니다. Activity를 다시 열어주세요."
@@ -476,6 +477,7 @@ function GameFrame({
   myAvatarUrl,
   dayNumber,
   hideStatusDock = false,
+  keyArt = false,
 }: {
   children: React.ReactNode;
   status?: string;
@@ -486,6 +488,12 @@ function GameFrame({
   myAvatarUrl?: string | null;
   dayNumber?: number;
   hideStatusDock?: boolean;
+  /**
+   * 진입·로딩 계열 화면의 풀블리드 키 아트(night-muse) 배경 (2026-06-12).
+   * object-cover + focal 로 어떤 종횡비에서도 시선점이 살고, quality 90 으로
+   * 화질을 보존한다. edge fade-b 가 기본 배경색(#11131a)으로 침잠해 이음새 없음.
+   */
+  keyArt?: boolean;
 }) {
   const tone = status ? PHASE_TONES[status as keyof typeof PHASE_TONES] : undefined;
   const bg = tone?.bg ?? "bg-[#11131a]";
@@ -498,6 +506,19 @@ function GameFrame({
     <main
       className={`relative flex h-full w-full overflow-y-auto px-4 pb-20 pt-5 text-white transition-colors duration-700 sm:px-6 ${bg}`}
     >
+      {/* 진입·로딩 키 아트 — 콘텐츠 뒤(DOM 앞순서) 풀블리드. */}
+      {keyArt ? (
+        <div aria-hidden="true" className="pointer-events-none fixed inset-0">
+          <IllustrationScene
+            id="night-muse"
+            priority
+            drift
+            quality={90}
+            sizes="100vw"
+            className="h-full w-full opacity-85"
+          />
+        </div>
+      ) : null}
       {/* 로비는 독을 띄우지 않는다 — 화면 자체가 상태("대기 중")를 말하고 있어
           정보 중복인 데다, 모바일에서 시트 peek 과 하단 자리를 다퉜다. */}
       {status !== "lobby" && !hideStatusDock ? (
@@ -614,5 +635,6 @@ function mapPlayerRow(row: Record<string, unknown>): PlayerSummary {
     lastSeenAt: typeof row.last_seen_at === "string" ? row.last_seen_at : null,
     role: typeof row.role === "string" ? row.role : null,
     faction: typeof row.faction === "string" ? row.faction : null,
+    circleChat: row.circle_chat === true,
   };
 }

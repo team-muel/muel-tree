@@ -39,6 +39,7 @@ export function IllustrationScene({
   drift = false,
   className,
   sizes = "100vw",
+  quality,
 }: {
   /** ILLUSTRATIONS 매니페스트 키. meta 직접 주입과 둘 중 하나. */
   id?: string;
@@ -51,6 +52,8 @@ export function IllustrationScene({
   className?: string;
   /** next/image sizes 힌트 — 컷인 등 부분 폭이면 조정. */
   sizes?: string;
+  /** next/image quality (기본 next 기본값). 풀블리드 키 아트는 90 권장 — 화질 보존. */
+  quality?: number;
 }) {
   const art = meta ?? (id ? illustrationById(id) : null);
   if (!art) return null;
@@ -66,6 +69,7 @@ export function IllustrationScene({
           fill
           priority={priority}
           sizes={sizes}
+          quality={quality}
           className="object-cover"
           style={{ objectPosition: `${art.focal.x * 100}% ${art.focal.y * 100}%` }}
         />

@@ -29,7 +29,9 @@ export interface GomdoriRoleMeta {
   label: string; // 한글 직업명
   faction: "angel" | "demon" | "neutral";
   reveal: string; // RoleAssign 설명
-  demonTeam?: boolean; // 악마 회로(동료 공개·악마 채팅) 포함
+  // 악마팀 풀 소속(처치 UI 분기·도감 분류용). 채팅·동료 공개는 이 플래그가 아니라
+  // 접선 회로(백엔드 circleChat/circleKnown — 가인·로건 패시브, 팬텀은 통지만)가 결정 (2026-06-12).
+  demonTeam?: boolean;
   night?: GomdoriNightAction; // 밤 능동 능력(없으면 패시브/취침)
   // 추가 밤 능동(예: 팬텀 봉인+일식, 베스토 변신). 각각 독립 제출. night2 의 일반화.
   extraNights?: GomdoriNightAction[];
