@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { activities } from "@/config/activities";
+import { activities, type MuelActivity } from "@/config/activities";
+import { ActivityBootScreen } from "@/components/ActivityBootScreen";
 import { isInsideDiscord } from "@/lib/discord-launch";
 
 /**
@@ -24,7 +25,8 @@ import { isInsideDiscord } from "@/lib/discord-launch";
 export function DiscordActivityRedirect() {
   const router = useRouter();
   const pathname = usePathname();
-  const [redirecting, setRedirecting] = useState(false);
+  // 어떤 Activity 로 가는지 기억해 그 Activity 의 부트 화면(키 아트)을 띄운다.
+  const [redirectTarget, setRedirectTarget] = useState<MuelActivity | null>(null);
 
   useEffect(() => {
     if (pathname !== "/") return;
@@ -34,18 +36,17 @@ export function DiscordActivityRedirect() {
     const target = activities.find((a) => a.discordClientId && a.discordClientId === appId);
     if (!target) return;
 
-    setRedirecting(true);
+    setRedirectTarget(target);
     router.replace(`${target.route}${window.location.search}${window.location.hash}`);
   }, [pathname, router]);
 
-  if (!redirecting) return null;
+  if (!redirectTarget) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#070712]">
-      <div className="text-center">
-        <div className="animate-pulse text-4xl">🧵</div>
-        <p className="mt-3 text-sm text-white/30">여는 중...</p>
-      </div>
-    </div>
+    <ActivityBootScreen
+      boot={redirectTarget.boot}
+      label="여는 중..."
+      className="fixed inset-0 z-50"
+    />
   );
 }
