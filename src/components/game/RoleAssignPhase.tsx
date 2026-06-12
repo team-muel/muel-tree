@@ -29,6 +29,67 @@ type PendingSelection = { kind?: string; pool?: string[] };
 // 표류해 같은 직업이 화면마다 다른 이름("악마" vs "대악마")으로 보이던 문제(2026-06-12) 제거.
 const FACTION_MARKS = { angel: "A", demon: "D", helper: "D", neutral: "N" } as const;
 
+function abilityNames(roleId: string): string[] {
+  const meta = roleMeta(roleId);
+  return [meta?.night, ...(meta?.extraNights ?? [])]
+    .filter((ability): ability is NonNullable<typeof ability> => Boolean(ability))
+    .map((ability) => ability.label);
+}
+
+function RoleBrief({
+  roleId,
+  accentClass,
+  compact = false,
+}: {
+  roleId: string;
+  accentClass: string;
+  compact?: boolean;
+}) {
+  const meta = roleMeta(roleId);
+  if (!meta) return null;
+  const abilities = abilityNames(roleId);
+
+  if (compact) {
+    return (
+      <div className="mt-1 space-y-1">
+        {meta.title ? <div className="text-[0.6875rem] text-white/40">{meta.title}</div> : null}
+        <div className="text-xs leading-5 text-white/55">{meta.reveal}</div>
+        {meta.abilitySummary ? (
+          <div className="text-[0.6875rem] leading-4 text-white/45">{meta.abilitySummary}</div>
+        ) : null}
+        {abilities.length > 0 ? (
+          <div className={`text-[0.6875rem] font-medium ${accentClass}`}>
+            밤 능력: {abilities.join(" · ")}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto mt-6 grid max-w-xl gap-3 text-left sm:grid-cols-2">
+      {meta.passive ? (
+        <section className="rounded-lg border border-white/10 bg-black/20 px-3 py-2">
+          <div className={`text-[0.625rem] font-semibold uppercase tracking-widest ${accentClass}`}>패시브</div>
+          <p className="mt-1 text-xs leading-5 text-white/60">{meta.passive}</p>
+        </section>
+      ) : null}
+      {meta.abilitySummary ? (
+        <section className="rounded-lg border border-white/10 bg-black/20 px-3 py-2">
+          <div className={`text-[0.625rem] font-semibold uppercase tracking-widest ${accentClass}`}>능력 요약</div>
+          <p className="mt-1 text-xs leading-5 text-white/60">{meta.abilitySummary}</p>
+        </section>
+      ) : null}
+      <section className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 sm:col-span-2">
+        <div className={`text-[0.625rem] font-semibold uppercase tracking-widest ${accentClass}`}>밤에 누를 수 있는 능력</div>
+        <p className="mt-1 text-xs leading-5 text-white/60">
+          {abilities.length > 0 ? abilities.join(" · ") : "밤 능동 능력이 없습니다. 토론과 투표가 핵심입니다."}
+        </p>
+      </section>
+    </div>
+  );
+}
+
 export function RoleAssignPhase({ players, myPlayer, events, matchId, gameJwt }: RoleAssignPhaseProps) {
   const roleEvent = events.find((e) => e.event_type === "role_assigned");
   const pending = roleEvent?.payload?.pendingSelection as PendingSelection | null | undefined;
@@ -79,12 +140,12 @@ export function RoleAssignPhase({ players, myPlayer, events, matchId, gameJwt }:
                   }`}
                 >
                   <RoleEmblem role={roleId} size="sm" mood="dark" glow={active} className="mt-0.5" />
-                  <span className="min-w-0">
+                  <div className="min-w-0">
                     <span className={`block text-base font-semibold ${active ? tone.primary : "text-white"}`}>
                       {meta?.label ?? roleId}
                     </span>
-                    <span className="mt-1 block text-xs leading-5 text-white/55">{meta?.reveal ?? ""}</span>
-                  </span>
+                    <RoleBrief roleId={roleId} accentClass={active ? tone.accent : "text-white/45"} compact />
+                  </div>
                 </button>
               );
             })}
@@ -155,6 +216,9 @@ export function RoleAssignPhase({ players, myPlayer, events, matchId, gameJwt }:
           <p className="mx-auto mt-6 max-w-xl text-base leading-7 text-white/75 sm:text-lg">
             {roleCopy.detail}
           </p>
+          {metaForRole ? (
+            <RoleBrief roleId={role} accentClass={factionColor.accent} />
+          ) : null}
 
           {allyRows.length > 0 ? (
             <div className={`mt-8 rounded-xl border p-4 text-left ${factionColor.border} bg-black/20`}>
