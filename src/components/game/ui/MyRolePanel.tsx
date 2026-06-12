@@ -10,8 +10,9 @@
  */
 
 import { FACTION_COLORS } from "@/config/design-tokens";
-import { factionLabel, roleMeta, roleLabel } from "@/config/gomdori-roles";
+import { factionLabel, roleMeta, roleLabel, roleOriginalAbilities } from "@/config/gomdori-roles";
 import { RoleEmblem } from "@/components/game/ui/RoleEmblem";
+import { RoleOriginalAbilities } from "@/components/game/ui/RoleOriginalAbilities";
 
 export function MyRolePanel({
   role,
@@ -33,6 +34,7 @@ export function MyRolePanel({
   const abilities = [meta?.night, ...(meta?.extraNights ?? [])].filter(
     (a): a is NonNullable<typeof a> => Boolean(a),
   );
+  const originalAbilities = roleOriginalAbilities(role);
 
   return (
     <div className="space-y-4">
@@ -59,7 +61,7 @@ export function MyRolePanel({
         {meta?.passive ? (
           <section className="rounded-lg border border-white/10 bg-black/20 px-3 py-2">
             <div className="text-[0.625rem] font-semibold uppercase tracking-widest text-white/35">
-              패시브
+              현재 게임 패시브
             </div>
             <p className="mt-1 text-xs leading-5 text-white/55">{meta.passive}</p>
           </section>
@@ -68,9 +70,18 @@ export function MyRolePanel({
         {meta?.abilitySummary ? (
           <section className="rounded-lg border border-white/10 bg-black/20 px-3 py-2">
             <div className="text-[0.625rem] font-semibold uppercase tracking-widest text-white/35">
-              능력 요약
+              현재 게임 능력 요약
             </div>
             <p className="mt-1 text-xs leading-5 text-white/55">{meta.abilitySummary}</p>
+          </section>
+        ) : null}
+
+        {originalAbilities.length > 0 ? (
+          <section>
+            <div className="text-[0.625rem] font-semibold uppercase tracking-widest text-white/35">
+              원본 능력표
+            </div>
+            <RoleOriginalAbilities abilities={originalAbilities} />
           </section>
         ) : null}
 

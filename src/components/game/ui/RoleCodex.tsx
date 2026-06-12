@@ -9,8 +9,9 @@
  */
 
 import { useState } from "react";
-import { ASSIGNABLE_ROLE_IDS, GOMDORI_ROLES } from "@/config/gomdori-roles";
+import { ASSIGNABLE_ROLE_IDS, GOMDORI_ROLES, roleOriginalAbilities } from "@/config/gomdori-roles";
 import { RoleEmblem } from "@/components/game/ui/RoleEmblem";
+import { RoleOriginalAbilities } from "@/components/game/ui/RoleOriginalAbilities";
 
 const FACTION_TABS = [
   { id: "angel", label: "천사", active: "bg-amber-400/20 text-amber-200 border border-amber-300/30", text: "text-amber-200" },
@@ -64,6 +65,7 @@ export function RoleCodex({
       <ul className="max-h-64 space-y-2 overflow-y-auto pr-1 text-xs leading-5 text-white/65">
         {roles.map(([id, r]) => {
           const mine = highlightRole === id;
+          const originalAbilities = roleOriginalAbilities(id);
           return (
             <li
               key={id}
@@ -77,16 +79,7 @@ export function RoleCodex({
                 {mine ? <span className="ml-1.5 text-[0.625rem] text-white/45">— 나</span> : null}{" "}
                 {r.title ? <span className="text-white/35">({r.title}) </span> : null}
                 <span className="text-white/55">{r.reveal}</span>
-                {r.passive ? (
-                  <span className="mt-0.5 block text-[0.6875rem] text-white/45">
-                    패시브: {r.passive}
-                  </span>
-                ) : null}
-                {r.abilitySummary ? (
-                  <span className="mt-0.5 block text-[0.6875rem] text-white/45">
-                    요약: {r.abilitySummary}
-                  </span>
-                ) : null}
+                <RoleOriginalAbilities abilities={originalAbilities} compact />
                 {r.night ? (
                   <span className="mt-0.5 block text-[0.6875rem] text-white/40">
                     밤 능력: {r.night.label}
