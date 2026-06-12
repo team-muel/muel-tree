@@ -8,6 +8,7 @@
 
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
 import { MOOD } from "@/config/design-tokens";
+import { eventLines } from "@/config/gomdori-events";
 import { GameStage } from "@/components/game/ui/GameStage";
 import { BottomSheet } from "@/components/game/ui/BottomSheet";
 import { SpectatorFeed } from "@/components/game/ui/SpectatorFeed";
@@ -15,10 +16,18 @@ import { SpectatorFeed } from "@/components/game/ui/SpectatorFeed";
 type DayPhaseProps = {
   match: MatchSummary;
   players: PlayerSummary[];
-  events: Array<{ id: string; event_type: string; payload?: Record<string, unknown> }>;
+  events: Array<{ id: string; event_type: string; phase_id?: string; payload?: Record<string, unknown> }>;
   myPlayer: PlayerSummary | null;
   /** 토론 페이즈 종료 시각 — 무대 위 차고 노는 타이머 오브에 쓰인다. */
   phaseEndsAt?: string | null;
+};
+
+// 아침 무대는 light mood — 라이트 잉크 기준 톤.
+const PERSONAL_TONE_CLS: Record<string, string> = {
+  danger: "border-rose-900/20 bg-rose-100/75 text-rose-900",
+  warn: "border-amber-900/20 bg-amber-100/75 text-amber-900",
+  good: "border-emerald-900/20 bg-emerald-100/75 text-emerald-900",
+  info: "border-[#2b2118]/15 bg-white/70 text-[#5c4d3c]",
 };
 
 export function DayPhase({ match, players, events, myPlayer, phaseEndsAt }: DayPhaseProps) {
@@ -51,6 +60,18 @@ export function DayPhase({ match, players, events, myPlayer, phaseEndsAt }: DayP
   const revivedNames = reportRevivals.map(nameOf).filter((n): n is string => Boolean(n));
   const hasDeaths = deadNames.length > 0;
 
+  // 어젯밤 나에게 일어난 일 — 백엔드가 당사자 private 으로 보낸 이벤트(RLS 로
+  // 내 것만 도착). 같은 밤(=morning_report 와 같은 phase_id)의 것만. 카피·노출
+  // 여부는 gomdori-events 레지스트리 단일 출처.
+  const personalLines =
+    report && report.phase_id
+      ? eventLines(
+          events.filter((e) => e.phase_id === report.phase_id),
+          "personal",
+          (id) => nameOf(typeof id === "string" ? id : "") ?? "누군가",
+        )
+      : [];
+
   const isDead = myPlayer && !myPlayer.alive;
   const ink = MOOD.light;
 
@@ -82,6 +103,26 @@ export function DayPhase({ match, players, events, myPlayer, phaseEndsAt }: DayP
           </p>
         ) : null}
       </div>
+
+      {/* 어젯밤, 당신에게 — 당사자 전용 밤 피드백 (나에게만 보임) */}
+      {personalLines.length > 0 ? (
+        <div className="mx-auto mt-3 w-full max-w-md space-y-1.5">
+          <div className={`px-1 text-[0.625rem] font-semibold uppercase tracking-widest ${ink.faint}`}>
+            어젯밤, 당신에게
+          </div>
+          {personalLines.map((l) => (
+            <div
+              key={l.id}
+              className={`rounded-xl border px-3 py-2 text-sm backdrop-blur-md ${
+                PERSONAL_TONE_CLS[l.tone] ?? PERSONAL_TONE_CLS.info
+              }`}
+            >
+              <span aria-hidden="true" className="mr-1.5">{l.icon}</span>
+              {l.text}
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       {/* 무대 — 마을 전원이 보이는 테이블 */}
       <div className="flex flex-1 flex-col justify-center">

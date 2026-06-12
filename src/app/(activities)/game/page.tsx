@@ -62,7 +62,8 @@ function GameShell({ session }: { session: ActivitySession }) {
   const [openMatches, setOpenMatches] = useState<MatchSummary[]>([]);
   const [playerCounts, setPlayerCounts] = useState<Record<string, number>>({});
   const [players, setPlayers] = useState<PlayerSummary[]>([]);
-  const [events, setEvents] = useState<Array<{ id: string; event_type: string; created_at: string; payload?: Record<string, unknown> }>>([]);
+  // phase_id: 같은 밤에 속한 이벤트 묶음 판별(개인 밤 피드백 — DayPhase)에 쓴다.
+  const [events, setEvents] = useState<Array<{ id: string; event_type: string; created_at: string; phase_id?: string; payload?: Record<string, unknown> }>>([]);
   const [currentPhase, setCurrentPhase] = useState<{ phaseType: string; phaseNumber: number; expectedEndedAt: string | null; endedAt: string | null } | null>(null);
 
   const channelId = session.activityContext.channelId;
@@ -233,7 +234,7 @@ function GameShell({ session }: { session: ActivitySession }) {
         "postgres_changes",
         { event: "INSERT", schema: "mafia", table: "match_events", filter: `match_id=eq.${matchId}` },
         (payload) => {
-          const row = payload.new as { id: string; event_type: string; created_at: string; payload: Record<string, unknown> };
+          const row = payload.new as { id: string; event_type: string; created_at: string; phase_id?: string; payload: Record<string, unknown> };
           setEvents((current) => [row, ...current].slice(0, 20));
         },
       )
