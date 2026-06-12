@@ -139,6 +139,23 @@ export const GOMDORI_EVENT_COPY: Record<string, GomdoriEventCopy> = {
     audience: "personal", tone: "info", icon: "⏳",
     line: () => "능력이 예약되었습니다 — 효력은 다음 해소 때 나타납니다.",
   },
+
+  // ── 접선 회로 (정본 2026-06-12) — 변종 확정 직후 당사자에게만 ────────
+  circle_contact: {
+    audience: "personal", tone: "info", icon: "🤝",
+    line: (p, n) =>
+      `접선 — ${n(p.user_id)}님이 당신의 동료입니다. 악마의 속삭임이 열렸습니다.${
+        typeof p.expires_after_night === "number" ? ` (밤 ${p.expires_after_night} 종료 시 대화가 끊깁니다)` : ""
+      }`,
+  },
+  circle_notify: {
+    audience: "personal", tone: "info", icon: "👁️",
+    line: (p, n) => `통지 — ${n(p.user_id)}님이 같은 편입니다. 접선(대화)은 불가능합니다.`,
+  },
+  circle_expired: {
+    audience: "personal", tone: "warn", icon: "🌫️",
+    line: () => "진실을 가리는 암흑이 걷혔습니다 — 악마와의 대화가 끊겼습니다.",
+  },
 };
 
 export type GomdoriEventLine = { id: string; icon: string; tone: GomdoriEventTone; text: string };

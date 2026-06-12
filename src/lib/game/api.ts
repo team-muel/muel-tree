@@ -92,6 +92,11 @@ export type PlayerSummary = {
   lastSeenAt: string | null;
   role: string | null;
   faction: string | null;
+  /**
+   * 접선 회로(본인 전용, 뷰 circle_chat) — true 면 악마 채팅이 열려 있다.
+   * 정본(2026-06-12): 가인(밤2까지)·로건(영구)만. 진영이 아니라 능력이 결정.
+   */
+  circleChat?: boolean;
 };
 
 export async function resolveMatch(

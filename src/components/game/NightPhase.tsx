@@ -183,8 +183,12 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
     };
   }, [match.id, gameJwt]);
 
+  // 접선 회로(정본 2026-06-12): 채팅은 진영이 아니라 능력이 연다 — 가인(밤2까지)·
+  // 로건(영구)만 circleChat=true. 팬텀 페어·루나·엘런·타락자는 회로 없음.
+  const circleChat = myPlayer?.circleChat === true;
+
   useEffect(() => {
-    if (!role || !isDemonTeamRole(role) || !match.id || !gameJwt) return;
+    if (!circleChat || !match.id || !gameJwt) return;
 
     let cancelled = false;
     const supabase = getGameSupabase(gameJwt);
@@ -207,7 +211,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
       cancelled = true;
       supabase.removeChannel(channel);
     };
-  }, [match.id, role, gameJwt]);
+  }, [match.id, circleChat, gameJwt]);
 
   useEffect(() => {
     if (!match.id || !gameJwt || !myPlayer?.userId) return;
@@ -319,7 +323,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
     setSelectedMap((m) => ({ ...m, [ability.actionType]: myPlayer.userId }));
   };
 
-  const demonChat = role && isDemonTeamRole(role) && myPlayer?.alive;
+  const demonChat = circleChat && myPlayer?.alive;
 
   const chatPanel = (
     <div className="flex h-72 flex-col">
@@ -433,12 +437,27 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
     void handleSubmit(current, id);
   }
 
+  // 접선 동료 — 회로가 열리면(circleKnown) 뷰가 상대 demon-faction 행의 정체를
+  // 보여준다. 이벤트가 아니라 뷰 기반이라 재접속해도 유지. 루나·엘런은 안 보임(정본).
+  const circleAlly = players.find(
+    (p) => p.userId !== myPlayer?.userId && p.faction === "demon" && p.role,
+  );
+
   const nightProfilePanel = role ? (
     <div className="space-y-4">
       {/* 평소엔 아래 "밤 능력" 상호작용 카드가 능력을 담당(같은 문자열 2회 반복 방지).
           첫 밤은 능력 사용 불가라 그 카드가 없으므로 정적 능력 프리뷰를 켠다 —
           새 직업을 받은 직후 자기 능력을 읽어볼 유일한 시간. */}
       <MyRolePanel role={role} faction={myPlayer?.faction ?? undefined} showAbilities={isFirstNight} />
+
+      {circleAlly ? (
+        <div className="rounded-xl border border-rose-300/15 bg-rose-500/[0.06] px-3 py-2 text-xs text-rose-100/80">
+          <span aria-hidden="true" className="mr-1.5">{circleChat ? "🤝" : "👁️"}</span>
+          같은 편 — <span className="font-semibold">{circleAlly.displayName}</span>
+          {" "}({roleMeta(circleAlly.role)?.label ?? circleAlly.role})
+          {circleChat ? "" : " · 접선 불가, 정체 통지만"}
+        </div>
+      ) : null}
 
       {isFirstNight ? (
         <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center text-sm text-white/45">
