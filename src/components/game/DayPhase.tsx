@@ -34,7 +34,7 @@ export function DayPhase({ match, players, events, myPlayer, phaseEndsAt }: DayP
   const ink = MOOD.light;
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-5xl flex-col p-5 pb-24">
+    <div className="mx-auto flex h-full w-full max-w-5xl flex-col py-5 pb-24">
       {/* 공표 배너 — 밝은 무대 위 핏빛/온기 카드 */}
       <div
         className={`w-full rounded-2xl border p-5 text-center backdrop-blur-md ${

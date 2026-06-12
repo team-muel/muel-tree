@@ -66,7 +66,7 @@ export function ResultPhase({ match, players, events }: ResultPhaseProps) {
   const winTitle = isNeutralWin ? "파스아 단독 승리!" : isAngelWin ? "천사 진영 승리!" : "악마 진영 승리!";
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-5xl flex-col overflow-y-auto p-5">
+    <div className="mx-auto flex h-full w-full max-w-5xl flex-col overflow-y-auto py-5">
       <div
         className={`w-full rounded-2xl border p-10 text-center backdrop-blur-xl motion-safe:animate-in motion-safe:slide-in-from-top-4 motion-safe:duration-700 ${bannerTone.frame}`}
       >

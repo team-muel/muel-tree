@@ -94,7 +94,7 @@ export function VotePhase({ match, players, myPlayer, gameJwt, events }: VotePha
 
   if (isDead) {
     return (
-      <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center p-5 pb-24">
+      <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center py-5 pb-24">
         <GameStage players={players} myUserId={myPlayer?.userId} mood="light" inspectable matchId={match.id} movable />
         <BottomSheet title="관전 피드">
           <p className="text-sm text-white/55">당신은 사망하여 투표권이 없습니다. 투표를 지켜보세요.</p>
@@ -105,7 +105,7 @@ export function VotePhase({ match, players, myPlayer, gameJwt, events }: VotePha
   }
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center p-5 pb-24">
+    <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center py-5 pb-24">
       {/* 무대 — 즉시 지목 투표 및 낙인 연동 */}
       <GameStage
         players={players}
@@ -135,10 +135,10 @@ export function VotePhase({ match, players, myPlayer, gameJwt, events }: VotePha
             ? `${selectedName}님에게 투표했습니다.`
             : selectedTarget === null && submitted
               ? "기권했습니다."
-              : "무대 위 인물을 클릭하여 투표하세요."}
+              : "무대 위 인물을 선택해 투표하세요."}
         </h2>
         <p className="mt-1 text-xs text-[#5c4d3c] leading-relaxed">
-          가장 많은 표를 받은 사람이 처형대에 오릅니다. 언제든지 대상을 클릭해 바꿀 수 있으며, 기권하려면 아래 단추를 누르세요.
+          가장 많은 표를 받은 사람이 처형대에 오릅니다. 언제든지 다른 대상을 선택해 바꿀 수 있으며, 기권하려면 아래 단추를 누르세요.
         </p>
 
         <div className="mt-4 flex justify-center">
