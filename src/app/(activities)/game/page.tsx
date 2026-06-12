@@ -57,6 +57,10 @@ export default function GamePage() {
 
 function GameShell({ session }: { session: ActivitySession }) {
   const [boot, setBoot] = useState<BootState>({ status: "waiting" });
+  // 오류 화면 복구 (2026-06-12): 참가/나가기 반복 중 오류가 나면 막다른 화면에
+  // 고정되던 문제 — 부트 재시도 트리거 + 참가 실패는 랜딩 인라인 알림으로.
+  const [retryNonce, setRetryNonce] = useState(0);
+  const [landingNotice, setLandingNotice] = useState<string | null>(null);
   const [gameJwt, setGameJwt] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [match, setMatch] = useState<MatchSummary | null>(null);
@@ -141,7 +145,8 @@ function GameShell({ session }: { session: ActivitySession }) {
     return () => {
       cancelled = true;
     };
-  }, [channelId, guildId, instanceId, session.accessToken, session.hasDiscordAuth]);
+    // retryNonce: 오류 화면의 "다시 시도"가 부트 시퀀스를 처음부터 재실행한다.
+  }, [channelId, guildId, instanceId, session.accessToken, session.hasDiscordAuth, retryNonce]);
 
   // 매치가 바뀌거나(만들기/참가) 떠날 때 이전 매치의 잔여 상태를 비운다 —
   // 새 방에 옛 플레이어·이벤트·페이즈가 남아 "새 방이 아니라 기존 요소가 잔류"하는
@@ -287,6 +292,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   async function createGame() {
     if (!gameJwt || !channelId) return;
+    setLandingNotice(null);
     setBoot({ status: "joining" });
     try {
       const created = await createMatch(
@@ -297,7 +303,9 @@ function GameShell({ session }: { session: ActivitySession }) {
       setMatch(joined.match);
       setBoot({ status: "ready" });
     } catch (error) {
-      setBoot({ status: "error", message: error instanceof Error ? error.message : "게임 생성에 실패했습니다." });
+      // 막다른 오류 화면 대신 랜딩으로 복귀 + 인라인 알림 — 바로 재시도 가능.
+      setLandingNotice(error instanceof Error ? error.message : "게임 생성에 실패했습니다.");
+      await returnToLanding();
     }
   }
 
@@ -318,13 +326,17 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   async function joinGame(targetMatchId: string) {
     if (!gameJwt) return;
+    setLandingNotice(null);
     setBoot({ status: "joining" });
     try {
       const joined = await joinMatch(targetMatchId, gameJwt);
       setMatch(joined.match);
       setBoot({ status: "ready" });
     } catch (error) {
-      setBoot({ status: "error", message: error instanceof Error ? error.message : "참가에 실패했습니다." });
+      // 막다른 오류 화면 대신 랜딩으로 복귀 + 인라인 알림 — 참가/나가기 반복 중
+      // 일시 오류(잔존 행 정리 지연 등)도 한 번 더 누르면 풀린다.
+      setLandingNotice(error instanceof Error ? error.message : "참가에 실패했습니다.");
+      await returnToLanding();
     }
   }
 
@@ -339,7 +351,22 @@ function GameShell({ session }: { session: ActivitySession }) {
   if (boot.status === "error") {
     return (
       <GameFrame keyArt>
-        <StatusBlock title="입장 실패" detail={boot.message} />
+        <StatusBlock
+          title="입장 실패"
+          detail={boot.message}
+          actions={[
+            {
+              label: "다시 시도",
+              onClick: () => {
+                setBoot({ status: "waiting" });
+                setRetryNonce((n) => n + 1);
+              },
+            },
+            ...(gameJwt && channelId
+              ? [{ label: "로비 목록으로", onClick: () => void returnToLanding() }]
+              : []),
+          ]}
+        />
       </GameFrame>
     );
   }
@@ -354,6 +381,11 @@ function GameShell({ session }: { session: ActivitySession }) {
           myUserId={session.discordUser?.id ?? null}
           onCreate={createGame}
           onJoin={joinGame}
+          notice={landingNotice}
+          onRefresh={() => {
+            setLandingNotice(null);
+            void returnToLanding();
+          }}
         />
       </GameFrame>
     );
