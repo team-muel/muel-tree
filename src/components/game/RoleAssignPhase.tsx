@@ -193,7 +193,7 @@ export function RoleAssignPhase({ players, myPlayer, events, matchId, gameJwt }:
     .filter((ally) => ally.user_id !== myPlayer?.userId);
 
   return (
-    <div className="flex h-full w-full items-center justify-center overflow-hidden p-5">
+    <div className="flex h-full w-full items-start justify-center overflow-y-auto p-5 sm:items-center">
       <Card
         emphasis
         className={`gomdori-role-card relative w-full max-w-2xl overflow-hidden p-8 text-center ring-1 ${factionColor.border} ${factionColor.bgSoft} ${factionColor.ring} sm:p-10`}
