@@ -25,6 +25,10 @@ type LandingScreenProps = {
   myUserId?: string | null;
   onCreate: () => void;
   onJoin: (matchId: string) => void;
+  /** 직전 참가/생성 실패 알림 — 막다른 오류 화면 대신 여기서 재시도 (2026-06-12). */
+  notice?: string | null;
+  /** 게임방 목록 새로고침 — 참가/나가기 반복 중 잔존 목록을 손으로 갱신. */
+  onRefresh?: () => void;
 };
 
 /** Activity 인스턴스 참가자 → 무대 토큰. 매치 전이므로 전원 생존·비호스트 취급. */
@@ -166,11 +170,30 @@ export function LandingScreen({
   myUserId,
   onCreate,
   onJoin,
+  notice,
+  onRefresh,
 }: LandingScreenProps) {
   const { layout } = useDisplay();
 
   const mainPanel = (
     <div className="flex flex-col gap-4">
+      {notice ? (
+        <div
+          role="alert"
+          className="flex items-center justify-between gap-3 rounded-lg border border-rose-300/25 bg-rose-500/10 px-3 py-2 text-sm text-rose-200"
+        >
+          <span>{notice} — 잠시 후 다시 시도해주세요.</span>
+          {onRefresh ? (
+            <button
+              type="button"
+              onClick={onRefresh}
+              className="shrink-0 rounded border border-rose-300/30 px-2 py-0.5 text-xs text-rose-100 transition-colors hover:bg-rose-400/15"
+            >
+              새로고침
+            </button>
+          ) : null}
+        </div>
+      ) : null}
       <RosterStage participants={participants} myUserId={myUserId} />
       <MatchListPanel openMatches={openMatches} playerCounts={playerCounts} onJoin={onJoin} />
       <div className="flex flex-col gap-3">
