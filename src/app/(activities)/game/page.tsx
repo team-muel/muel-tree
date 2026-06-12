@@ -418,7 +418,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "lobby") {
     return (
-      <GameFrame status="lobby">
+      <GameFrame status="lobby" keyArt="dim">
         <LobbyPhase session={session} match={match} players={lobbyPlayers} myPlayer={myPlayer} gameJwt={gameJwt} onLeave={returnToLanding} />
       </GameFrame>
     );
@@ -492,8 +492,9 @@ function GameFrame({
    * 진입·로딩 계열 화면의 풀블리드 키 아트(night-muse) 배경 (2026-06-12).
    * object-cover + focal 로 어떤 종횡비에서도 시선점이 살고, quality 90 으로
    * 화질을 보존한다. edge fade-b 가 기본 배경색(#11131a)으로 침잠해 이음새 없음.
+   * "dim" = 콘텐츠가 주인공인 화면(로비)용 저채도 배경 — 가독성 우선.
    */
-  keyArt?: boolean;
+  keyArt?: boolean | "dim";
 }) {
   const tone = status ? PHASE_TONES[status as keyof typeof PHASE_TONES] : undefined;
   const bg = tone?.bg ?? "bg-[#11131a]";
@@ -506,7 +507,7 @@ function GameFrame({
     <main
       className={`relative flex h-full w-full overflow-y-auto px-4 pb-20 pt-5 text-white transition-colors duration-700 sm:px-6 ${bg}`}
     >
-      {/* 진입·로딩 키 아트 — 콘텐츠 뒤(DOM 앞순서) 풀블리드. */}
+      {/* 진입·로딩 키 아트 — 콘텐츠 뒤(DOM 앞순서) 풀블리드. dim = 로비용 저채도. */}
       {keyArt ? (
         <div aria-hidden="true" className="pointer-events-none fixed inset-0">
           <IllustrationScene
@@ -515,7 +516,7 @@ function GameFrame({
             drift
             quality={90}
             sizes="100vw"
-            className="h-full w-full opacity-85"
+            className={`h-full w-full ${keyArt === "dim" ? "opacity-30" : "opacity-85"}`}
           />
         </div>
       ) : null}

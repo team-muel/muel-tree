@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { appFetch } from "@/lib/app-fetch";
 import { initDiscord, subscribeInstanceParticipants, getInstanceParticipants, type DiscordUser, type InstanceParticipant } from "@/lib/discord";
+import { ActivityBootScreen } from "@/components/ActivityBootScreen";
 import type { MuelActivity } from "@/config/activities";
 
 export type ActivitySession = {
@@ -81,10 +82,10 @@ export function ActivityLayout({ activity, children }: Props) {
 
   return (
     <div className="w-screen h-screen relative overflow-hidden">
+      {/* Activity 전용 부트 화면(activities.boot — Gomdori = 키 아트), 미지정은 실타래 폴백. */}
       {!ready && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none bg-[#070712]">
-          <div className="text-4xl animate-pulse">🧵</div>
-          <p className="text-white/30 text-sm mt-3">불러오는 중...</p>
+        <div className="pointer-events-none absolute inset-0 z-10">
+          <ActivityBootScreen boot={activity.boot} label="불러오는 중..." />
         </div>
       )}
 
