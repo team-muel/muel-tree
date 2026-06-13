@@ -223,11 +223,11 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     title: "박해자",
     roster: "helper",
     faction: "demon",
-    reveal: "박해자. 매일 밤 한 명에게 투표 무게를 실어 처형대로 몰아갑니다.",
-    passive: "박해자/해체된 퍼즐: 원본에서는 홀수날 투표 압박과 자아 해체 상태를 다룹니다. v1은 투표 무게 증가에 집중합니다.",
-    abilitySummary: "박해: 대상이 받는 처형 투표 무게를 그 라운드 동안 키웁니다.",
+    reveal: "박해자. 당신이 투표한 사람을 처형대로 몰아갑니다.",
+    passive: "박해자/해체된 퍼즐: 원본에서는 홀수날 투표 압박과 자아 해체 상태를 다룹니다. v1은 자기 투표 대상의 무게 증가에 집중합니다.",
+    abilitySummary: "박해: 당신이 직전에 투표한 대상이 다음 집계에서 받는 처형 투표 무게를 키웁니다(별도 지목 없이 자기 투표를 따라감).",
     demonTeam: true,
-    night: { actionType: "ellen_persecute", label: "박해", prompt: "투표 무게를 실어 처형대로 몰 대상을 고르세요.", excludeSelf: true },
+    night: { actionType: "ellen_persecute", label: "박해", prompt: "당신이 직전에 투표한 대상을 처형대로 몰아갑니다. (대상 없음 — 자기 투표를 따라감)", self: true },
   },
   // --- 기본 로스터: 천사 풀 ---
   dordan: {
