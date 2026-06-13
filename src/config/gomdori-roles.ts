@@ -236,9 +236,9 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     title: "탐정",
     faction: "angel",
     reveal: "탐정. 매일 밤 한 명의 정체를 조사할 수 있습니다.",
-    passive: "침착한 탐정: 원본에서는 탈락 사건의 범인을 추적하는 단서 흐름을 갖습니다.",
-    abilitySummary: "조사하기: 한 명을 골라 악마인지 아닌지 확인합니다. v1은 정체 조사로 축약됩니다.",
-    night: { actionType: "police_investigate", label: "조사하기", prompt: "오늘 밤 정체를 알아볼 사람을 고르세요.", excludeSelf: true },
+    passive: "침착한 탐정: 누군가 탈락할 때마다 단서가 쌓입니다. 단서가 3개 모이면 조사가 정확한 직업까지 밝혀냅니다(정밀 조사).",
+    abilitySummary: "조사하기: 악마인지 확인합니다. 단서 3개부터는 정확한 직업까지 알아냅니다.",
+    night: { actionType: "police_investigate", label: "조사하기", prompt: "오늘 밤 정체를 알아볼 사람을 고르세요. (단서 3개부터 정밀 조사)", excludeSelf: true },
   },
   habreterus: {
     label: "하브레터스",
@@ -311,9 +311,12 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     title: "연주자",
     faction: "angel",
     reveal: "영혼을 만지는 연주자. 매일 밤 한 명을 매료해 그 처형 투표를 당신에게 양도받습니다.",
-    passive: "아름다운 영혼을 위한 소나타: 원본에서는 매료가 쌓이면 전원 투표 흐름을 뒤흔드는 연주가 시작됩니다.",
-    abilitySummary: "영혼을 만지는 음색: 대상의 처형 투표 권한을 루루에게 양도시킵니다.",
+    passive: "아름다운 영혼을 위한 소나타: 매료가 3명 쌓이면 연주를 시작할 수 있습니다 — 전원의 부정 효과를 씻고 루루는 그 밤 무적이 됩니다.",
+    abilitySummary: "영혼을 만지는 음색: 대상의 처형 투표 권한을 양도받습니다. 소나타(매료 3 누적): 전원 부정 효과를 제거하고 자신은 그 밤 무적이 됩니다(소비).",
     night: { actionType: "luru_charm", label: "영혼을 만지는 음색", prompt: "매료해 처형 투표를 양도받을 대상을 고르세요.", excludeSelf: true },
+    extraNights: [
+      { actionType: "luru_sonata", label: "소나타", prompt: "아름다운 영혼을 위한 소나타 — 전원의 부정 효과를 씻고 그 밤 무적이 됩니다. (매료 3 필요, 대상 없음)", self: true },
+    ],
   },
   // --- W6 v1 중립 ---
   pasua: {
