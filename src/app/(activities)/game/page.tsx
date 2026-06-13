@@ -206,7 +206,9 @@ function GameShell({ session }: { session: ActivitySession }) {
         .from("match_phases")
         .select("*")
         .eq("match_id", matchId)
+        .is("ended_at", null)
         .order("phase_number", { ascending: false })
+        .order("started_at", { ascending: false })
         .limit(1)
         .maybeSingle();
       if (!cancelled && !error && data) {
@@ -216,6 +218,8 @@ function GameShell({ session }: { session: ActivitySession }) {
           expectedEndedAt: typeof data.expected_ended_at === "string" ? data.expected_ended_at : null,
           endedAt: typeof data.ended_at === "string" ? data.ended_at : null,
         });
+      } else if (!cancelled && !error) {
+        setCurrentPhase(null);
       }
     }
 
