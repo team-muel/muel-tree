@@ -9,6 +9,27 @@ function endpoint(name: string): string {
   return `${BASE.replace(/\/$/, "")}/${name}`;
 }
 
+function gameApiErrorMessage(name: string, status: number, text: string): string {
+  const fallback = `게임 서버 요청에 실패했습니다. (${name} ${status})`;
+  if (!text) return fallback;
+
+  try {
+    const body = JSON.parse(text) as unknown;
+    if (!body || typeof body !== "object") return fallback;
+
+    const error = (body as { error?: unknown }).error;
+    if (typeof error === "string" && error.trim()) return error.trim();
+    if (error && typeof error === "object") {
+      const message = (error as { message?: unknown }).message;
+      if (typeof message === "string" && message.trim()) return message.trim();
+    }
+  } catch {
+    // Non-JSON error pages should not leak into compact Activity UI alerts.
+  }
+
+  return fallback;
+}
+
 async function postJson<TReq, TRes>(
   name: string,
   body: TReq,
@@ -28,7 +49,7 @@ async function postJson<TReq, TRes>(
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(`game api ${name} failed: ${res.status} ${text}`);
+    throw new Error(gameApiErrorMessage(name, res.status, text));
   }
   return (await res.json()) as TRes;
 }
