@@ -301,13 +301,22 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     faction: "neutral",
     reveal: "사이비 교주(중립). 매일 밤 한 명을 포교해 당신의 교세로 끌어들이세요. 3명을 전향시키면 당신만의 승리입니다.",
     passive: "구원자: 파스아 교세가 충분히 커지면 천사·악마와 별개로 단독 승리를 노립니다.",
-    abilitySummary: "포교하기: 천사나 조력자를 전향자로 바꿉니다. 악마와 중립은 포교할 수 없습니다.",
+    abilitySummary: "포교하기: 천사나 조력자를 전향자로 바꿉니다(악마·중립 불가, 연속 포교 불가). 신앙: 대상을 탈락시킵니다(악마는 면역).",
     night: {
       actionType: "pasua_convert",
       label: "포교하기",
       prompt: "포교할 대상을 고르세요. 천사와 조력자만 전향됩니다. (악마·중립 불가)",
       excludeSelf: true,
     },
+    extraNights: [
+      {
+        actionType: "pasua_faith",
+        label: "신앙",
+        prompt: "신앙으로 탈락시킬 대상을 고르세요. 악마는 신앙으로 탈락하지 않습니다.",
+        excludeSelf: true,
+        kind: "kill",
+      },
+    ],
   },
   converted: {
     label: "전향자",
