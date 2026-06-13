@@ -258,10 +258,13 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     label: "헬렌",
     title: "황금빛 수면",
     faction: "angel",
-    reveal: "황금빛 수면의 천사. 매일 밤 탈락한 한 명을 되살릴 수 있습니다.",
+    reveal: "황금빛 수면의 천사. 생존자를 재워 지키거나, 탈락한 한 명을 되살립니다.",
     passive: "행복 쉼터: 원본에서는 전원에게 존재가 알려지고 수면 대상과 영혼 기억을 공유합니다.",
-    abilitySummary: "황금빛 수면: 탈락한 한 명을 수면에서 깨워 되살립니다.",
-    night: { actionType: "helen_revive", label: "황금빛 수면", prompt: "수면으로 되살릴 탈락자를 고르세요." },
+    abilitySummary: "황금빛 수면: 생존자를 재우면 그 밤 죽음·부정효과로부터 보호합니다(행동은 봉인). 탈락자에게 쓰면 되살립니다(1회).",
+    night: { actionType: "helen_revive", label: "수면(부활)", prompt: "수면으로 되살릴 탈락자를 고르세요. (1회)" },
+    extraNights: [
+      { actionType: "helen_sleep", label: "황금빛 수면", prompt: "재워서 지킬 생존자를 고르세요. 그 밤 죽음·부정효과를 막지만 행동은 봉인됩니다." },
+    ],
   },
   uno: {
     label: "우노",

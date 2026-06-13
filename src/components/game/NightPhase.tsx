@@ -70,16 +70,24 @@ function buildAbilities(role: string | null | undefined, myUserId: string | null
     }];
   }
 
-  // 부활 계열 — 탈락자만 지목.
+  // 부활 계열 — 메인(부활)은 탈락자만. 헬렌은 생존자 수면(extraNights) 보조 능력도.
   if (role === "mizlet" || role === "helen") {
-    return [{
+    const revive: NightAbility = {
       actionType: meta.night.actionType,
       label: meta.night.label,
       prompt: meta.night.prompt,
       confirm: true,
       eligible: (p) => !p.alive,
       emptyNote: "아직 되살릴 탈락자가 없습니다.",
-    }];
+    };
+    const extras: NightAbility[] = (meta.extraNights ?? []).map((extra) => ({
+      actionType: extra.actionType,
+      label: extra.label,
+      prompt: extra.prompt,
+      confirm: true,
+      eligible: aliveNotMe, // 수면은 생존자 대상
+    }));
+    return [revive, ...extras];
   }
 
   // 악마 처치자 — 메인 처치 + 보조 능력(봉인/일식/빙의/변신).
