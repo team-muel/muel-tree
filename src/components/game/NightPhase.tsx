@@ -110,13 +110,22 @@ function buildAbilities(role: string | null | undefined, myUserId: string | null
   }
 
   // 능동 조력자(루나/로건/엘런) — 처치 없음, 직접 제출(기존 SecondaryAbility 의미).
+  // 보조 능동(루나 고요한 적막 = self 충전)도 extraNights 로 표면화.
   if (isDemonTeamRole(role) && meta?.night) {
-    return [{
+    const main: NightAbility = {
       actionType: meta.night.actionType,
       label: meta.night.label,
       prompt: meta.night.prompt,
       eligible: aliveNotMe,
-    }];
+    };
+    const extras: NightAbility[] = (meta.extraNights ?? []).map((extra) => ({
+      actionType: extra.actionType,
+      label: extra.label,
+      prompt: extra.prompt,
+      self: extra.self,
+      eligible: aliveNotMe,
+    }));
+    return [main, ...extras];
   }
 
   // 일반 밤 능동(조사/용의자/잔불/투쟁/초신성/매료/포교 등) — manifest 단일 능력 + 보조 능력.

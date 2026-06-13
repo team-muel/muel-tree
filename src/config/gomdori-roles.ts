@@ -198,11 +198,14 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     title: "달의 사제",
     roster: "helper",
     faction: "demon",
-    reveal: "달의 사제. 매일 밤 천사 하나를 악마팀으로 타락시킵니다.",
-    passive: "달빛이 비치는 우물: 원본에서는 투표·의심으로 달의 힘을 충전합니다. v1은 핵심 변환 능력에 집중합니다.",
-    abilitySummary: "공포 속에 밀어 넣다: 천사 한 명을 악마팀 타락자로 바꿉니다.",
+    reveal: "달의 사제. 달의 힘을 모아, 가득 차면 천사 하나를 악마팀으로 타락시킵니다.",
+    passive: "달빛이 비치는 우물: 당신이 투표·의심한 대상에 달빛이 깃들고 달의 힘이 차오릅니다. 달의 힘이 2 이상일 때 공포를 발동할 수 있습니다.",
+    abilitySummary: "고요한 적막: 달의 힘을 +1 모으고, 당신이 투표·의심한 대상에 달빛을 남깁니다. 공포 속에 밀어 넣다: 달의 힘 2 이상에서 천사 한 명을 타락시킵니다(소비).",
     demonTeam: true,
-    night: { actionType: "luna_corrupt", label: "공포 속에 밀어 넣다", prompt: "악마팀으로 타락시킬 천사를 고르세요.", excludeSelf: true },
+    night: { actionType: "luna_corrupt", label: "공포 속에 밀어 넣다", prompt: "달의 힘이 가득 찼을 때, 악마팀으로 타락시킬 천사를 고르세요. (달의 힘 2 필요)", excludeSelf: true },
+    extraNights: [
+      { actionType: "luna_moonlight", label: "고요한 적막", prompt: "달의 힘을 +1 모읍니다. 당신이 투표·의심한 대상에 달빛이 깃듭니다.", self: true },
+    ],
   },
   logen: {
     label: "로건",
