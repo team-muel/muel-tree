@@ -11,9 +11,9 @@ import { Badge } from "@/components/game/ui/Badge";
 import { Button } from "@/components/game/ui/Button";
 import { Card } from "@/components/game/ui/Card";
 import { FACTION_COLORS } from "@/config/design-tokens";
-import { factionLabel, roleMeta } from "@/config/gomdori-roles";
+import { factionLabel, roleArchetype, roleMeta } from "@/config/gomdori-roles";
 import { RoleEmblem } from "@/components/game/ui/RoleEmblem";
-import { cleanRoleReveal, roleNightAbilityLabels } from "@/components/game/ui/RoleAbilityDetails";
+import { cleanRoleReveal } from "@/components/game/ui/RoleAbilityDetails";
 import { selectRole, type PlayerSummary } from "@/lib/game/api";
 
 type RoleAssignPhaseProps = {
@@ -41,59 +41,29 @@ function RoleBrief({
 }) {
   const meta = roleMeta(roleId);
   if (!meta) return null;
-  const abilities = roleNightAbilityLabels(roleId);
   const reveal = cleanRoleReveal(roleId);
+  const archetype = roleArchetype(roleId);
 
   if (compact) {
     return (
       <div className="mt-1 space-y-1">
         {meta.title ? <div className="text-[0.6875rem] text-white/40">{meta.title}</div> : null}
         {reveal ? <div className="text-xs leading-5 text-white/55">{reveal}</div> : null}
-        {meta.abilitySummary ? (
-          <div className="text-[0.6875rem] leading-4 text-white/45">{meta.abilitySummary}</div>
-        ) : null}
-        {abilities.length > 0 ? (
-          <div className="flex flex-wrap gap-1">
-            {abilities.map((ability) => (
-              <span
-                key={ability}
-                className={`rounded-full border border-white/10 bg-black/15 px-1.5 py-0.5 text-[0.625rem] font-medium ${accentClass}`}
-              >
-                {ability}
-              </span>
-            ))}
-          </div>
-        ) : null}
+        <div className={`text-[0.6875rem] font-semibold ${accentClass}`}>{archetype}</div>
       </div>
     );
   }
 
   return (
     <div className="mx-auto mt-6 grid max-w-xl gap-3 text-left sm:grid-cols-2">
+      <section className="px-1 py-1">
+        <div className={`text-[0.625rem] font-semibold uppercase tracking-widest ${accentClass}`}>아키타입</div>
+        <p className="mt-1 text-sm font-semibold text-white/70">{archetype}</p>
+      </section>
       {meta.passive ? (
-        <section className="rounded-lg border border-white/10 bg-black/20 px-3 py-2">
+        <section className="px-1 py-1">
           <div className={`text-[0.625rem] font-semibold uppercase tracking-widest ${accentClass}`}>패시브</div>
           <p className="mt-1 text-xs leading-5 text-white/60">{meta.passive}</p>
-        </section>
-      ) : null}
-      {meta.abilitySummary ? (
-        <section className="rounded-lg border border-white/10 bg-black/20 px-3 py-2">
-          <div className={`text-[0.625rem] font-semibold uppercase tracking-widest ${accentClass}`}>능력 요약</div>
-          <p className="mt-1 text-xs leading-5 text-white/60">{meta.abilitySummary}</p>
-        </section>
-      ) : null}
-      {abilities.length > 0 ? (
-        <section className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 sm:col-span-2">
-          <div className="flex flex-wrap gap-1.5">
-            {abilities.map((ability) => (
-              <span
-                key={ability}
-                className={`rounded-full border border-white/10 bg-black/15 px-2 py-1 text-[0.6875rem] font-medium ${accentClass}`}
-              >
-                {ability}
-              </span>
-            ))}
-          </div>
         </section>
       ) : null}
     </div>
@@ -134,7 +104,7 @@ export function RoleAssignPhase({ players, myPlayer, events, matchId, gameJwt }:
           <h1 className={`mt-2 text-3xl font-bold sm:text-4xl ${tone.primary}`}>직업 선택</h1>
           <p className="mt-3 text-sm text-white/60">시간이 끝나면 선택하지 않은 직업은 무작위로 정해집니다.</p>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <div className="mt-6 grid gap-1 sm:grid-cols-2">
             {pool.map((roleId) => {
               const meta = roleMeta(roleId);
               const active = picked === roleId;
@@ -143,10 +113,10 @@ export function RoleAssignPhase({ players, myPlayer, events, matchId, gameJwt }:
                   key={roleId}
                   type="button"
                   onClick={() => setPicked(roleId)}
-                  className={`flex items-start gap-3 rounded-xl border p-4 text-left transition ${
+                  className={`flex items-start gap-3 rounded-md px-2.5 py-2.5 text-left transition ${
                     active
-                      ? `${tone.border} ${tone.bgSoft} ring-1 ${tone.ring} ${tone.glow}`
-                      : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]"
+                      ? `${tone.bgSoft}`
+                      : "hover:bg-white/[0.045]"
                   }`}
                 >
                   <RoleEmblem role={roleId} size="sm" mood="dark" glow={active} className="mt-0.5" />

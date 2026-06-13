@@ -4,13 +4,6 @@ import { FACTION_COLORS } from "@/config/design-tokens";
 import { roleMeta, roleOriginalAbilities } from "@/config/gomdori-roles";
 import { RoleOriginalAbilities } from "@/components/game/ui/RoleOriginalAbilities";
 
-export function roleNightAbilityLabels(role: string): string[] {
-  const meta = roleMeta(role);
-  return [meta?.night, ...(meta?.extraNights ?? [])]
-    .filter((ability): ability is NonNullable<typeof ability> => Boolean(ability))
-    .map((ability) => ability.label);
-}
-
 export function cleanRoleReveal(role: string): string {
   const meta = roleMeta(role);
   if (!meta?.reveal) return "";
@@ -65,17 +58,15 @@ export function RoleAbilityDetails({
         </section>
       ) : null}
 
-      {meta.abilitySummary ? (
-        <section className={sectionClass}>
-          <div className={titleClass}>현재 게임 능력 요약</div>
-          <p className={bodyClass}>{meta.abilitySummary}</p>
-        </section>
-      ) : null}
-
       {originalAbilities.length > 0 ? (
         <section>
           <div className={titleClass}>원본 능력표</div>
-          <RoleOriginalAbilities abilities={originalAbilities} compact={compact} />
+          <RoleOriginalAbilities
+            abilities={originalAbilities}
+            compact={compact}
+            accentClass={color.accent}
+            itemClassName={sectionClass}
+          />
         </section>
       ) : null}
 

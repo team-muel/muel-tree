@@ -2,34 +2,34 @@
 
 import type { GomdoriOriginalAbility } from "@/config/gomdori-roles";
 
-const KIND_CLASS: Record<GomdoriOriginalAbility["kind"], string> = {
-  "패시브": "border-amber-300/20 bg-amber-300/10 text-amber-100",
-  "특수 패시브": "border-fuchsia-300/20 bg-fuchsia-300/10 text-fuchsia-100",
-  "능력": "border-emerald-300/20 bg-emerald-300/10 text-emerald-100",
-  "능력2": "border-sky-300/20 bg-sky-300/10 text-sky-100",
-};
-
 export function RoleOriginalAbilities({
   abilities,
   compact = false,
+  accentClass = "text-white/75",
+  itemClassName,
 }: {
   abilities: GomdoriOriginalAbility[];
   compact?: boolean;
+  accentClass?: string;
+  itemClassName?: string;
 }) {
   if (abilities.length === 0) return null;
+  const itemClass =
+    itemClassName ??
+    (compact ? "rounded-md border border-white/10 bg-black/15 px-2.5 py-2" : "rounded-lg border border-white/10 bg-black/20 px-3 py-2");
 
   return (
-    <div className={compact ? "mt-1 space-y-1.5" : "space-y-2"}>
+    <div className={compact ? "mt-2 space-y-2" : "mt-2 space-y-2"}>
       {abilities.map((ability) => (
         <div
           key={`${ability.kind}-${ability.name}`}
-          className={compact ? "rounded-md border border-white/10 bg-black/15 px-2 py-1.5" : "rounded-lg border border-white/10 bg-black/20 px-3 py-2"}
+          className={itemClass}
         >
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className={`rounded-full border px-1.5 py-0.5 text-[0.5625rem] font-semibold ${KIND_CLASS[ability.kind]}`}>
+          <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+            <span className={`text-[0.625rem] font-semibold uppercase tracking-widest ${accentClass}`}>
               {ability.kind}
             </span>
-            <span className={compact ? "text-[0.6875rem] font-semibold text-white/75" : "text-sm font-semibold text-white/80"}>
+            <span className={compact ? "text-xs font-semibold text-white/75" : "text-sm font-semibold text-white/80"}>
               {ability.name}
             </span>
           </div>

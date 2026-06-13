@@ -5,12 +5,11 @@
  *
  * 사용자 요구 (2026-06-11): Discord 하단 자기 프로필 차용 — 언제든 내 직업과
  * 그 능력·설명을 다시 읽는다. 데이터는 manifest(gomdori-roles) 한 곳에서.
- * 능동 능력은 night/extraNights, 패시브와 원본 능력 흐름은 표시 전용
- * manifest 필드(passive/abilitySummary)로 분리한다.
+ * 능동 능력은 night/extraNights, 패시브와 원본 능력 흐름은 표시 전용 manifest 필드로 분리한다.
  */
 
 import { FACTION_COLORS } from "@/config/design-tokens";
-import { factionLabel, roleMeta, roleLabel } from "@/config/gomdori-roles";
+import { factionLabel, roleArchetype, roleMeta, roleLabel } from "@/config/gomdori-roles";
 import { RoleEmblem } from "@/components/game/ui/RoleEmblem";
 import { cleanRoleReveal, RoleAbilityDetails } from "@/components/game/ui/RoleAbilityDetails";
 
@@ -32,6 +31,7 @@ export function MyRolePanel({
   const fac = (faction ?? meta?.faction ?? "neutral") as keyof typeof FACTION_COLORS;
   const color = FACTION_COLORS[fac] ?? FACTION_COLORS.neutral;
   const reveal = cleanRoleReveal(role);
+  const archetype = roleArchetype(role);
 
   return (
     <div className="space-y-4">
@@ -47,6 +47,7 @@ export function MyRolePanel({
           {meta?.title ? (
             <div className="mt-0.5 text-[0.6875rem] font-medium text-white/40">{meta.title}</div>
           ) : null}
+          <div className={`mt-1 text-[0.6875rem] font-semibold ${color.accent}`}>{archetype}</div>
           {reveal ? (
             <p className="mt-1 text-xs leading-5 text-white/55">{reveal}</p>
           ) : null}

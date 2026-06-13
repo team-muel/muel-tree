@@ -432,6 +432,60 @@ export function roleLabel(role?: string | null): string {
   return GOMDORI_ROLES[role]?.label ?? role;
 }
 
+export function roleArchetype(role?: string | null): string {
+  switch (role) {
+    case "demon":
+      return "처치·재배정";
+    case "phantom":
+      return "지연 처치·봉인";
+    case "malen":
+      return "처치·빙의";
+    case "besto":
+      return "처치·변신";
+    case "gain":
+      return "보호·접선";
+    case "luna":
+      return "타락·충전";
+    case "logen":
+      return "무력화·접선";
+    case "ellen":
+      return "투표 압박";
+    case "romaz":
+      return "의심·투표 압박";
+    case "rainer":
+      return "카운트 보강";
+    case "dordan":
+    case "police":
+      return "조사·단서";
+    case "doctor":
+    case "habreterus":
+      return "보호";
+    case "mizlet":
+    case "helen":
+      return "부활";
+    case "uno":
+      return "카운트 보정";
+    case "arthur":
+      return "보호·무적";
+    case "seika":
+      return "봉인";
+    case "luru":
+      return "투표 위임";
+    case "pasua":
+      return "포교·단독 승리";
+    case "converted":
+      return "전향";
+    case "corrupted":
+      return "타락";
+    default: {
+      const meta = roleMeta(role);
+      if (meta?.roster === "helper") return "접선·보조";
+      if (meta?.roster === "neutral" || meta?.faction === "neutral") return "중립";
+      return "토론·투표";
+    }
+  }
+}
+
 export function isDemonTeamRole(role?: string | null): boolean {
   return !!(role && GOMDORI_ROLES[role]?.demonTeam);
 }
