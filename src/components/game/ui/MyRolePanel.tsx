@@ -10,9 +10,9 @@
  */
 
 import { FACTION_COLORS } from "@/config/design-tokens";
-import { factionLabel, roleMeta, roleLabel, roleOriginalAbilities } from "@/config/gomdori-roles";
+import { factionLabel, roleMeta, roleLabel } from "@/config/gomdori-roles";
 import { RoleEmblem } from "@/components/game/ui/RoleEmblem";
-import { RoleOriginalAbilities } from "@/components/game/ui/RoleOriginalAbilities";
+import { cleanRoleReveal, RoleAbilityDetails } from "@/components/game/ui/RoleAbilityDetails";
 
 export function MyRolePanel({
   role,
@@ -31,10 +31,7 @@ export function MyRolePanel({
   const meta = roleMeta(role);
   const fac = (faction ?? meta?.faction ?? "neutral") as keyof typeof FACTION_COLORS;
   const color = FACTION_COLORS[fac] ?? FACTION_COLORS.neutral;
-  const abilities = [meta?.night, ...(meta?.extraNights ?? [])].filter(
-    (a): a is NonNullable<typeof a> => Boolean(a),
-  );
-  const originalAbilities = roleOriginalAbilities(role);
+  const reveal = cleanRoleReveal(role);
 
   return (
     <div className="space-y-4">
@@ -50,71 +47,14 @@ export function MyRolePanel({
           {meta?.title ? (
             <div className="mt-0.5 text-[0.6875rem] font-medium text-white/40">{meta.title}</div>
           ) : null}
-          {meta?.reveal ? (
-            <p className="mt-1 text-xs leading-5 text-white/55">{meta.reveal}</p>
+          {reveal ? (
+            <p className="mt-1 text-xs leading-5 text-white/55">{reveal}</p>
           ) : null}
         </div>
       </div>
 
       {showAbilities ? (
-      <div className="space-y-3">
-        {meta?.passive ? (
-          <section className="rounded-lg border border-white/10 bg-black/20 px-3 py-2">
-            <div className="text-[0.625rem] font-semibold uppercase tracking-widest text-white/35">
-              현재 게임 패시브
-            </div>
-            <p className="mt-1 text-xs leading-5 text-white/55">{meta.passive}</p>
-          </section>
-        ) : null}
-
-        {meta?.abilitySummary ? (
-          <section className="rounded-lg border border-white/10 bg-black/20 px-3 py-2">
-            <div className="text-[0.625rem] font-semibold uppercase tracking-widest text-white/35">
-              현재 게임 능력 요약
-            </div>
-            <p className="mt-1 text-xs leading-5 text-white/55">{meta.abilitySummary}</p>
-          </section>
-        ) : null}
-
-        {originalAbilities.length > 0 ? (
-          <section>
-            <div className="text-[0.625rem] font-semibold uppercase tracking-widest text-white/35">
-              원본 능력표
-            </div>
-            <RoleOriginalAbilities abilities={originalAbilities} />
-          </section>
-        ) : null}
-
-        <div>
-        <div className="text-[0.625rem] font-semibold uppercase tracking-widest text-white/35">
-          밤에 누를 수 있는 능력
-        </div>
-        {abilities.length > 0 ? (
-          <ul className="mt-2 space-y-2">
-            {abilities.map((a) => (
-              <li
-                key={a.actionType}
-                className="rounded-lg border border-white/10 bg-black/20 px-3 py-2"
-              >
-                <div className="flex items-center gap-2">
-                  <span className={`text-sm font-semibold ${color.accent}`}>{a.label}</span>
-                  {a.self ? (
-                    <span className="rounded-full border border-white/10 px-1.5 py-0.5 text-[0.5rem] uppercase tracking-wider text-white/35">
-                      자신
-                    </span>
-                  ) : null}
-                </div>
-                <p className="mt-1 text-xs leading-5 text-white/55">{a.prompt}</p>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-2 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-xs leading-5 text-white/45">
-            밤 능동 능력이 없습니다. 토론·투표와 패시브로 마을에 기여하세요.
-          </p>
-        )}
-        </div>
-      </div>
+        <RoleAbilityDetails role={role} faction={fac} />
       ) : null}
     </div>
   );

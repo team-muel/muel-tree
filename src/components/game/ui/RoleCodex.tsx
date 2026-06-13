@@ -9,9 +9,13 @@
  */
 
 import { useState } from "react";
-import { ASSIGNABLE_ROLE_IDS, GOMDORI_ROLES, roleOriginalAbilities } from "@/config/gomdori-roles";
+import { ASSIGNABLE_ROLE_IDS, GOMDORI_ROLES } from "@/config/gomdori-roles";
 import { RoleEmblem } from "@/components/game/ui/RoleEmblem";
-import { RoleOriginalAbilities } from "@/components/game/ui/RoleOriginalAbilities";
+import {
+  cleanRoleReveal,
+  roleNightAbilityLabels,
+  RoleAbilityDetails,
+} from "@/components/game/ui/RoleAbilityDetails";
 
 const FACTION_TABS = [
   { id: "angel", label: "천사", active: "bg-amber-400/20 text-amber-200 border border-amber-300/30", text: "text-amber-200" },
@@ -35,6 +39,7 @@ export function RoleCodex({
     ? (initialFaction as CodexFaction)
     : "angel";
   const [faction, setFaction] = useState<CodexFaction>(safeInitial);
+  const [openRole, setOpenRole] = useState<string | null>(null);
   const tab = FACTION_TABS.find((f) => f.id === faction) ?? FACTION_TABS[0];
 
   const roles = ASSIGNABLE_ROLE_IDS
@@ -62,33 +67,55 @@ export function RoleCodex({
         ))}
       </div>
 
-      <ul className="max-h-64 space-y-2 overflow-y-auto pr-1 text-xs leading-5 text-white/65">
+      <ul className="max-h-[60vh] space-y-2 overflow-y-auto pr-1 text-xs leading-5 text-white/65">
         {roles.map(([id, r]) => {
           const mine = highlightRole === id;
-          const originalAbilities = roleOriginalAbilities(id);
+          const open = openRole === id;
+          const nightLabels = roleNightAbilityLabels(id);
+          const reveal = cleanRoleReveal(id);
           return (
             <li
               key={id}
-              className={`flex items-start gap-2 border-b border-white/5 pb-1.5 last:border-b-0 last:pb-0 ${
-                mine ? "rounded-md bg-white/[0.05] px-1.5 pt-1" : ""
+              className={`rounded-lg border transition-colors ${
+                open
+                  ? "border-white/15 bg-white/[0.055]"
+                  : mine
+                    ? "border-white/10 bg-white/[0.035]"
+                    : "border-white/10 bg-white/[0.02] hover:bg-white/[0.04]"
               }`}
             >
-              <RoleEmblem role={id} size="sm" mood="dark" className="mt-0.5 shrink-0" />
-              <span className="min-w-0">
-                <span className={`font-semibold ${tab.text}`}>{r.label}</span>
-                {mine ? <span className="ml-1.5 text-[0.625rem] text-white/45">— 나</span> : null}{" "}
-                {r.title ? <span className="text-white/35">({r.title}) </span> : null}
-                <span className="text-white/55">{r.reveal}</span>
-                <RoleOriginalAbilities abilities={originalAbilities} compact />
-                {r.night ? (
-                  <span className="mt-0.5 block text-[0.6875rem] text-white/40">
-                    밤 능력: {r.night.label}
-                    {(r.extraNights ?? []).length > 0
-                      ? ` · ${(r.extraNights ?? []).map((a) => a.label).join(" · ")}`
-                      : ""}
+              <button
+                type="button"
+                aria-expanded={open}
+                onClick={() => setOpenRole(open ? null : id)}
+                className="flex w-full items-start gap-2 px-2.5 py-2 text-left"
+              >
+                <RoleEmblem role={id} size="sm" mood="dark" glow={open || mine} className="mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-wrap items-baseline gap-x-1.5">
+                    <span className={`font-semibold ${tab.text}`}>{r.label}</span>
+                    {mine ? <span className="text-[0.625rem] text-white/45">나</span> : null}
+                    {r.title ? <span className="text-[0.6875rem] text-white/35">{r.title}</span> : null}
                   </span>
-                ) : null}
-              </span>
+                  {reveal ? <span className="mt-0.5 block text-white/50">{reveal}</span> : null}
+                  {nightLabels.length > 0 ? (
+                    <span className="mt-1 block truncate text-[0.6875rem] text-white/35">
+                      {nightLabels.join(" · ")}
+                    </span>
+                  ) : null}
+                </span>
+                <span
+                  aria-hidden="true"
+                  className={`mt-1 shrink-0 text-[0.625rem] text-white/35 transition-transform ${open ? "rotate-180" : ""}`}
+                >
+                  ▲
+                </span>
+              </button>
+              {open ? (
+                <div className="border-t border-white/10 px-2.5 pb-2.5 pt-2">
+                  <RoleAbilityDetails role={id} faction={r.faction} compact />
+                </div>
+              ) : null}
             </li>
           );
         })}

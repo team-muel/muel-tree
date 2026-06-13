@@ -13,6 +13,7 @@ import { Card } from "@/components/game/ui/Card";
 import { FACTION_COLORS } from "@/config/design-tokens";
 import { factionLabel, roleMeta } from "@/config/gomdori-roles";
 import { RoleEmblem } from "@/components/game/ui/RoleEmblem";
+import { cleanRoleReveal, roleNightAbilityLabels } from "@/components/game/ui/RoleAbilityDetails";
 import { selectRole, type PlayerSummary } from "@/lib/game/api";
 
 type RoleAssignPhaseProps = {
@@ -29,13 +30,6 @@ type PendingSelection = { kind?: string; pool?: string[] };
 // 표류해 같은 직업이 화면마다 다른 이름("악마" vs "대악마")으로 보이던 문제(2026-06-12) 제거.
 const FACTION_MARKS = { angel: "A", demon: "D", helper: "D", neutral: "N" } as const;
 
-function abilityNames(roleId: string): string[] {
-  const meta = roleMeta(roleId);
-  return [meta?.night, ...(meta?.extraNights ?? [])]
-    .filter((ability): ability is NonNullable<typeof ability> => Boolean(ability))
-    .map((ability) => ability.label);
-}
-
 function RoleBrief({
   roleId,
   accentClass,
@@ -47,19 +41,27 @@ function RoleBrief({
 }) {
   const meta = roleMeta(roleId);
   if (!meta) return null;
-  const abilities = abilityNames(roleId);
+  const abilities = roleNightAbilityLabels(roleId);
+  const reveal = cleanRoleReveal(roleId);
 
   if (compact) {
     return (
       <div className="mt-1 space-y-1">
         {meta.title ? <div className="text-[0.6875rem] text-white/40">{meta.title}</div> : null}
-        <div className="text-xs leading-5 text-white/55">{meta.reveal}</div>
+        {reveal ? <div className="text-xs leading-5 text-white/55">{reveal}</div> : null}
         {meta.abilitySummary ? (
           <div className="text-[0.6875rem] leading-4 text-white/45">{meta.abilitySummary}</div>
         ) : null}
         {abilities.length > 0 ? (
-          <div className={`text-[0.6875rem] font-medium ${accentClass}`}>
-            밤 능력: {abilities.join(" · ")}
+          <div className="flex flex-wrap gap-1">
+            {abilities.map((ability) => (
+              <span
+                key={ability}
+                className={`rounded-full border border-white/10 bg-black/15 px-1.5 py-0.5 text-[0.625rem] font-medium ${accentClass}`}
+              >
+                {ability}
+              </span>
+            ))}
           </div>
         ) : null}
       </div>
@@ -80,12 +82,20 @@ function RoleBrief({
           <p className="mt-1 text-xs leading-5 text-white/60">{meta.abilitySummary}</p>
         </section>
       ) : null}
-      <section className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 sm:col-span-2">
-        <div className={`text-[0.625rem] font-semibold uppercase tracking-widest ${accentClass}`}>밤에 누를 수 있는 능력</div>
-        <p className="mt-1 text-xs leading-5 text-white/60">
-          {abilities.length > 0 ? abilities.join(" · ") : "밤 능동 능력이 없습니다. 토론과 투표가 핵심입니다."}
-        </p>
-      </section>
+      {abilities.length > 0 ? (
+        <section className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 sm:col-span-2">
+          <div className="flex flex-wrap gap-1.5">
+            {abilities.map((ability) => (
+              <span
+                key={ability}
+                className={`rounded-full border border-white/10 bg-black/15 px-2 py-1 text-[0.6875rem] font-medium ${accentClass}`}
+              >
+                {ability}
+              </span>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }
@@ -120,8 +130,8 @@ export function RoleAssignPhase({ players, myPlayer, events, matchId, gameJwt }:
       <div className="flex h-full w-full items-center justify-center overflow-y-auto p-5">
         <Card emphasis className={`w-full max-w-2xl p-8 ring-1 ${tone.border} ${tone.bgSoft} ${tone.ring} sm:p-10`}>
           <Badge className={`${tone.border} ${tone.bgSoft} ${tone.accent}`}>악마팀</Badge>
-          <p className="mt-6 text-xs font-semibold uppercase tracking-widest text-white/45">당신은 {kindLabel}입니다</p>
-          <h1 className={`mt-2 text-3xl font-bold sm:text-4xl ${tone.primary}`}>플레이할 {kindLabel}를 고르세요</h1>
+          <p className="mt-6 text-xs font-semibold uppercase tracking-widest text-white/45">{kindLabel} 슬롯</p>
+          <h1 className={`mt-2 text-3xl font-bold sm:text-4xl ${tone.primary}`}>직업 선택</h1>
           <p className="mt-3 text-sm text-white/60">시간이 끝나면 선택하지 않은 직업은 무작위로 정해집니다.</p>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -177,7 +187,7 @@ export function RoleAssignPhase({ players, myPlayer, events, matchId, gameJwt }:
   const allies = roleEvent?.payload?.allies as Array<{user_id: string, role: string}> | undefined;
   const metaForRole = roleMeta(role);
   const roleCopy = metaForRole
-    ? { label: metaForRole.label, detail: metaForRole.reveal }
+    ? { label: metaForRole.label, detail: cleanRoleReveal(role) }
     : { label: role || "확인 중...", detail: "직업 정보를 불러오고 있습니다." };
   const factionCopy = {
     label: factionLabel(faction),

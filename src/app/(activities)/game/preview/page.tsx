@@ -193,12 +193,12 @@ const PREVIEW_STEPS: Array<{ key: string; label: string; detail: string }> = (()
       steps.push({
         key: "role_select_demon",
         label: "변종 선택 (악마)",
-        detail: "악마 슬롯은 4직업 중 플레이할 변종을 고른다 — 미선택 시 랜덤",
+        detail: "악마 슬롯은 4직업 중 변종 선택 — 미선택 시 랜덤",
       });
       steps.push({
         key: "role_select_helper",
         label: "변종 선택 (조력자)",
-        detail: "조력자 슬롯도 4직업 중 선택 — role_assign 30초 창",
+        detail: "조력자 슬롯은 4직업 중 선택 — role_assign 30초 창",
       });
     }
     if (step.key === "night") {
