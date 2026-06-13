@@ -255,8 +255,11 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     faction: "angel",
     reveal: "행복을 파는 가게의 주인. 매일 밤 탈락한 한 명을 되살릴 수 있습니다.",
     passive: "행복을 파는 가게: 원본에서는 탈락자가 생존자보다 많아지면 다수 복귀를 일으킵니다.",
-    abilitySummary: "디저트 선물: 탈락한 한 명을 되살립니다. 현재 밸런스에서는 부활 사용 횟수가 중요한 축입니다.",
-    night: { actionType: "mizlet_revive", label: "디저트 선물", prompt: "디저트로 되살릴 탈락자를 고르세요." },
+    abilitySummary: "디저트 선물(부활): 탈락한 한 명을 되살립니다(1회). 디저트 선물(버프): 생존자에게 디저트를 주어 그 밤 보호합니다.",
+    night: { actionType: "mizlet_revive", label: "디저트 선물(부활)", prompt: "디저트로 되살릴 탈락자를 고르세요. (1회)" },
+    extraNights: [
+      { actionType: "mizlet_dessert", label: "디저트 선물", prompt: "디저트를 줄 생존자를 고르세요. 그 밤 보호받습니다." },
+    ],
   },
   helen: {
     label: "헬렌",
@@ -288,8 +291,11 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     faction: "angel",
     reveal: "여명의 기사. 자신은 보호막을 지니고, 매일 밤 잔불 대검으로 한 명에게 하루 무적을 부여합니다.",
     passive: "여명의 기사: 원본에서는 탈락 면역을 갖되 결백한 천사들의 희생과 연결됩니다. v1은 자기 보호막 1회로 축약됩니다.",
-    abilitySummary: "잔불 대검: 한 명에게 하루 동안 무적 보호를 부여합니다.",
+    abilitySummary: "잔불 대검: 한 명에게 하루 무적을 부여합니다. 단죄: 대상에 폭열을 새기고, 폭열된 자를 다시 베면 소멸시킵니다(부활 불가, 2회).",
     night: { actionType: "arthur_emberblade", label: "잔불 대검", prompt: "오늘 밤 하루 무적을 부여할 대상을 고르세요.", excludeSelf: true },
+    extraNights: [
+      { actionType: "arthur_judge", label: "단죄", prompt: "단죄할 대상을 고르세요. 처음엔 폭열을 새기고, 폭열된 자를 다시 베면 소멸합니다.", excludeSelf: true },
+    ],
   },
   seika: {
     label: "세이카",
