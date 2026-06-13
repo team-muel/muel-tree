@@ -17,6 +17,7 @@ import { getGameSupabase } from "@/lib/game/client";
 import { GOMDORI_RULES } from "@/config/gomdori-rules";
 import { GLOW } from "@/config/design-tokens";
 import { roleMeta, isDemonTeamRole } from "@/config/gomdori-roles";
+import { resolveMyStatusEffects } from "@/config/status-effects";
 import { SpectatorFeed } from "@/components/game/ui/SpectatorFeed";
 import { GameStage } from "@/components/game/ui/GameStage";
 import { BottomSheet } from "@/components/game/ui/BottomSheet";
@@ -132,6 +133,14 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
 
   const role = myPlayer?.role;
   const abilities = buildAbilities(role, myPlayer?.userId);
+
+  const myEffects = resolveMyStatusEffects(myPlayer?.userId, events ?? []);
+  const isNightLocked = iAmSuspected || myEffects.includes("sealed");
+  const lockReason = iAmSuspected
+    ? "의심자로 지목받아 이번 밤 능력을 사용할 수 없습니다."
+    : myEffects.includes("sealed")
+      ? "🔇 어둠이 당신을 봉인했습니다! 이번 밤 능력을 사용할 수 없습니다."
+      : null;
 
   const [activeType, setActiveType] = useState<string | null>(null);
   const currentType = activeType;
@@ -387,6 +396,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
     : null;
 
   function selectAbility(ability: NightAbility) {
+    if (isNightLocked) return;
     setActiveType(ability.actionType);
     setActionError(null);
 
@@ -407,6 +417,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
   }
 
   function handleStageSelect(id: string) {
+    if (isNightLocked) return;
     const target = players.find((p) => p.userId === id);
     if (!target || busy) return;
 
@@ -460,15 +471,33 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
       ) : null}
 
       {isFirstNight ? (
-        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center text-sm text-white/45">
-          {GOMDORI_RULES.firstNight.silentMessage}
-        </div>
-      ) : iAmSuspected ? (
-        <div className="rounded-xl border border-rose-300/20 bg-rose-500/10 p-3 text-center text-sm text-rose-200">
-          의심자로 지목받아 이번 밤 능력을 사용할 수 없습니다.
+        <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-indigo-500/20 bg-indigo-950/20 p-8 text-center backdrop-blur-md shadow-[0_0_24px_rgba(99,102,241,0.12)]">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-500/10 text-xl animate-pulse">
+            🌙
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-indigo-200">고요한 첫 밤</h3>
+            <p className="mt-2 text-xs leading-relaxed text-indigo-100/50">
+              {GOMDORI_RULES.firstNight.silentMessage}
+            </p>
+          </div>
+          <div className="h-1 w-full max-w-[180px] overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full bg-indigo-400"
+              style={{
+                animation: "first-night-fade 8s linear forwards",
+                width: "100%",
+              }}
+            />
+          </div>
         </div>
       ) : (
         <>
+          {isNightLocked && lockReason ? (
+            <div className="rounded-xl border border-rose-300/20 bg-rose-500/10 p-3 text-center text-sm text-rose-200">
+              {lockReason}
+            </div>
+          ) : null}
           <div className="border-t border-white/10 pt-4">
             <div className="mb-2 text-xs font-semibold uppercase tracking-widest text-white/40">
               밤 능력
@@ -484,17 +513,21 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
                     <button
                       key={ability.actionType}
                       type="button"
-                      disabled={busy}
+                      disabled={busy || isNightLocked}
                       onClick={() => selectAbility(ability)}
-                      className={`w-full rounded-xl border p-3 text-left transition ${
+                      className={`relative w-full rounded-xl border p-3 text-left transition ${
                         isSelected
                           ? "border-rose-400/50 bg-rose-400/10 text-rose-100"
                           : "border-white/10 bg-white/[0.02] text-white/70 hover:bg-white/[0.06]"
-                      } ${busy ? "opacity-60" : ""}`}
+                      } ${busy || isNightLocked ? "opacity-45 cursor-not-allowed" : ""}`}
                     >
                       <div className="flex items-center justify-between gap-3">
                         <span className="text-xs font-semibold">{ability.label}</span>
-                        {isDone ? (
+                        {isNightLocked ? (
+                          <span className="shrink-0 text-[0.625rem] font-semibold text-rose-300">
+                            🔒 잠김
+                          </span>
+                        ) : isDone ? (
                           <span className="shrink-0 text-[0.625rem] font-semibold text-emerald-300">
                             완료 · 교체 가능
                           </span>
@@ -563,7 +596,15 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
   if (!myPlayer || !myPlayer.alive) {
     return (
       <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center py-5 pb-24">
-        <GameStage players={players} myUserId={myPlayer?.userId} mood="dark" inspectable matchId={match.id} movable />
+        <GameStage
+          players={players}
+          myUserId={myPlayer?.userId}
+          mood="dark"
+          inspectable
+          matchId={match.id}
+          movable
+          myEffects={myEffects}
+        />
         <BottomSheet title="관전 피드">
           <p className="text-sm text-white/55">당신은 사망했습니다. 다른 플레이어들의 행동을 지켜보세요.</p>
           <SpectatorFeed events={events} players={players} />
@@ -581,13 +622,14 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
         mood="dark"
         inspectable
         matchId={match.id}
-        selectable={!isFirstNight && !iAmSuspected && abilities.length > 0}
+        selectable={!isFirstNight && !isNightLocked && abilities.length > 0}
         canSelect={current ? current.eligible : (p) => p.alive}
         selectedId={stageSelectedId}
         abilityTargetId={selectedTargetId}
         selectedGlow={GLOW.selectNight}
         disabled={busy}
         onSelect={handleStageSelect}
+        myEffects={myEffects}
       />
 
       {demonChat ? (

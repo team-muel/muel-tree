@@ -13,20 +13,23 @@ import { submitAction } from "@/lib/game/api";
 import { getGameSupabase } from "@/lib/game/client";
 import { PlayerToken } from "@/components/game/ui/PlayerToken";
 import { GameStage } from "@/components/game/ui/GameStage";
+import { resolveMyStatusEffects } from "@/config/status-effects";
 
 type VerdictPhaseProps = {
   match: MatchSummary;
   players: PlayerSummary[];
   myPlayer: PlayerSummary | null;
   gameJwt: string;
-  events: Array<{ id: string; event_type: string; payload?: Record<string, unknown> }>;
+  events: Array<{ id: string; event_type: string; phase_id?: string; payload?: Record<string, unknown> }>;
 };
 
-export function VerdictPhase({ match, players, myPlayer, gameJwt }: VerdictPhaseProps) {
+export function VerdictPhase({ match, players, myPlayer, gameJwt, events = [] }: VerdictPhaseProps) {
   const verdict = match.engineState?.verdict as Record<string, unknown> | undefined;
   const candidateUserId = (verdict?.candidateUserId as string | undefined) || null;
   const candidate = candidateUserId ? players.find((p) => p.userId === candidateUserId) : null;
   const watchers = candidate ? players.filter((p) => p.userId !== candidate.userId) : players;
+
+  const myEffects = resolveMyStatusEffects(myPlayer?.userId, events);
 
   const [selectedVote, setSelectedVote] = useState<"approve" | "reject" | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -111,6 +114,7 @@ export function VerdictPhase({ match, players, myPlayer, gameJwt }: VerdictPhase
               sub="최후의 반론 진행 중"
               selected
               selectedGlow="ring-2 ring-amber-300/60 shadow-[0_0_36px_rgba(252,211,77,0.35)]"
+              effects={myPlayer?.userId === candidateUserId ? myEffects : undefined}
             />
           </div>
         ) : (
@@ -181,6 +185,7 @@ export function VerdictPhase({ match, players, myPlayer, gameJwt }: VerdictPhase
           mood="dark"
           matchId={match.id}
           className="opacity-80"
+          myEffects={myEffects}
         />
       </div>
     </div>

@@ -56,6 +56,7 @@ export function GameStage({
   votedTargetId = null,
   suspicionTargetId = null,
   abilityTargetId = null,
+  myEffects = [],
 }: {
   players: PlayerSummary[];
   myUserId?: string | null;
@@ -95,6 +96,7 @@ export function GameStage({
   votedTargetId?: string | null;
   suspicionTargetId?: string | null;
   abilityTargetId?: string | null;
+  myEffects?: string[];
 }) {
   const light = mood === "light";
 
@@ -177,6 +179,8 @@ export function GameStage({
                 votedStamp={p.userId === votedTargetId}
                 suspicionStamp={p.userId === suspicionTargetId}
                 abilityStamp={p.userId === abilityTargetId}
+                effects={isMe ? myEffects : undefined}
+                ready={p.ready}
                 onClick={
                   selectable
                     ? (canPick || isMe)

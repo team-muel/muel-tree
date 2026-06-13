@@ -9,9 +9,11 @@
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
 import { MOOD } from "@/config/design-tokens";
 import { eventLines } from "@/config/gomdori-events";
+import { resolveMyStatusEffects } from "@/config/status-effects";
 import { GameStage } from "@/components/game/ui/GameStage";
 import { BottomSheet } from "@/components/game/ui/BottomSheet";
 import { SpectatorFeed } from "@/components/game/ui/SpectatorFeed";
+import { useState, useEffect } from "react";
 
 type DayPhaseProps = {
   match: MatchSummary;
@@ -31,6 +33,13 @@ const PERSONAL_TONE_CLS: Record<string, string> = {
 };
 
 export function DayPhase({ match, players, events, myPlayer, phaseEndsAt }: DayPhaseProps) {
+  const [renderAliveDeaths, setRenderAliveDeaths] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setRenderAliveDeaths(false), 600);
+    return () => clearTimeout(timer);
+  }, []);
+
   // 아침 공표 — morning_report(밤 해소 집계, 다중 사망·부활 포함)가 1차 출처.
   // events 는 최신순: report 보다 앞(=이후 발생)의 nightmare_death(night_resolve
   // 단계의 악몽 탈락)도 같은 아침의 사망으로 합친다.
@@ -72,8 +81,22 @@ export function DayPhase({ match, players, events, myPlayer, phaseEndsAt }: DayP
         )
       : [];
 
+  const myEffects = resolveMyStatusEffects(
+    myPlayer?.userId,
+    events,
+    report?.phase_id
+  );
+
   const isDead = myPlayer && !myPlayer.alive;
   const ink = MOOD.light;
+
+  const stagePlayers = players.map((p) => {
+    const isJustDied = deadNames.includes(p.displayName);
+    if (isJustDied && renderAliveDeaths) {
+      return { ...p, alive: true };
+    }
+    return p;
+  });
 
   return (
     <div className="mx-auto flex h-full w-full max-w-5xl flex-col py-5 pb-24">
@@ -133,13 +156,14 @@ export function DayPhase({ match, players, events, myPlayer, phaseEndsAt }: DayP
           </span>
         </div>
         <GameStage
-          players={players}
+          players={stagePlayers}
           myUserId={myPlayer?.userId}
           mood="light"
           inspectable
           matchId={match.id}
           movable
           timerOrbEndsAt={phaseEndsAt}
+          myEffects={myEffects}
         />
       </div>
 

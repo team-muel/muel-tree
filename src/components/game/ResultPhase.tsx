@@ -10,11 +10,14 @@ import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
 import { roleLabel } from "@/config/gomdori-roles";
 import { GOMDORI_RULES } from "@/config/gomdori-rules";
 import { RoleEmblem } from "@/components/game/ui/RoleEmblem";
+import { Button } from "@/components/game/ui/Button";
+import { useState } from "react";
 
 type ResultPhaseProps = {
   match: MatchSummary;
   players: PlayerSummary[];
   events: Array<{ id: string; event_type: string; payload?: Record<string, unknown> }>;
+  onLeave?: () => void | Promise<void>;
 };
 
 // game_ended payload 의 reveal 항목 (M4-1). final_* 는 게임 내 변환(전향·타락·낙인
@@ -33,7 +36,10 @@ function revealMap(payload: Record<string, unknown> | undefined): Map<string, Re
   return new Map(list.filter((p) => typeof p?.user_id === "string").map((p) => [p.user_id, p]));
 }
 
-export function ResultPhase({ match, players, events }: ResultPhaseProps) {
+export function ResultPhase({ match, players, events, onLeave }: ResultPhaseProps) {
+  const [isLeaving, setIsLeaving] = useState(false);
+  const [leaveError, setLeaveError] = useState<string | null>(null);
+
   // Primary source: match.winner from Realtime (set by phase-advance on DB).
   // Fallback: game_ended event payload (if phase-advance emits it in the future).
   const endEvent = events.find((e) => e.event_type === "game_ended");
@@ -127,6 +133,34 @@ export function ResultPhase({ match, players, events }: ResultPhaseProps) {
           );
         })}
       </div>
+
+      {onLeave ? (
+        <div className="mx-auto mt-12 w-full max-w-sm text-center">
+          <Button
+            type="button"
+            variant="primary"
+            disabled={isLeaving}
+            onClick={async () => {
+              setIsLeaving(true);
+              setLeaveError(null);
+              try {
+                await onLeave();
+              } catch (err) {
+                setLeaveError(err instanceof Error ? err.message : "로비 이동 실패");
+                setIsLeaving(false);
+              }
+            }}
+            className="w-full shadow-lg"
+          >
+            {isLeaving ? "돌아가는 중..." : "로비 목록으로 돌아가기"}
+          </Button>
+          {leaveError ? (
+            <p role="alert" className="mt-3 text-sm text-rose-300">
+              {leaveError}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

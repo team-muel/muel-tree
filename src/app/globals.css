@@ -230,6 +230,23 @@ body {
   animation: gomdori-spotlight 2.6s ease-in-out infinite;
 }
 
+@keyframes gomdori-shake {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  20% { transform: rotate(-3deg) scale(0.98); }
+  40% { transform: rotate(3deg) scale(1.02); }
+  60% { transform: rotate(-2deg) scale(0.99); }
+  80% { transform: rotate(2deg) scale(1.01); }
+}
+
+.gomdori-shake {
+  animation: gomdori-shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes first-night-fade {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .gomdori-role-card,
   .gomdori-role-burst,
@@ -239,7 +256,8 @@ body {
   .gomdori-roam-b,
   .gomdori-roam-c,
   .gomdori-spotlight,
-  .gomdori-illust-drift {
+  .gomdori-illust-drift,
+  .gomdori-shake {
     animation: none;
   }
   .gomdori-phase-sweep,

@@ -10,6 +10,7 @@ import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
 import { submitAction } from "@/lib/game/api";
 import { getGameSupabase } from "@/lib/game/client";
 import { GLOW } from "@/config/design-tokens";
+import { resolveMyStatusEffects } from "@/config/status-effects";
 import { Button } from "@/components/game/ui/Button";
 import { GameStage } from "@/components/game/ui/GameStage";
 import { BottomSheet } from "@/components/game/ui/BottomSheet";
@@ -20,10 +21,11 @@ type VotePhaseProps = {
   players: PlayerSummary[];
   myPlayer: PlayerSummary | null;
   gameJwt: string;
-  events?: Array<{ id: string; event_type: string; payload?: Record<string, unknown> }>;
+  events?: Array<{ id: string; event_type: string; phase_id?: string; payload?: Record<string, unknown> }>;
 };
 
-export function VotePhase({ match, players, myPlayer, gameJwt, events }: VotePhaseProps) {
+export function VotePhase({ match, players, myPlayer, gameJwt, events = [] }: VotePhaseProps) {
+  const myEffects = resolveMyStatusEffects(myPlayer?.userId, events);
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -123,6 +125,7 @@ export function VotePhase({ match, players, myPlayer, gameJwt, events }: VotePha
             handleVote(id);
           }
         }}
+        myEffects={myEffects}
       />
 
       {/* 투표 안내 패널 (In-flow) */}
@@ -130,6 +133,11 @@ export function VotePhase({ match, players, myPlayer, gameJwt, events }: VotePha
         <div className="text-xs font-semibold uppercase tracking-widest text-amber-800">
           투표 시간
         </div>
+        {myEffects.includes("enchanted") && (
+          <div className="mt-3 rounded-lg border border-rose-300/35 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-700 leading-relaxed text-left">
+            💖 현재 매료 상태입니다! 투표 권한이 연주자에게 위임되어 최종 투표 결과가 다르게 변경됩니다.
+          </div>
+        )}
         <h2 className="mt-1 text-lg font-semibold">
           {selectedTarget !== null && submitted
             ? `${selectedName}님에게 투표했습니다.`

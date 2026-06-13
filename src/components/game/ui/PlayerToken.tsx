@@ -11,8 +11,9 @@
  * alive 플래그가 뒤집히는 순간 자동 재생), 선택 = 광휘 전환. reduced-motion 존중.
  */
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Mood } from "@/config/design-tokens";
+import { STATUS_EFFECTS } from "@/config/status-effects";
 
 function initialOf(name: string): string {
   const t = name.trim();
@@ -41,6 +42,8 @@ export function PlayerToken({
   votedStamp = false,
   suspicionStamp = false,
   abilityStamp = false,
+  effects = [],
+  ready = false,
 }: {
   name: string;
   avatarUrl?: string | null;
@@ -79,6 +82,8 @@ export function PlayerToken({
   votedStamp?: boolean;
   suspicionStamp?: boolean;
   abilityStamp?: boolean;
+  effects?: string[];
+  ready?: boolean;
 }) {
   const light = mood === "light";
   const ink = light ? "text-[#2b2118]" : "text-white";
@@ -109,6 +114,24 @@ export function PlayerToken({
   const DRAG_THRESHOLD = 6;
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
+  const [shake, setShake] = useState(false);
+  useEffect(() => {
+    if (votedStamp || suspicionStamp) {
+      setShake(true);
+      const timer = setTimeout(() => setShake(false), 400);
+      return () => clearTimeout(timer);
+    }
+  }, [votedStamp, suspicionStamp]);
+
+  const prevReady = useRef(ready);
+  useEffect(() => {
+    if (ready && !prevReady.current) {
+      setShake(true);
+      const timer = setTimeout(() => setShake(false), 400);
+      return () => clearTimeout(timer);
+    }
+    prevReady.current = ready;
+  }, [ready]);
   const press = useRef<{ x: number; y: number; base: { x: number; y: number }; moved: boolean; drag: boolean } | null>(null);
   const longTimer = useRef<number | null>(null);
   const consumed = useRef(false); // 이번 포인터에서 click 을 막을지
@@ -157,11 +180,18 @@ export function PlayerToken({
       setOffset({ x: p.base.x + dx, y: p.base.y + dy });
     }
   };
-  const onPointerEnd = () => {
+  const onPointerEnd = (e: React.PointerEvent) => {
     const p = press.current;
     clearLong();
-    if (p?.drag) consumed.current = true; // 끌었으면 지목으로 흘리지 않음
-    if (p) setDragging(false);
+    if (p) {
+      const dx = e.clientX - p.x;
+      const dy = e.clientY - p.y;
+      if (Math.abs(dx) + Math.abs(dy) > 10) {
+        consumed.current = true;
+      }
+      if (p.drag) consumed.current = true;
+      setDragging(false);
+    }
     press.current = null;
   };
   const handleContextMenu = (e: React.MouseEvent) => {
@@ -231,7 +261,7 @@ export function PlayerToken({
         </>
       )}
 
-      {/* 추측 에디터 (Black/White 유리색 그라데이션 버튼) */}
+      {/* 추측 에디터 (Black/Reset/White 유리색 그라데이션 버튼) */}
       {isGuessingEdit && (
         <>
           <button
@@ -241,9 +271,20 @@ export function PlayerToken({
               onGuessChange?.("demon");
               onToggleGuessingEdit?.();
             }}
-            className="absolute top-0 inset-x-0 h-[45%] bg-gradient-to-b from-black/95 to-black/70 backdrop-blur-md text-white text-[10px] font-bold flex items-center justify-center rounded-t-xl border-t border-black/50 cursor-pointer hover:from-black hover:to-black/85 transition z-20"
+            className="absolute top-0 inset-x-0 h-[33.3%] bg-gradient-to-b from-black/95 to-black/75 backdrop-blur-md text-white text-[10px] font-bold flex items-center justify-center rounded-t-xl border-t border-black/50 cursor-pointer hover:from-black hover:to-black/85 transition z-20"
           >
             악마 (Black)
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onGuessChange?.(null);
+              onToggleGuessingEdit?.();
+            }}
+            className="absolute top-[33.3%] inset-x-0 h-[33.4%] bg-white/10 backdrop-blur-md text-white/80 text-[10px] font-bold flex items-center justify-center cursor-pointer hover:bg-white/20 transition z-20 border-y border-white/[0.06]"
+          >
+            초기화 (Reset)
           </button>
           <button
             type="button"
@@ -252,7 +293,7 @@ export function PlayerToken({
               onGuessChange?.("angel");
               onToggleGuessingEdit?.();
             }}
-            className="absolute bottom-0 inset-x-0 h-[45%] bg-gradient-to-t from-white/95 to-white/70 backdrop-blur-md text-slate-900 text-[10px] font-bold flex items-center justify-center rounded-b-xl border-b border-white/50 cursor-pointer hover:from-white hover:to-white/85 transition z-20"
+            className="absolute bottom-0 inset-x-0 h-[33.3%] bg-gradient-to-t from-white/95 to-white/75 backdrop-blur-md text-slate-900 text-[10px] font-bold flex items-center justify-center rounded-b-xl border-b border-white/50 cursor-pointer hover:from-white hover:to-white/85 transition z-20"
           >
             천사 (White)
           </button>
@@ -280,22 +321,31 @@ export function PlayerToken({
             ✕
           </span>
         ) : null}
-
-        {/* 추측 초기화 X 단추 (프로필 중앙 오버레이) */}
-        {guess && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onGuessChange?.(null);
-            }}
-            className="absolute inset-0 flex items-center justify-center bg-black/60 hover:bg-black/80 rounded-full text-white text-xs font-bold transition z-20 cursor-pointer"
-            aria-label="추측 초기화"
-          >
-            ✕
-          </button>
-        )}
       </span>
+      {/* 상태 이상 뱃지 목록 (하드코딩 배제) */}
+      {effects.length > 0 && (
+        <div className="mt-1.5 flex flex-wrap justify-center gap-1">
+          {effects.map((effId) => {
+            const eff = STATUS_EFFECTS[effId];
+            if (!eff) return null;
+            return (
+              <div key={effId} className="group relative flex items-center justify-center">
+                <span
+                  title={eff.label}
+                  className={`inline-flex h-5 w-5 items-center justify-center rounded-full border text-[10px] font-bold shadow-md cursor-help ${eff.badgeClass}`}
+                >
+                  {eff.icon}
+                </span>
+                {/* 툴팁 오버레이 */}
+                <div className="absolute bottom-6 left-1/2 z-30 hidden w-32 -translate-x-1/2 rounded bg-slate-950/95 px-2 py-1.5 text-[10px] text-white shadow-xl ring-1 ring-white/10 group-hover:block pointer-events-none">
+                  <div className="font-bold text-center border-b border-white/10 pb-0.5 mb-1">{eff.label}</div>
+                  <div className="text-white/70 leading-4 text-center">{eff.description}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
       <span
         className={`block w-full truncate text-sm font-medium transition-colors duration-500 ${alive ? ink : inkFaint}`}
       >
@@ -318,7 +368,7 @@ export function PlayerToken({
         style={offsetStyle}
         className={`relative flex flex-col items-center text-center transition-all duration-500 ${frame} ${enter} ${
           movable ? `touch-none ${movableCursor}` : ""
-        } ${dragging ? "z-30" : ""} ${guessFx}`}
+        } ${dragging ? "z-30" : ""} ${guessFx} ${shake ? "gomdori-shake" : ""}`}
       >
         {body}
       </div>
@@ -336,7 +386,7 @@ export function PlayerToken({
         movable ? `touch-none ${movableCursor}` : ""
       } ${dragging ? "z-30" : ""} ${
         selected && chrome ? selectedGlow : pickable && chrome && !disabled ? pickFx : ""
-      } ${guessFx} ${disabled && !selected ? "cursor-not-allowed opacity-40" : ""}`}
+      } ${guessFx} ${disabled && !selected ? "cursor-not-allowed opacity-40" : ""} ${shake ? "gomdori-shake" : ""}`}
     >
       {body}
     </button>

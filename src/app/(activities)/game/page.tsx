@@ -129,6 +129,7 @@ function GameShell({ session }: { session: ActivitySession }) {
           if (cancelled) return;
           setOpenMatches(listRes.matches);
           setPlayerCounts(listRes.playerCounts);
+          setLandingNotice(null);
           setBoot({ status: "landing" });
         }
       } catch (error) {
@@ -337,9 +338,28 @@ function GameShell({ session }: { session: ActivitySession }) {
       setMatch(joined.match);
       setBoot({ status: "ready" });
     } catch (error) {
+      const message = error instanceof Error ? error.message : "참가에 실패했습니다.";
+      if (message.includes("match_not_joinable") || message.includes("match_full")) {
+        if (channelId) {
+          try {
+            const listRes = await listMatches(channelId, gameJwt);
+            setOpenMatches(listRes.matches);
+            setPlayerCounts(listRes.playerCounts);
+          } catch {
+            // 목록 새로고침 실패 시에도 랜딩에 남겨 다시 시도할 수 있게 한다.
+          }
+        }
+        setLandingNotice(
+          message.includes("match_full")
+            ? "정원이 찬 방입니다. 다른 방을 선택하거나 새 방을 만들 수 있어요."
+            : "이미 시작된 방입니다. 목록을 새로고침했어요.",
+        );
+        setBoot({ status: "landing" });
+        return;
+      }
       // 막다른 오류 화면 대신 랜딩으로 복귀 + 인라인 알림 — 참가/나가기 반복 중
       // 일시 오류(잔존 행 정리 지연 등)도 한 번 더 누르면 풀린다.
-      setLandingNotice(error instanceof Error ? error.message : "참가에 실패했습니다.");
+      setLandingNotice(message);
       await returnToLanding();
     }
   }
@@ -383,9 +403,9 @@ function GameShell({ session }: { session: ActivitySession }) {
           playerCounts={playerCounts}
           participants={session.instanceParticipants}
           myUserId={session.discordUser?.id ?? null}
+          notice={landingNotice}
           onCreate={createGame}
           onJoin={joinGame}
-          notice={landingNotice}
           onRefresh={() => {
             setLandingNotice(null);
             void returnToLanding();
@@ -487,7 +507,7 @@ function GameShell({ session }: { session: ActivitySession }) {
   if (match.status === "ended") {
     return (
       <GameFrame status="ended">
-        <ResultPhase match={match} players={players} events={events} />
+        <ResultPhase match={match} players={players} events={events} onLeave={returnToLanding} />
       </GameFrame>
     );
   }
