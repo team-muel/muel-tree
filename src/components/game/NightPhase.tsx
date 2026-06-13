@@ -112,11 +112,13 @@ function buildAbilities(role: string | null | undefined, myUserId: string | null
   }
 
   // 일반 밤 능동(조사/용의자/잔불/투쟁/초신성/매료/포교 등) — manifest 단일 능력.
+  // self 능동(라이너 백호 소환)도 지원 — 대상 그리드 없이 버튼만.
   if (meta?.night) {
     return [{
       actionType: meta.night.actionType,
       label: meta.night.label,
       prompt: meta.night.prompt,
+      self: meta.night.self,
       confirm: true,
       eligible: aliveNotMe,
     }];

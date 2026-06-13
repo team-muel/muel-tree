@@ -115,9 +115,15 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     label: "라이너",
     title: "백호의 소환자",
     faction: "angel",
-    reveal: "수호신 백호의 소환자. 천사팀 카운트를 늘려 마을을 지킵니다. (밤 능동 능력 없음)",
-    passive: "백호: 천사팀 카운트를 늘립니다. v1에서는 무한게임 방지를 위해 축약된 카운트 보너스로 적용됩니다.",
-    abilitySummary: "밤 능동 능력은 없습니다. 토론과 투표에서 백호 카운트 압박을 근거로 악마를 찾아야 합니다.",
+    reveal: "수호신 백호의 소환자. 백호를 소환해 천사팀 카운트를 늘려 마을을 지킵니다.",
+    passive: "백호: 소환하면 천사팀 카운트가 늘어납니다(소환 전에는 미보유). canon 은 +3, v1 은 축약된 보너스입니다.",
+    abilitySummary: "백호 소환: 한 번 발동해 천사팀 카운트를 영구히 늘립니다(1회).",
+    night: {
+      actionType: "rainer_summon",
+      label: "백호 소환",
+      prompt: "백호를 소환해 천사팀 카운트를 늘립니다. (1회, 대상 없음)",
+      self: true,
+    },
   },
   romaz: {
     label: "로마즈",
