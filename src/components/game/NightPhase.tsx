@@ -111,15 +111,25 @@ function buildAbilities(role: string | null | undefined, myUserId: string | null
     }];
   }
 
-  // 일반 밤 능동(조사/용의자/잔불/투쟁/초신성/매료/포교 등) — manifest 단일 능력.
+  // 일반 밤 능동(조사/용의자/잔불/투쟁/초신성/매료/포교 등) — manifest 단일 능력 + 보조 능력.
+  // extraNights 는 비악마 듀얼 액션(파스아 포교+신앙)도 표면화한다. 매니페스트 단일 출처.
   if (meta?.night) {
-    return [{
+    const main: NightAbility = {
       actionType: meta.night.actionType,
       label: meta.night.label,
       prompt: meta.night.prompt,
       confirm: true,
       eligible: aliveNotMe,
-    }];
+    };
+    const extras: NightAbility[] = (meta.extraNights ?? []).map((extra) => ({
+      actionType: extra.actionType,
+      label: extra.label,
+      prompt: extra.prompt,
+      self: extra.self,
+      confirm: true,
+      eligible: aliveNotMe,
+    }));
+    return [main, ...extras];
   }
 
   return [];
