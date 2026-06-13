@@ -116,6 +116,7 @@ function buildAbilities(role: string | null | undefined, myUserId: string | null
       actionType: meta.night.actionType,
       label: meta.night.label,
       prompt: meta.night.prompt,
+      self: meta.night.self, // 엘런 박해 = 무대상(자기 투표 대상 따라감)
       eligible: aliveNotMe,
     };
     const extras: NightAbility[] = (meta.extraNights ?? []).map((extra) => ({
