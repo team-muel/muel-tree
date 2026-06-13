@@ -100,6 +100,7 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     },
     extraNights: [
       { actionType: "daeakma_brand", label: "메피스토 낙인", prompt: "낙인을 찍을 대상을 고르세요. 그 직업이 삭제되고 다른 정체로 비밀리에 재배정됩니다.", excludeSelf: true },
+      { actionType: "daeakma_dominion", label: "압도적 존재감", prompt: "압도적 존재감 — 이번 밤 전원의 능력을 봉인합니다. (1회, 대상 없음)", self: true },
     ],
   },
   helper: {
@@ -212,11 +213,11 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     title: "부서진 펜던트",
     roster: "helper",
     faction: "demon",
-    reveal: "부서진 펜던트의 조력자. 매일 밤 한 명의 능력을 무력화합니다.",
+    reveal: "부서진 펜던트의 조력자. 한 명을 표식해, 그가 다음에 쓰는 능력을 소멸시킵니다.",
     passive: "부서진 펜던트: 시작 시 악마와 접선하고 악마팀에 지워지지 않는 펜던트 효과를 남깁니다.",
-    abilitySummary: "네 안에 없는 것: 그 밤 대상의 능력 발동을 무력화합니다.",
+    abilitySummary: "네 안에 없는 것: 대상이 가장 가까운 밤에 발동하는 능력 효과를 소멸시킵니다(표식은 쓸 때까지 남습니다).",
     demonTeam: true,
-    night: { actionType: "logen_nullify", label: "네 안에 없는 것", prompt: "오늘 밤 능력을 무력화할 대상을 고르세요.", excludeSelf: true },
+    night: { actionType: "logen_nullify", label: "네 안에 없는 것", prompt: "다음 능력을 소멸시킬 대상을 고르세요.", excludeSelf: true },
   },
   ellen: {
     label: "엘런",
@@ -275,8 +276,11 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     faction: "angel",
     reveal: "명예의 군인. 살아있는 한 천사팀 카운트를 더하고, 매일 밤 투쟁으로 한 명의 소속 카운트를 키웁니다.",
     passive: "군인의 사명/명예: 생존 중 천사팀 카운트를 보강하고 악마 효과 제거 흐름을 갖습니다. v1은 카운트 보너스로 축약됩니다.",
-    abilitySummary: "투쟁: 대상의 소속 카운트를 더해 승리 판정의 무게를 바꿉니다.",
+    abilitySummary: "투쟁: 대상의 소속 카운트를 더합니다. 용맹함(1회): 자기 부정 효과를 모두 씻고 명예(천사팀 카운트 +1)를 세웁니다.",
     night: { actionType: "uno_struggle", label: "투쟁", prompt: "소속 카운트를 더해줄 대상을 고르세요.", excludeSelf: true },
+    extraNights: [
+      { actionType: "uno_valor", label: "용맹함", prompt: "용맹함 — 자기 부정 효과를 씻고 명예를 세웁니다. (1회, 대상 없음)", self: true },
+    ],
   },
   arthur: {
     label: "아서",
