@@ -148,6 +148,7 @@ function renderPhasePreview(
           players={players}
           events={MOCK_EVENTS.dayAfterDeath}
           myPlayer={me}
+          gameJwt="preview"
           phaseEndsAt={new Date(Date.now() + 90_000).toISOString()}
         />
       );

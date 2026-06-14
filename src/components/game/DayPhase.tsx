@@ -13,6 +13,7 @@ import { resolveMyStatusEffects } from "@/config/status-effects";
 import { GameStage } from "@/components/game/ui/GameStage";
 import { BottomSheet } from "@/components/game/ui/BottomSheet";
 import { SpectatorFeed } from "@/components/game/ui/SpectatorFeed";
+import { MatchChat } from "@/components/game/ui/MatchChat";
 import { useState, useEffect } from "react";
 
 type DayPhaseProps = {
@@ -20,6 +21,7 @@ type DayPhaseProps = {
   players: PlayerSummary[];
   events: Array<{ id: string; event_type: string; phase_id?: string; payload?: Record<string, unknown> }>;
   myPlayer: PlayerSummary | null;
+  gameJwt: string;
   /** 토론 페이즈 종료 시각 — 무대 위 차고 노는 타이머 오브에 쓰인다. */
   phaseEndsAt?: string | null;
 };
@@ -32,7 +34,7 @@ const PERSONAL_TONE_CLS: Record<string, string> = {
   info: "border-[#2b2118]/15 bg-white/70 text-[#5c4d3c]",
 };
 
-export function DayPhase({ match, players, events, myPlayer, phaseEndsAt }: DayPhaseProps) {
+export function DayPhase({ match, players, events, myPlayer, gameJwt, phaseEndsAt }: DayPhaseProps) {
   const [renderAliveDeaths, setRenderAliveDeaths] = useState(true);
 
   useEffect(() => {
@@ -168,13 +170,32 @@ export function DayPhase({ match, players, events, myPlayer, phaseEndsAt }: DayP
       </div>
 
       {isDead ? (
-        <BottomSheet title="관전 피드" defaultOpen={false}>
-          <p className="text-sm text-white/55">
-            당신은 사망했습니다. 산 자들의 토론을 조용히 지켜보세요.
-          </p>
+        <BottomSheet title="관전 · 영혼 채팅" defaultOpen={false}>
+          <MatchChat
+            matchId={match.id}
+            gameJwt={gameJwt}
+            myPlayer={myPlayer}
+            players={players}
+            placeholder="영혼끼리 대화..."
+            emptyHint="영혼들과 대화하세요 (산 자에겐 보이지 않습니다)"
+          />
+          <div className="border-t border-white/5 pt-3 text-sm text-white/55">
+            당신은 사망했습니다. 산 자들의 토론은 읽을 수만 있습니다.
+          </div>
           <SpectatorFeed events={events} players={players} />
         </BottomSheet>
-      ) : null}
+      ) : (
+        <BottomSheet title="마을 채팅">
+          <MatchChat
+            matchId={match.id}
+            gameJwt={gameJwt}
+            myPlayer={myPlayer}
+            players={players}
+            placeholder="마을 사람들과 대화..."
+            emptyHint="낮 동안 자유롭게 대화하세요"
+          />
+        </BottomSheet>
+      )}
     </div>
   );
 }

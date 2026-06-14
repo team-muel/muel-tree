@@ -1,0 +1,165 @@
+"use client";
+
+/**
+ * MatchChat — Feign식 중앙 채팅. 채널은 서버(match-chat)가 페이즈+상태로 결정한다.
+ * 클라이언트는 match_chats 를 구독하고(가시성은 RLS 가 강제: town=전원, dead=사망자,
+ * demon_circle=회로원), 어떤 채널이든 같은 입력창으로 보낸다(서버가 라우팅).
+ * 사망자 영혼('dead') 메시지는 "영혼" 표식으로 구분 — 산 자에겐 애초에 도착하지 않는다.
+ */
+
+import { useEffect, useRef, useState } from "react";
+import type { PlayerSummary } from "@/lib/game/api";
+import { sendChat } from "@/lib/game/api";
+import { getGameSupabase } from "@/lib/game/client";
+
+type ChatRow = {
+  id: string;
+  sender_user_id: string;
+  message: string;
+  channel?: string;
+  created_at?: string;
+};
+
+export function MatchChat({
+  matchId,
+  gameJwt,
+  myPlayer,
+  players,
+  placeholder = "메시지 입력...",
+  emptyHint = "대화를 시작하세요",
+  canSend = true,
+  disabledHint,
+  accent = "town",
+}: {
+  matchId: string;
+  gameJwt: string;
+  myPlayer: PlayerSummary | null;
+  players: PlayerSummary[];
+  placeholder?: string;
+  emptyHint?: string;
+  /** false 면 입력창을 잠근다(예: 발화 불가 페이즈). */
+  canSend?: boolean;
+  disabledHint?: string;
+  /** 강조색 — town(호박)·circle(장미). */
+  accent?: "town" | "circle";
+}) {
+  const [chats, setChats] = useState<ChatRow[]>([]);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const endRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!matchId || !gameJwt) return;
+    let cancelled = false;
+    const supabase = getGameSupabase(gameJwt);
+
+    supabase
+      .schema("mafia")
+      .from("match_chats")
+      .select("*")
+      .eq("match_id", matchId)
+      .order("created_at", { ascending: true })
+      .then(({ data }) => {
+        if (!cancelled && data) setChats(data as ChatRow[]);
+      });
+
+    const channel = supabase
+      .channel(`match-chat-${matchId}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "mafia", table: "match_chats", filter: `match_id=eq.${matchId}` },
+        (payload) => setChats((prev) => [...prev, payload.new as ChatRow]),
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
+  }, [matchId, gameJwt]);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chats]);
+
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!message.trim()) return;
+    const msg = message;
+    setMessage("");
+    setError(null);
+    try {
+      await sendChat(matchId, msg, gameJwt);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "채팅 전송 실패");
+      setMessage(msg);
+    }
+  };
+
+  const sendColor =
+    accent === "circle"
+      ? "bg-rose-500/20 text-rose-300 focus-within:border-rose-500/50"
+      : "bg-amber-500/20 text-amber-200 focus-within:border-amber-400/50";
+  const mineBubble = accent === "circle" ? "bg-rose-500/20 text-rose-100" : "bg-amber-500/15 text-amber-50";
+
+  return (
+    <div className="flex h-72 flex-col">
+      <div className="flex-1 space-y-3 overflow-y-auto pr-1">
+        {chats.length === 0 ? (
+          <div className="flex h-full items-center justify-center text-sm text-white/20">{emptyHint}</div>
+        ) : (
+          chats.map((chat) => {
+            const isMe = chat.sender_user_id === myPlayer?.userId;
+            const sender = players.find((p) => p.userId === chat.sender_user_id)?.displayName || "알 수 없음";
+            const isGhost = chat.channel === "dead";
+            return (
+              <div key={chat.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+                {!isMe && (
+                  <div className="mb-1 flex items-center gap-1 pl-1 text-[0.625rem] text-white/40">
+                    {sender}
+                    {isGhost ? <span className="rounded-full bg-white/10 px-1.5 text-[0.5625rem] text-white/45">영혼</span> : null}
+                  </div>
+                )}
+                <div
+                  className={`max-w-[85%] break-words rounded-lg px-3 py-2 text-sm ${
+                    isMe
+                      ? `rounded-tr-sm ${isGhost ? "bg-white/10 text-white/80" : mineBubble}`
+                      : `rounded-tl-sm ${isGhost ? "bg-white/[0.06] text-white/70" : "bg-white/10 text-white"}`
+                  }`}
+                >
+                  {chat.message}
+                </div>
+              </div>
+            );
+          })
+        )}
+        <div ref={endRef} />
+      </div>
+      <div className="border-t border-white/5 pt-3">
+        {error ? <p role="alert" className="mb-2 text-xs text-rose-300">{error}</p> : null}
+        {canSend ? (
+          <form onSubmit={handleSend} className="flex gap-2">
+            <input
+              type="text"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder={placeholder}
+              aria-label="채팅 메시지"
+              maxLength={2000}
+              className="min-w-0 flex-1 rounded border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none"
+            />
+            <button
+              type="submit"
+              disabled={!message.trim()}
+              className={`whitespace-nowrap rounded px-3 text-sm font-medium disabled:opacity-50 ${sendColor}`}
+            >
+              전송
+            </button>
+          </form>
+        ) : (
+          <p className="text-center text-xs text-white/35">{disabledHint ?? "지금은 발화할 수 없습니다."}</p>
+        )}
+      </div>
+    </div>
+  );
+}

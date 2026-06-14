@@ -483,7 +483,7 @@ function GameShell({ session }: { session: ActivitySession }) {
   if (match.status === "day") {
     return (
       <GameFrame status="day" phaseEndsAt={phaseEndsAt} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} myName={myPlayer?.displayName} myAvatarUrl={myPlayer?.avatarUrl} dayNumber={currentPhase?.phaseNumber}>
-        <DayPhase match={match} players={players} events={events} myPlayer={myPlayer} phaseEndsAt={phaseEndsAt} />
+        <DayPhase match={match} players={players} events={events} myPlayer={myPlayer} gameJwt={gameJwt} phaseEndsAt={phaseEndsAt} />
       </GameFrame>
     );
   }
