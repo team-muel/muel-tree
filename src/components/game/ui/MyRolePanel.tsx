@@ -17,22 +17,14 @@ export function MyRolePanel({
   role,
   faction,
   showAbilities = true,
-  showNightActions = false,
 }: {
   role: string;
   faction?: string;
   /**
    * false 면 능력 목록을 생략하고 정체 헤더만 — NightPhase 처럼 같은 패널 안에
-   * *상호작용형* 능력 목록(같은 label·prompt)이 따로 있는 화면에서 같은 문자열이
-   * 2회 반복되던 문제(2026-06-12)의 차단 스위치.
+   * *상호작용형* 능력 목록이 따로 있는 화면에서 중복을 막는 차단 스위치.
    */
   showAbilities?: boolean;
-  /**
-   * 인게임 프로필에선 "현재 게임 액션"을 숨기고 "원본 능력표"만 둔다(기본 false) —
-   * 실제 액션은 NightPhase 의 상호작용 카드가 담당하므로 정적 액션 목록은 중복.
-   * 도감(RoleCodex)은 RoleAbilityDetails 를 직접 써서 액션을 계속 보여준다.
-   */
-  showNightActions?: boolean;
 }) {
   const meta = roleMeta(role);
   const fac = (faction ?? meta?.faction ?? "neutral") as keyof typeof FACTION_COLORS;
@@ -62,7 +54,7 @@ export function MyRolePanel({
       </div>
 
       {showAbilities ? (
-        <RoleAbilityDetails role={role} faction={fac} showNightActions={showNightActions} />
+        <RoleAbilityDetails role={role} faction={fac} />
       ) : null}
     </div>
   );
