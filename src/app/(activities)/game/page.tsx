@@ -89,7 +89,8 @@ function GameShell({ session }: { session: ActivitySession }) {
   );
   const lobbyPlayers = useMemo(() => {
     if (presentIds.size === 0 || !userId || !presentIds.has(userId)) return players;
-    return players.filter((p) => p.userId === userId || p.isHost || presentIds.has(p.userId));
+    // AI 용병은 Discord 참가자 목록에 없으므로 presence 필터에서 제외하지 않는다.
+    return players.filter((p) => p.userId === userId || p.isHost || p.isAi || presentIds.has(p.userId));
   }, [players, presentIds, userId]);
 
   useEffect(() => {
@@ -693,5 +694,7 @@ function mapPlayerRow(row: Record<string, unknown>): PlayerSummary {
     role: typeof row.role === "string" ? row.role : null,
     faction: typeof row.faction === "string" ? row.faction : null,
     circleChat: row.circle_chat === true,
+    isAi: row.is_ai === true,
+    aiProvider: typeof row.ai_provider === "string" ? row.ai_provider : null,
   };
 }

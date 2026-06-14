@@ -20,6 +20,14 @@ function initialOf(name: string): string {
   return t ? Array.from(t)[0].toUpperCase() : "?";
 }
 
+// AI 용병 토큰 시각 (ADR-005) — 로고 복제 없이 브랜드 컬러 + 제너릭 글리프.
+// 모델명은 토큰 이름 라벨이 표시하므로 여기선 색/글리프로 정체만 드러낸다.
+const AI_PROVIDER_VIS: Record<string, { glyph: string; bg: string }> = {
+  chatgpt: { glyph: "✺", bg: "#10a37f" },
+  gemini: { glyph: "✦", bg: "#3b82f6" },
+  claude: { glyph: "✳", bg: "#d97757" },
+};
+
 export function PlayerToken({
   name,
   avatarUrl,
@@ -44,6 +52,8 @@ export function PlayerToken({
   abilityStamp = false,
   effects = [],
   ready = false,
+  isAi = false,
+  aiProvider = null,
 }: {
   name: string;
   avatarUrl?: string | null;
@@ -84,6 +94,9 @@ export function PlayerToken({
   abilityStamp?: boolean;
   effects?: string[];
   ready?: boolean;
+  /** AI 용병 토큰 — 아바타 대신 프로바이더 브랜드 마크를 렌더한다(ADR-005). */
+  isAi?: boolean;
+  aiProvider?: string | null;
 }) {
   const light = mood === "light";
   const ink = light ? "text-[#2b2118]" : "text-white";
@@ -226,6 +239,16 @@ export function PlayerToken({
         ? "ring-2 ring-white/70 shadow-[0_0_22px_rgba(255,255,255,0.28)]"
         : "";
 
+  // AI 용병: 아바타 대신 프로바이더 브랜드 마크(브랜드 컬러 + 제너릭 글리프).
+  const aiVis = isAi && aiProvider ? AI_PROVIDER_VIS[aiProvider] ?? null : null;
+  const avatarStyle: React.CSSProperties | undefined =
+    idleFloat || aiVis
+      ? {
+          ...(idleFloat ? { animationDelay: `${idleDelayMs}ms` } : {}),
+          ...(aiVis ? { backgroundColor: aiVis.bg, color: "#fff", borderColor: "rgba(255,255,255,0.35)" } : {}),
+        }
+      : undefined;
+
   const body = (
     <>
       {/* 낙인 (Stamps) */}
@@ -301,13 +324,15 @@ export function PlayerToken({
       )}
 
       <span
-        style={idleFloat ? { animationDelay: `${idleDelayMs}ms` } : undefined}
+        style={avatarStyle}
         className={`relative inline-flex ${avatarSize} items-center justify-center overflow-hidden rounded-full border text-base font-semibold backdrop-blur-sm transition-all duration-500 ${tokenBase} ${ink} ${
           selected ? selectedGlow : ""
         } ${!alive ? deadFx : ""} ${idleFloat ? "gomdori-stage-idle" : ""}`}
       >
         {avatarUrl ? (
           <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+        ) : aiVis ? (
+          <span aria-hidden="true" className="text-lg leading-none">{aiVis.glyph}</span>
         ) : (
           initialOf(name)
         )}
