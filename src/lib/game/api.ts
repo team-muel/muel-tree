@@ -118,6 +118,10 @@ export type PlayerSummary = {
    * 정본(2026-06-12): 가인(밤2까지)·로건(영구)만. 진영이 아니라 능력이 결정.
    */
   circleChat?: boolean;
+  /** AI 용병 플레이어 여부 (ADR-005). */
+  isAi?: boolean;
+  /** AI 프로바이더 — 'chatgpt' | 'gemini' | 'claude'. AI 토큰 브랜드/라벨에 쓰인다. */
+  aiProvider?: string | null;
 };
 
 export async function resolveMatch(
@@ -192,6 +196,29 @@ export async function kickPlayer(
   return postJson<{ matchId: string; targetUserId: string }, { success: boolean }>(
     "match-kick",
     { matchId, targetUserId },
+    { gameJwt },
+  );
+}
+
+export async function inviteAi(
+  matchId: string,
+  gameJwt: string,
+): Promise<{ player: PlayerSummary }> {
+  return postJson<{ matchId: string }, { player: PlayerSummary }>(
+    "match-invite-ai",
+    { matchId },
+    { gameJwt },
+  );
+}
+
+export async function removeAi(
+  matchId: string,
+  userId: string,
+  gameJwt: string,
+): Promise<{ success: boolean }> {
+  return postJson<{ matchId: string; userId: string }, { success: boolean }>(
+    "match-remove-ai",
+    { matchId, userId },
     { gameJwt },
   );
 }

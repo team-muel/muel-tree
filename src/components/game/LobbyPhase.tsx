@@ -10,8 +10,10 @@
 
 import type { MatchSummary, NeutralMode, PlayerSummary } from "@/lib/game/api";
 import {
+  inviteAi,
   kickPlayer,
   leaveMatch,
+  removeAi,
   resolveNeutralMode,
   setReady,
   startMatch,
@@ -77,6 +79,8 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
   const [copied, setCopied] = useState(false);
   const [neutralPending, setNeutralPending] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [aiPending, setAiPending] = useState(false);
+  const [aiRemoving, setAiRemoving] = useState<string | null>(null);
 
   const { layout } = useDisplay();
   const hostLabel = useMemo(() => hostName(players, match.hostUserId), [match.hostUserId, players]);
@@ -92,6 +96,11 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
   const readyCount = nonHost.filter((p) => p.ready).length;
   const everyoneReady = nonHost.every((p) => p.ready);
   const canStart = enoughPlayers && notTooMany && everyoneReady;
+
+  // AI 용병 (ADR-005) — 사람이 부족할 때 자리를 채운다. 최대 3(서로 다른 모델).
+  const aiPlayers = players.filter((p) => p.isAi);
+  const MAX_AI = 3;
+  const canInviteAi = !!isHost && aiPlayers.length < MAX_AI && total < maxPlayers;
 
   // 중립(파스아) 등장 모드 (M3-1, 결정 잠금 #2). auto = 존재를 알 수 없는 확률 등장.
   // 등장 자격(8인+)은 최소 시작 인원과 일치 — playerCount.min 단일 출처.
@@ -159,6 +168,33 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
     }
   }
 
+  async function addAi() {
+    if (!gameJwt || !match.id || aiPending) return;
+    setActionError(null);
+    setAiPending(true);
+    try {
+      await inviteAi(match.id, gameJwt);
+      // 반영은 match_players realtime 구독이 해준다.
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "AI 영입 실패");
+    } finally {
+      setAiPending(false);
+    }
+  }
+
+  async function dropAi(userId: string) {
+    if (!gameJwt || !match.id || aiRemoving) return;
+    setActionError(null);
+    setAiRemoving(userId);
+    try {
+      await removeAi(match.id, userId, gameJwt);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "AI 내보내기 실패");
+    } finally {
+      setAiRemoving(null);
+    }
+  }
+
   async function doKick(userId: string) {
     if (!gameJwt || !match.id) return;
     if (confirmKick !== userId) {
@@ -189,6 +225,49 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
           {copied ? "복사됨 ✓" : "초대 링크 복사"}
         </button>
       </div>
+
+      {isHost ? (
+        <div className="rounded-md border border-white/10 bg-black/20 p-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs uppercase tracking-widest text-white/35">AI 용병</span>
+            <span className="text-xs text-white/40">{aiPlayers.length} / {MAX_AI}</span>
+          </div>
+          <p className="mt-1 text-xs leading-5 text-white/40">
+            사람이 부족할 때 자리를 채웁니다. 데려올 때마다 ChatGPT·Gemini·Claude 중 하나가 랜덤으로 옵니다.
+          </p>
+          {aiPlayers.length > 0 ? (
+            <div className="mt-2 space-y-1.5">
+              {aiPlayers.map((p) => (
+                <div key={p.userId} className="flex items-center justify-between gap-2 text-sm">
+                  <span className="truncate text-white/75">{p.displayName}</span>
+                  <button
+                    type="button"
+                    disabled={!gameJwt || aiRemoving === p.userId}
+                    onClick={() => dropAi(p.userId)}
+                    className="rounded border border-white/15 px-2 py-0.5 text-xs text-white/55 transition-colors hover:bg-white/[0.08] disabled:opacity-40"
+                  >
+                    {aiRemoving === p.userId ? "..." : "내보내기"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : null}
+          <button
+            type="button"
+            disabled={!gameJwt || !canInviteAi || aiPending}
+            onClick={addAi}
+            className="mt-2 w-full rounded-md border border-indigo-300/25 bg-indigo-400/10 px-3 py-2 text-sm text-indigo-100 transition-colors hover:bg-indigo-400/15 disabled:opacity-40"
+          >
+            {aiPending
+              ? "데려오는 중..."
+              : aiPlayers.length >= MAX_AI
+                ? "AI 최대 영입됨"
+                : !canInviteAi
+                  ? "자리가 가득 찼어요"
+                  : "참가자 데려오기"}
+          </button>
+        </div>
+      ) : null}
 
       {composition ? (
         <div className="rounded-md border border-white/10 bg-black/20 p-3">
@@ -310,6 +389,7 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
 
   // 무대 토큰 보조 라벨 — 캡션 목록을 대체한다 (정보가 캐릭터 발밑에 선다).
   const stageSub = (p: PlayerSummary, isMe: boolean): React.ReactNode => {
+    if (p.isAi) return "AI 용병";
     const role = p.isHost ? "방장" : p.ready ? "준비" : "대기";
     return isMe ? `나 · ${role}` : role;
   };

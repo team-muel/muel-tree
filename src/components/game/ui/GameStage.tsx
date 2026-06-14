@@ -181,6 +181,8 @@ export function GameStage({
                 abilityStamp={p.userId === abilityTargetId}
                 effects={isMe ? myEffects : undefined}
                 ready={p.ready}
+                isAi={p.isAi}
+                aiProvider={p.aiProvider}
                 onClick={
                   selectable
                     ? (canPick || (isMe && !excludeSelf))
