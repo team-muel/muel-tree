@@ -135,7 +135,7 @@ export function VotePhase({ match, players, myPlayer, gameJwt, events = [] }: Vo
         </div>
         {myEffects.includes("enchanted") && (
           <div className="mt-3 rounded-lg border border-rose-300/35 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-700 leading-relaxed text-left">
-            💖 현재 매료 상태입니다! 투표 권한이 연주자에게 위임되어 최종 투표 결과가 다르게 변경됩니다.
+            💖 현재 매료 상태입니다! 투표 권한이 연주자에게 위임되어 최종 투표 결과가 달라질 수 있습니다.
           </div>
         )}
         <h2 className="mt-1 text-lg font-semibold">

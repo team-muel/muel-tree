@@ -183,7 +183,7 @@ export function GameStage({
                 ready={p.ready}
                 onClick={
                   selectable
-                    ? (canPick || isMe)
+                    ? (canPick || (isMe && !excludeSelf))
                       ? () => onSelect?.(p.userId)
                       : undefined
                     : canInspectPlayer
