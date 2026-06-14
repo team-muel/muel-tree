@@ -235,14 +235,18 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
     supabase.schema("mafia").from("match_chats")
       .select("*")
       .eq("match_id", match.id)
+      .eq("channel", "demon_circle")
       .order("created_at", { ascending: true })
       .then(({ data }) => {
         if (!cancelled && data) setChats(data as ChatRow[]);
       });
 
+    // 채널 격리(2026-06-15): town/dead 가 생기면서 채널 미필터 구독은 낮 채팅까지 끌어온다.
+    // 악마 속삭임 패널은 demon_circle 만.
     const channel = supabase.channel(`night-chat-${match.id}`)
       .on("postgres_changes", { event: "INSERT", schema: "mafia", table: "match_chats", filter: `match_id=eq.${match.id}` }, (payload) => {
-        setChats(prev => [...prev, payload.new as ChatRow]);
+        const row = payload.new as ChatRow & { channel?: string };
+        if (row.channel === "demon_circle") setChats(prev => [...prev, row]);
       })
       .subscribe();
 

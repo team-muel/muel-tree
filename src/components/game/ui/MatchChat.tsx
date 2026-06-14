@@ -30,6 +30,7 @@ export function MatchChat({
   canSend = true,
   disabledHint,
   accent = "town",
+  channels,
 }: {
   matchId: string;
   gameJwt: string;
@@ -42,6 +43,8 @@ export function MatchChat({
   disabledHint?: string;
   /** 강조색 — town(호박)·circle(장미). */
   accent?: "town" | "circle";
+  /** 표시할 채널 화이트리스트(채널 격리). 없으면 RLS 가 허용하는 전체. */
+  channels?: string[];
 }) {
   const [chats, setChats] = useState<ChatRow[]>([]);
   const [message, setMessage] = useState("");
@@ -53,11 +56,15 @@ export function MatchChat({
     let cancelled = false;
     const supabase = getGameSupabase(gameJwt);
 
-    supabase
+    const allowChannel = (c?: string) => !channels || (typeof c === "string" && channels.includes(c));
+
+    let query = supabase
       .schema("mafia")
       .from("match_chats")
       .select("*")
-      .eq("match_id", matchId)
+      .eq("match_id", matchId);
+    if (channels && channels.length > 0) query = query.in("channel", channels);
+    query
       .order("created_at", { ascending: true })
       .then(({ data }) => {
         if (!cancelled && data) setChats(data as ChatRow[]);
@@ -68,7 +75,10 @@ export function MatchChat({
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "mafia", table: "match_chats", filter: `match_id=eq.${matchId}` },
-        (payload) => setChats((prev) => [...prev, payload.new as ChatRow]),
+        (payload) => {
+          const row = payload.new as ChatRow;
+          if (allowChannel(row.channel)) setChats((prev) => [...prev, row]);
+        },
       )
       .subscribe();
 
@@ -76,6 +86,8 @@ export function MatchChat({
       cancelled = true;
       supabase.removeChannel(channel);
     };
+    // channels 는 마운트 시 고정(페이즈별 호출부가 리터럴 전달) — 재구독 불필요.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [matchId, gameJwt]);
 
   useEffect(() => {
