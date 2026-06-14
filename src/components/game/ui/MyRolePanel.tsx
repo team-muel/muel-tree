@@ -17,6 +17,7 @@ export function MyRolePanel({
   role,
   faction,
   showAbilities = true,
+  showNightActions = false,
 }: {
   role: string;
   faction?: string;
@@ -26,6 +27,12 @@ export function MyRolePanel({
    * 2회 반복되던 문제(2026-06-12)의 차단 스위치.
    */
   showAbilities?: boolean;
+  /**
+   * 인게임 프로필에선 "현재 게임 액션"을 숨기고 "원본 능력표"만 둔다(기본 false) —
+   * 실제 액션은 NightPhase 의 상호작용 카드가 담당하므로 정적 액션 목록은 중복.
+   * 도감(RoleCodex)은 RoleAbilityDetails 를 직접 써서 액션을 계속 보여준다.
+   */
+  showNightActions?: boolean;
 }) {
   const meta = roleMeta(role);
   const fac = (faction ?? meta?.faction ?? "neutral") as keyof typeof FACTION_COLORS;
@@ -55,7 +62,7 @@ export function MyRolePanel({
       </div>
 
       {showAbilities ? (
-        <RoleAbilityDetails role={role} faction={fac} />
+        <RoleAbilityDetails role={role} faction={fac} showNightActions={showNightActions} />
       ) : null}
     </div>
   );

@@ -183,6 +183,7 @@ export function VerdictPhase({ match, players, myPlayer, gameJwt, events = [] }:
           players={watchers}
           myUserId={myPlayer?.userId}
           mood="dark"
+          inspectable
           matchId={match.id}
           className="opacity-80"
           myEffects={myEffects}

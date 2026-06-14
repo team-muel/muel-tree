@@ -136,7 +136,7 @@ export function SuspicionPhase({ match, players, myPlayer, gameJwt, events = [] 
         </div>
         {myEffects.includes("enchanted") && (
           <div className="mt-3 rounded-lg border border-rose-300/25 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-300 leading-relaxed text-left">
-            💖 현재 매료 상태입니다! 투표 권한이 연주자에게 위임되어 최종 의심 결과가 다르게 변경됩니다.
+            💖 현재 매료 상태입니다! 투표 권한이 연주자에게 위임되어 최종 의심 결과가 달라질 수 있습니다.
           </div>
         )}
         <h2 className="mt-1 text-lg font-semibold">
