@@ -176,6 +176,7 @@ export function DayPhase({ match, players, events, myPlayer, gameJwt, phaseEndsA
             gameJwt={gameJwt}
             myPlayer={myPlayer}
             players={players}
+            channels={["town", "dead"]}
             placeholder="영혼끼리 대화..."
             emptyHint="영혼들과 대화하세요 (산 자에겐 보이지 않습니다)"
           />
@@ -191,6 +192,7 @@ export function DayPhase({ match, players, events, myPlayer, gameJwt, phaseEndsA
             gameJwt={gameJwt}
             myPlayer={myPlayer}
             players={players}
+            channels={["town", "dead"]}
             placeholder="마을 사람들과 대화..."
             emptyHint="낮 동안 자유롭게 대화하세요"
           />
