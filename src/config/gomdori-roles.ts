@@ -47,6 +47,14 @@ export interface GomdoriOriginalAbility {
   kind: GomdoriOriginalAbilityKind;
   name: string;
   text: string;
+  /** 엔진에 배선된 action_type — 있으면 인게임에서 이 능력으로 직접 플레이된다. */
+  actionType?: string;
+  /**
+   * 구현 상태(원본 대비). live=원본대로 인게임 반영 / partial=핵심만 / planned=예정.
+   * 미지정이면 '원본'으로만 표시(구현 주장 없음). 엔진 심화가 배치별로 이 값을 올린다.
+   * 목표: 전 능력 live → 별도 "현재 게임 액션" 층 소멸.
+   */
+  status?: "live" | "partial" | "planned";
 }
 
 export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
@@ -359,10 +367,10 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
 // 출처: muel-bot/src/gomdoriCodex.ts (vault Universes/BoW/Characters/* 기반).
 export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]> = {
   romaz: [
-    { kind: "능력", name: "용의자 색출", text: "대상에게 +5 투표가치 / +10 의심가치를 받는 표로 가산합니다. 다음 집계에 반영됩니다." },
+    { kind: "능력", name: "용의자 색출", text: "대상에게 +5 투표가치 / +10 의심가치를 받는 표로 가산합니다. 다음 집계에 반영됩니다.", actionType: "romaz_suspect", status: "live" },
   ],
   rainer: [
-    { kind: "패시브", name: "백호", text: "백호 소환 시 천사팀 카운트 +3을 지속합니다. v1에서는 무한게임 방지를 위해 축약 보너스로 적용됩니다." },
+    { kind: "패시브", name: "백호", text: "백호 소환 시 천사팀 카운트 +3을 지속합니다. v1에서는 무한게임 방지를 위해 축약 보너스로 적용됩니다.", actionType: "rainer_summon", status: "live" },
   ],
   dordan: [
     { kind: "패시브", name: "침착한 탐정", text: "누군가 탈락하면 투표 대상을 범인으로 지목하고, 범인이 그날 밤 지정하는 대상이 도르단에게 알려집니다." },
@@ -434,22 +442,22 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
     { kind: "능력2", name: "급습", text: "대상의 통지를 삭제하고 급습을 충전합니다. 다음 아침까지 악마와 대화합니다. 1회성입니다." },
   ],
   luna: [
-    { kind: "패시브", name: "달빛이 비치는 우물", text: "루나가 투표·의심한 대상에게 달빛을 남기고, 달의 힘이 가득 차면 효과를 발동합니다." },
-    { kind: "능력", name: "고요한 적막", text: "달빛 대상 수에 따라 달의 힘을 충전하고, 가득 차면 토론과 투표 흐름을 바꿉니다." },
-    { kind: "능력2", name: "공포 속에 밀어 넣다", text: "대상에게 달빛 저주를 남깁니다. 달의 힘이 가득 차면 대상은 직업을 잃고 악마팀이 됩니다." },
+    { kind: "패시브", name: "달빛이 비치는 우물", text: "루나가 투표·의심한 대상에게 달빛을 남기고, 달의 힘이 가득 차면 효과를 발동합니다.", status: "live" },
+    { kind: "능력", name: "고요한 적막", text: "달빛 대상 수에 따라 달의 힘을 충전하고, 가득 차면 토론과 투표 흐름을 바꿉니다.", actionType: "luna_moonlight", status: "live" },
+    { kind: "능력2", name: "공포 속에 밀어 넣다", text: "대상에게 달빛 저주를 남깁니다. 달의 힘이 가득 차면 대상은 직업을 잃고 악마팀이 됩니다.", actionType: "luna_corrupt", status: "live" },
   ],
   logen: [
-    { kind: "패시브", name: "부서진 펜던트", text: "시작 시 악마와 접선합니다. 악마팀에 지워지지 않는 펜던트 효과를 남깁니다." },
-    { kind: "능력", name: "네 안에 없는 것", text: "대상의 가장 가까운 밤 능력 효과가 소멸한다는 통지와 펜던트를 적용합니다." },
+    { kind: "패시브", name: "부서진 펜던트", text: "시작 시 악마와 접선합니다. 악마팀에 지워지지 않는 펜던트 효과를 남깁니다.", status: "partial" },
+    { kind: "능력", name: "네 안에 없는 것", text: "대상의 가장 가까운 밤 능력 효과가 소멸한다는 통지와 펜던트를 적용합니다.", actionType: "logen_nullify", status: "live" },
   ],
   ellen: [
     { kind: "패시브", name: "박해자 / 해체된 퍼즐", text: "홀수날 투표 대상은 투표가 진행될 때마다 투표가치가 오릅니다. 자아 상태에 따라 투표·의심·능력 가치가 바뀝니다." },
     { kind: "능력", name: "비치지 않는 자아", text: "후속 다단계 능력입니다. 현재 v1은 박해 투표 무게 증가로 축약되어 있습니다." },
   ],
   pasua: [
-    { kind: "패시브", name: "구원자", text: "시작 전 파스아 존재를 전원에게 통지합니다. 생존자 중 파스아 팀이 충분히 커지면 즉시 승리합니다." },
-    { kind: "능력", name: "포교", text: "대상을 포교합니다. 악마와 중립은 포교할 수 없고, 전향자는 파스아 승리를 따릅니다." },
-    { kind: "능력2", name: "신앙", text: "대상을 탈락시킵니다. 악마는 탈락하지 않습니다." },
+    { kind: "패시브", name: "구원자", text: "시작 전 파스아 존재를 전원에게 통지합니다. 생존자 중 파스아 팀이 충분히 커지면 즉시 승리합니다.", status: "live" },
+    { kind: "능력", name: "포교", text: "대상을 포교합니다. 악마와 중립은 포교할 수 없고, 전향자는 파스아 승리를 따릅니다.", actionType: "pasua_convert", status: "live" },
+    { kind: "능력2", name: "신앙", text: "대상을 탈락시킵니다. 악마는 탈락하지 않습니다.", actionType: "pasua_faith", status: "live" },
   ],
 };
 

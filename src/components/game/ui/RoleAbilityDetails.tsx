@@ -21,17 +21,19 @@ export function cleanRoleReveal(role: string): string {
   return duplicatedIdentity ? rest : meta.reveal;
 }
 
+/**
+ * 직업 능력 단일 표시(2026-06-15) — "원본 능력표"와 "현재 게임 액션"으로 갈라져 서로
+ * 엇갈리던 두 목록을 하나로 합쳤다. 원본 능력표가 단일 출처이고, 각 능력에 구현상태
+ * 배지(게임 반영/부분/예정)가 붙는다. 엔진 심화가 배치별로 상태를 'live'로 올리며,
+ * 전부 live 가 되면 별도 액션 층은 필요 없어진다. 실제 밤 상호작용은 NightPhase 카드가 담당.
+ */
 export function RoleAbilityDetails({
   role,
   faction,
-  showNightActions = true,
-  showEmptyNight = true,
   compact = false,
 }: {
   role: string;
   faction?: string | null;
-  showNightActions?: boolean;
-  showEmptyNight?: boolean;
   compact?: boolean;
 }) {
   const meta = roleMeta(role);
@@ -39,9 +41,6 @@ export function RoleAbilityDetails({
 
   const fac = (faction ?? meta.faction ?? "neutral") as keyof typeof FACTION_COLORS;
   const color = FACTION_COLORS[fac] ?? FACTION_COLORS.neutral;
-  const abilities = [meta.night, ...(meta.extraNights ?? [])].filter(
-    (a): a is NonNullable<typeof a> => Boolean(a),
-  );
   const originalAbilities = roleOriginalAbilities(role);
   const sectionClass = compact
     ? "rounded-md border border-white/10 bg-black/15 px-2.5 py-2"
@@ -51,16 +50,9 @@ export function RoleAbilityDetails({
 
   return (
     <div className={compact ? "space-y-2" : "space-y-3"}>
-      {meta.passive ? (
-        <section className={sectionClass}>
-          <div className={titleClass}>현재 게임 패시브</div>
-          <p className={bodyClass}>{meta.passive}</p>
-        </section>
-      ) : null}
-
       {originalAbilities.length > 0 ? (
         <section>
-          <div className={titleClass}>원본 능력표</div>
+          <div className={titleClass}>능력</div>
           <RoleOriginalAbilities
             abilities={originalAbilities}
             compact={compact}
@@ -68,36 +60,11 @@ export function RoleAbilityDetails({
             itemClassName={sectionClass}
           />
         </section>
-      ) : null}
-
-      {showNightActions && (abilities.length > 0 || showEmptyNight) ? (
-        <section>
-          <div className={titleClass}>현재 게임 액션</div>
-          {abilities.length > 0 ? (
-            <ul className="mt-2 space-y-2">
-              {abilities.map((a) => (
-                <li key={a.actionType} className={sectionClass}>
-                  <div className="flex items-center gap-2">
-                    <span className={`${compact ? "text-xs" : "text-sm"} font-semibold ${color.accent}`}>
-                      {a.label}
-                    </span>
-                    {a.self ? (
-                      <span className="rounded-full border border-white/10 px-1.5 py-0.5 text-[0.5rem] uppercase tracking-wider text-white/35">
-                        자신
-                      </span>
-                    ) : null}
-                  </div>
-                  <p className={bodyClass}>{a.prompt}</p>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className={`${sectionClass} mt-2 text-xs leading-5 text-white/45`}>
-              밤 능동 능력이 없습니다. 토론과 투표가 핵심입니다.
-            </p>
-          )}
-        </section>
-      ) : null}
+      ) : meta.abilitySummary ? (
+        <p className={`${sectionClass} ${bodyClass}`}>{meta.abilitySummary}</p>
+      ) : (
+        <p className={`${sectionClass} ${bodyClass}`}>밤 능동 능력이 없습니다. 토론과 투표가 핵심입니다.</p>
+      )}
     </div>
   );
 }
