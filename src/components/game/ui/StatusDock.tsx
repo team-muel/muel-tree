@@ -123,39 +123,42 @@ export function StatusDock({
         <div className="flex items-center gap-3 rounded-2xl border border-white/12 border-t-white/20 bg-[#100e18]/85 px-3 py-2 shadow-[0_8px_32px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:px-4 sm:py-2.5">
           {showProfile ? (
             <>
+              {/* 본인 명세 — Discord 모바일 하단 프로필 차용(2026-06-15): 큰 아바타 +
+                  온라인 점, 이름/역할 2줄. 탭 = 펼침(기능 불변). */}
               <button
                 type="button"
                 onClick={() => setExpandedValue(!expandedValue)}
                 aria-expanded={open}
                 aria-label="내 직업 보기"
-                className="flex shrink-0 items-center gap-2 rounded-xl px-1 py-0.5 transition-colors hover:bg-white/[0.06]"
+                className="flex min-w-0 shrink items-center gap-2.5 rounded-xl px-1 py-0.5 transition-colors hover:bg-white/[0.06]"
               >
-                <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-white/15 bg-white/[0.06] text-xs font-semibold text-white">
+                <span className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/15 bg-white/[0.06] text-sm font-semibold text-white">
                   {myAvatarUrl ? (
                     <img src={myAvatarUrl} alt="" className="h-full w-full object-cover" />
                   ) : (
                     initialOf(myName)
                   )}
+                  <span
+                    aria-hidden="true"
+                    className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#100e18] bg-emerald-400"
+                  />
                 </span>
-                <span className="hidden min-w-0 flex-col items-start leading-tight sm:flex">
-                  <span className="max-w-[7rem] truncate text-xs font-medium text-white/80">
+                <span className="flex min-w-0 flex-col items-start leading-tight">
+                  <span className="max-w-[8rem] truncate text-sm font-semibold text-white">
                     {myName ?? "나"}
                   </span>
-                  <span className={`text-xs font-semibold ${factionAccent}`}>
+                  <span className={`max-w-[8rem] truncate text-xs font-medium ${factionAccent}`}>
                     {roleLabel(myRole)}
                   </span>
                 </span>
-                <span className={`${factionAccent} text-xs font-semibold sm:hidden`}>
-                  {roleLabel(myRole)}
-                </span>
                 <span
                   aria-hidden="true"
-                  className={`text-[0.625rem] text-white/35 transition-transform ${open ? "rotate-180" : ""}`}
+                  className={`ml-0.5 text-[0.625rem] text-white/35 transition-transform ${open ? "rotate-180" : ""}`}
                 >
                   ▲
                 </span>
               </button>
-              <span aria-hidden="true" className="h-7 w-px shrink-0 bg-white/10" />
+              <span aria-hidden="true" className="h-8 w-px shrink-0 bg-white/10" />
             </>
           ) : null}
 
