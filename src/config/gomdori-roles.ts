@@ -311,8 +311,11 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     faction: "angel",
     reveal: "초신성·등대의 천사. 대상에게 걸린 효과를 씻어내고 그 밤 능력을 봉인합니다.",
     passive: "별이 떠오른 밤: 같은 대상에게 초신성을 다시 터뜨리면 그 대상은 영구히 봉인됩니다. v1은 효과 제거+봉인에 집중합니다.",
-    abilitySummary: "초신성: 대상의 받은 부정 효과를 모두 제거하고 그 밤 능력을 봉인합니다(재적용 시 영구 봉인).",
+    abilitySummary: "초신성: 대상의 받은 부정 효과를 모두 제거하고 그 밤 능력을 봉인합니다(재적용 시 영구 봉인, 다음 밤 의심 생략). 자신만 아플 거야(1회): 전원의 부여 효과를 모두 씻어냅니다.",
     night: { actionType: "seika_supernova", label: "초신성", prompt: "효과를 씻고 능력을 봉인할 대상을 고르세요. (같은 대상 재적용 시 영구 봉인)", excludeSelf: true },
+    extraNights: [
+      { actionType: "seika_absorb", label: "자신만 아플 거야", prompt: "자신만 아플 거야 — 전원에게 걸린 부여 효과를 모두 씻어냅니다. (1회, 대상 없음)", self: true },
+    ],
   },
   luru: {
     label: "루루",
@@ -374,16 +377,16 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
   ],
   dordan: [
     { kind: "패시브", name: "침착한 탐정", text: "누군가 탈락하면 투표 대상을 범인으로 지목하고, 범인이 그날 밤 지정하는 대상이 도르단에게 알려집니다.", status: "partial" },
-    { kind: "능력", name: "단서 수집 / 사건의 전말", text: "대상의 능력 발동을 확인하고 단서를 얻습니다. 단서가 모이면 사건의 전말로 전환됩니다.", actionType: "police_investigate", status: "partial" },
+    { kind: "능력", name: "단서 수집 / 사건의 전말", text: "단서 3개 이상에서 정밀 조사로 악마를 정확히 식별하면 사건의 전말이 발동 — 다음 아침을 생략하고 그 악마를 곧장 판결대에 세웁니다.", actionType: "police_investigate", status: "live" },
     { kind: "능력2", name: "잠입 수사", text: "대상을 밤 동안 관찰합니다. 탈락과 연결되면 불심검문이 발동해 그 밤 부정 효과를 무시합니다.", status: "planned" },
   ],
   habreterus: [
     { kind: "패시브", name: "임종 선언", text: "치료 실패로 탈락한 날 투표가치가 내려가고 소명 효과가 남습니다.", status: "planned" },
-    { kind: "능력", name: "생명의 언약", text: "대상을 치료합니다. 성공하면 투표가치 보너스와 소명 대기 감소가 붙습니다.", actionType: "doctor_heal", status: "partial" },
+    { kind: "능력", name: "생명의 언약", text: "대상을 치료합니다. 그 밤 실제 공격을 막아내면(소명) 하브레터스의 투표가치가 +3 오릅니다.", actionType: "doctor_heal", status: "live" },
     { kind: "능력2", name: "삶이 있는 곳으로", text: "게임 시작 시 악마에게 존재가 알려지고, 매 밤 악마와 하브레터스가 서로를 추리하는 서브게임을 엽니다.", status: "planned" },
   ],
   mizlet: [
-    { kind: "패시브", name: "행복을 파는 가게", text: "탈락자가 생존자보다 많아지면 두 명을 복귀시키고 미즐렛은 탈락합니다. 1회성 역전 패시브입니다.", status: "planned" },
+    { kind: "패시브", name: "행복을 파는 가게", text: "탈락자가 생존자보다 많아지면 가장 최근 탈락 2명을 복귀(소멸·부활불가 무시)시키고 미즐렛은 탈락합니다. 1회성 역전 패시브입니다.", status: "live" },
     { kind: "능력", name: "디저트 선물", text: "대상에게 쿠키나 푸딩 효과를 부여해 탈락 시점과 밤 능력 발동을 다룹니다.", actionType: "mizlet_dessert", status: "partial" },
     { kind: "능력2", name: "고급 와인", text: "디저트를 받은 대상의 부정 효과를 제거하고 미즐렛과 대화하게 합니다.", status: "planned" },
   ],
@@ -403,9 +406,9 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
     { kind: "능력2", name: "잔불 대검(단죄)", text: "결백자(천사·중립)에게는 하루 무적을 주고, 타락자(악마팀)에게는 폭열을 새깁니다. 폭열된 타락자를 다시 단죄하면 소멸합니다(부활 불가). 결백자를 단죄해도 죽지 않습니다 — 무오사살.", actionType: "arthur_judge", status: "live" },
   ],
   seika: [
-    { kind: "패시브", name: "별이 떠오른 밤", text: "초신성 폭발 다음 밤은 의심을 생략하고 밤 대화가 길어집니다.", status: "planned" },
+    { kind: "패시브", name: "별이 떠오른 밤", text: "초신성을 터뜨린 다음 밤은 의심 투표를 생략하고 곧장 밤으로 넘어갑니다.", status: "live" },
     { kind: "능력", name: "초신성", text: "대상이 받는 부여 효과를 제거하고 그 밤 능력을 봉인합니다. 반복 적용 시 영구 봉인으로 커집니다.", actionType: "seika_supernova", status: "live" },
-    { kind: "능력2", name: "자신만 아플 거야", text: "전원 부여 효과를 세이카에게 모읍니다. 악마팀 효과가 충분히 쌓이면 소멸 조건이 됩니다.", status: "planned" },
+    { kind: "능력2", name: "자신만 아플 거야", text: "전원에게 걸린 부여 효과를 모두 씻어냅니다(전원 정화, 1회). 악마팀 효과 누적 시 소멸·악마팀 공개 downside 는 후속.", actionType: "seika_absorb", status: "live" },
   ],
   luru: [
     { kind: "패시브", name: "아름다운 영혼을 위한 소나타", text: "매료 3명 이상이면 즉시 연주가 시작되고, 하루 동안 전원의 투표 흐름을 바꿉니다.", actionType: "luru_sonata", status: "partial" },
@@ -427,7 +430,7 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
   malen: [
     { kind: "패시브", name: "악령 마야", text: "매 밤 한 명에게 빙의해 행동을 막고 악마팀 카운트로 셉니다. 마야가 말렌에게 빙의하면 그 밤 모든 효과를 무시합니다.", actionType: "malen_possess", status: "partial" },
     { kind: "특수 패시브", name: "악담", text: "탈락자가 생기면 혼을 생성하고, 혼이 시체로 바뀌어 투표·의심·능력 보조를 합니다.", status: "partial" },
-    { kind: "능력", name: "혼령 방출", text: "지목 대상을 공격합니다. 반복되면 혼령 표식과 마비, 생존 미취급으로 이어집니다.", actionType: "malen_release", status: "partial" },
+    { kind: "능력", name: "혼령 방출", text: "1회차에는 혼령 표식을 남기고, 표식이 있는 대상을 다시 방출하면 영에게 잠식되어 탈락 + 그 투표가치가 말렌에게 조공됩니다.", actionType: "malen_release", status: "live" },
     { kind: "능력2", name: "신출귀몰", text: "혼령 표식을 수거해 다음 밤 시체를 소환합니다. 1회성입니다.", status: "planned" },
   ],
   besto: [
