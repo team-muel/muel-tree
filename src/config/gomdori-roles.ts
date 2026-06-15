@@ -455,7 +455,7 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
     { kind: "능력", name: "네 안에 없는 것", text: "대상의 가장 가까운 밤 능력 효과가 소멸한다는 통지와 펜던트를 적용합니다.", actionType: "logen_nullify", status: "live" },
   ],
   ellen: [
-    { kind: "패시브", name: "박해자 / 해체된 퍼즐", text: "홀수날 투표 대상은 투표가 진행될 때마다 투표가치가 오릅니다. 자아 상태에 따라 투표·의심·능력 가치가 바뀝니다.", actionType: "ellen_persecute", status: "partial" },
+    { kind: "패시브", name: "박해자 / 해체된 퍼즐", text: "홀수날에만, 엘런이 직전에 투표한 대상의 받는-투표가치를 올려 처형대로 밀어냅니다(별도 지목 없이 자기 투표를 따라감). 투표마다 누진·해체된 퍼즐 상태 전환은 후속.", actionType: "ellen_persecute", status: "live" },
     { kind: "능력", name: "비치지 않는 자아", text: "후속 다단계 능력입니다. 현재 v1은 박해 투표 무게 증가로 축약되어 있습니다.", status: "planned" },
   ],
   pasua: [
