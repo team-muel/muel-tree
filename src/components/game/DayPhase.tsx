@@ -170,6 +170,25 @@ export function DayPhase({ match, players, events, myPlayer, gameJwt, phaseEndsA
         </div>
       ) : null}
 
+      {/* 누가 토론 시간을 조절했는지 — 공개 통지(discussion_time_adjusted). */}
+      {(() => {
+        const lines = events
+          .filter((e) => e.event_type === "discussion_time_adjusted")
+          .map((e) => {
+            const by = nameOf(String(e.payload?.by ?? "")) ?? "누군가";
+            const dir = e.payload?.direction === "cut" ? "단축" : "연장";
+            const sec = Math.abs(Number(e.payload?.delta_sec ?? 0));
+            return { id: e.id, text: `${by}님이 토론 시간을 ${sec}초 ${dir}했습니다.` };
+          });
+        return lines.length > 0 ? (
+          <div className="mx-auto mt-2 w-full max-w-md space-y-1 text-center">
+            {lines.map((l) => (
+              <div key={l.id} className="text-[0.6875rem] text-[#8a7a64]">⏱ {l.text}</div>
+            ))}
+          </div>
+        ) : null;
+      })()}
+
       {/* 어젯밤, 당신에게 — 당사자 전용 밤 피드백 (나에게만 보임) */}
       {personalLines.length > 0 ? (
         <div className="mx-auto mt-3 w-full max-w-md space-y-1.5">

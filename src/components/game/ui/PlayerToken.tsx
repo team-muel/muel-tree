@@ -270,6 +270,20 @@ export function PlayerToken({
         </span>
       )}
 
+      {/* 추측 뱃지 — 진영 추측이 어느 배경에서도 또렷이 보이게(링만으론 검정/어두움이 안 보였다). */}
+      {guess && (
+        <span
+          className={`absolute -bottom-1 -left-1 z-20 rounded-full border px-1.5 py-0.5 text-[0.5625rem] font-bold leading-none shadow-md ${
+            guess === "demon"
+              ? "border-white/50 bg-black text-white"
+              : "border-black/40 bg-white text-slate-900"
+          }`}
+          aria-label={guess === "demon" ? "악마로 추측" : "천사로 추측"}
+        >
+          {guess === "demon" ? "악마?" : "천사?"}
+        </span>
+      )}
+
       {/* 영구 추측 그라데이션 스타일 */}
       {guess === "demon" && (
         <>

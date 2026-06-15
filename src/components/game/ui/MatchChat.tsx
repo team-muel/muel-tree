@@ -12,6 +12,8 @@ import { useEffect, useRef, useState } from "react";
 import type { PlayerSummary } from "@/lib/game/api";
 import { sendChat } from "@/lib/game/api";
 import { getGameSupabase } from "@/lib/game/client";
+import { useInspectGuesses } from "@/lib/game/inspect";
+import { PlayerInspectSheet } from "@/components/game/ui/PlayerInspectSheet";
 
 type ChatRow = {
   id: string;
@@ -29,24 +31,27 @@ const AI_CHAT_VIS: Record<string, { glyph: string; bg: string }> = {
 };
 
 // 채팅 행 왼쪽 프로필 사진(로비 Discord 아바타 토큰과 같은 방식): 아바타 → AI 브랜드 → 이니셜.
-function ChatAvatar({ player }: { player?: PlayerSummary }) {
+// onClick 이 있으면 누를 수 있는 버튼(정체 추측 시트 열기) — hover 링으로 어포던스.
+function ChatAvatar({ player, onClick }: { player?: PlayerSummary; onClick?: () => void }) {
   const name = player?.displayName ?? "?";
   const aiVis = player?.isAi && player.aiProvider ? AI_CHAT_VIS[player.aiProvider] ?? null : null;
   const base = "h-7 w-7 shrink-0 overflow-hidden rounded-full border border-white/15 text-[0.6875rem] font-semibold";
-  if (player?.avatarUrl) {
-    return <img src={player.avatarUrl} alt="" className={`${base} object-cover`} />;
-  }
-  if (aiVis) {
-    return (
-      <span className={`${base} inline-flex items-center justify-center text-white`} style={{ backgroundColor: aiVis.bg }} aria-hidden="true">
-        {aiVis.glyph}
-      </span>
-    );
-  }
-  return (
+  const inner = player?.avatarUrl ? (
+    <img src={player.avatarUrl} alt="" className={`${base} object-cover`} />
+  ) : aiVis ? (
+    <span className={`${base} inline-flex items-center justify-center text-white`} style={{ backgroundColor: aiVis.bg }} aria-hidden="true">
+      {aiVis.glyph}
+    </span>
+  ) : (
     <span className={`${base} inline-flex items-center justify-center bg-white/10 text-white/70`} aria-hidden="true">
       {name.trim() ? Array.from(name.trim())[0].toUpperCase() : "?"}
     </span>
+  );
+  if (!onClick) return inner;
+  return (
+    <button type="button" onClick={onClick} aria-label={`${name} 정체 추측`} className="shrink-0 rounded-full transition hover:opacity-80 hover:ring-2 hover:ring-white/40">
+      {inner}
+    </button>
   );
 }
 
@@ -80,6 +85,10 @@ export function MatchChat({
   const [message, setMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  // 채팅 아바타 클릭 → 정체 추측 시트(토큰과 같은 localStorage 저장소).
+  const { guesses, save } = useInspectGuesses(matchId);
+  const [inspectId, setInspectId] = useState<string | null>(null);
+  const inspectPlayer = inspectId ? players.find((p) => p.userId === inspectId) : null;
 
   useEffect(() => {
     if (!matchId || !gameJwt) return;
@@ -176,7 +185,7 @@ export function MatchChat({
             // 남이 친 메시지: 로비 아바타 토큰처럼 프로필 사진을 왼쪽에 둬 누가 쳤는지 바로 보이게.
             return (
               <div key={chat.id} className="flex items-start gap-2">
-                <ChatAvatar player={senderPlayer} />
+                <ChatAvatar player={senderPlayer} onClick={senderPlayer ? () => setInspectId(chat.sender_user_id) : undefined} />
                 <div className="min-w-0 max-w-[85%]">
                   <div className="mb-1 flex items-center gap-1 pl-0.5 text-[0.625rem] text-white/50">
                     {sender}
@@ -215,6 +224,15 @@ export function MatchChat({
           <p className="text-center text-xs text-white/35">{disabledHint ?? "지금은 발화할 수 없습니다."}</p>
         )}
       </div>
+
+      <PlayerInspectSheet
+        open={!!inspectPlayer}
+        onClose={() => setInspectId(null)}
+        name={inspectPlayer?.displayName ?? ""}
+        avatarUrl={inspectPlayer?.avatarUrl}
+        initial={inspectId ? guesses[inspectId] : undefined}
+        onSave={(g) => { if (inspectId) save(inspectId, g); }}
+      />
     </div>
   );
 }
