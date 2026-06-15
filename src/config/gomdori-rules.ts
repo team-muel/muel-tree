@@ -48,8 +48,9 @@ export const GOMDORI_RULES = {
    * - 첫 밤 duration 은 짧음 (안내성).
    */
   firstNight: {
-    skipsAbilities: true,
-    durationSec: 8,
+    // 2026-06-15 설계 변경: 첫 밤도 일반 밤처럼 능력 사용(대악마 처치 등). silent 해제.
+    skipsAbilities: false,
+    durationSec: 60,
     silentMessage: "첫 밤은 모두가 잠듭니다. 아침을 기다리세요.",
   },
 

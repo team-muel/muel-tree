@@ -7,6 +7,7 @@
  */
 
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
+import { adjustDiscussionTime } from "@/lib/game/api";
 import { MOOD } from "@/config/design-tokens";
 import { eventLines } from "@/config/gomdori-events";
 import { resolveMyStatusEffects } from "@/config/status-effects";
@@ -36,6 +37,22 @@ const PERSONAL_TONE_CLS: Record<string, string> = {
 
 export function DayPhase({ match, players, events, myPlayer, gameJwt, phaseEndsAt }: DayPhaseProps) {
   const [renderAliveDeaths, setRenderAliveDeaths] = useState(true);
+  // 토론 시간 조절(유저당 이번 토론 1회 총량) — cut -20초 / extend +10초.
+  const [timeAdjusting, setTimeAdjusting] = useState(false);
+  const [timeAdjusted, setTimeAdjusted] = useState(false);
+  const doAdjustTime = async (direction: "cut" | "extend") => {
+    if (timeAdjusting || timeAdjusted) return;
+    setTimeAdjusting(true);
+    try {
+      await adjustDiscussionTime(match.id, direction, gameJwt);
+      setTimeAdjusted(true);
+    } catch {
+      // 이미 조절했거나 단계가 아니면 소진 처리(서버가 권위).
+      setTimeAdjusted(true);
+    } finally {
+      setTimeAdjusting(false);
+    }
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => setRenderAliveDeaths(false), 600);
@@ -128,6 +145,30 @@ export function DayPhase({ match, players, events, myPlayer, gameJwt, phaseEndsA
           </p>
         ) : null}
       </div>
+
+      {/* 토론 시간 조절 — 살아있는 참가자는 이번 토론에 1회(총량) 시간을 깎거나 늘릴 수 있다. */}
+      {!isDead ? (
+        <div className="mx-auto mt-3 flex w-full max-w-md items-center justify-center gap-2">
+          <span className="text-[0.6875rem] font-semibold uppercase tracking-widest text-[#5c4d3c]">토론 시간</span>
+          <button
+            type="button"
+            onClick={() => doAdjustTime("cut")}
+            disabled={timeAdjusting || timeAdjusted}
+            className="rounded-full border border-[#2b2118]/30 bg-[#2b2118]/[0.05] px-3 py-1 text-xs font-semibold text-[#2b2118] transition hover:bg-[#2b2118]/12 disabled:opacity-40"
+          >
+            −20초
+          </button>
+          <button
+            type="button"
+            onClick={() => doAdjustTime("extend")}
+            disabled={timeAdjusting || timeAdjusted}
+            className="rounded-full border border-[#2b2118]/30 bg-[#2b2118]/[0.05] px-3 py-1 text-xs font-semibold text-[#2b2118] transition hover:bg-[#2b2118]/12 disabled:opacity-40"
+          >
+            +10초
+          </button>
+          {timeAdjusted ? <span className="text-[0.6875rem] text-[#8a7a64]">조절 완료</span> : null}
+        </div>
+      ) : null}
 
       {/* 어젯밤, 당신에게 — 당사자 전용 밤 피드백 (나에게만 보임) */}
       {personalLines.length > 0 ? (
