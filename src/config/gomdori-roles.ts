@@ -154,8 +154,9 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     faction: "demon",
     reveal: "진실을 가리는 조력자. 악마를 살해·처형 1회로부터 보호합니다.",
     passive: "진실을 가리는 암흑: 악마와 접선하고 악마의 첫 치명적 탈락을 보호합니다. v1에서는 보호막 1회로 축약됩니다.",
-    abilitySummary: "직접 밤 능동 능력은 없습니다. 악마 생존을 보존하고 접선 정보로 판을 흔드는 조력자입니다.",
+    abilitySummary: "약간의 위선: 매일 밤 한 명의 정체(진영)를 알아내 악마팀에 정찰 정보를 줍니다. 악마 생존을 보존하는 조력자입니다.",
     demonTeam: true,
+    night: { actionType: "gain_hypocrisy", label: "약간의 위선", prompt: "정체를 알아낼 대상을 고르세요. 그 진영이 통지됩니다.", excludeSelf: true },
   },
   // --- 기본 로스터: 악마 풀 (전부 v1 처치) ---
   phantom: {
@@ -441,7 +442,7 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
   ],
   gain: [
     { kind: "패시브", name: "진실을 가리는 암흑", text: "악마와 접선·대화하고, 악마가 처형 또는 탈락할 때 1회 없던 일로 만듭니다.", status: "partial" },
-    { kind: "능력", name: "약간의 위선", text: "대상 직업을 통지하고 적용 효과를 다음 밤으로 연기합니다. 조건에 따라 다음 위선이 탈락 효과로 바뀝니다.", status: "planned" },
+    { kind: "능력", name: "약간의 위선", text: "매일 밤 한 명의 정체(진영)를 알아내 악마팀에 정찰 정보를 줍니다. 효과 연기·급습은 후속.", actionType: "gain_hypocrisy", status: "live" },
     { kind: "능력2", name: "급습", text: "대상의 통지를 삭제하고 급습을 충전합니다. 다음 아침까지 악마와 대화합니다. 1회성입니다.", status: "planned" },
   ],
   luna: [
