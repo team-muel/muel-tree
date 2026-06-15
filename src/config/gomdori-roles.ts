@@ -96,13 +96,13 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     roster: "demon",
     faction: "demon",
     reveal: "만악의 근원, 대악마. 처치하고, 메피스토 낙인으로 한 명의 정체를 뒤바꿉니다.",
-    passive: "사탄의 마/메피스토의 낙인: 원본에서는 능력 성공과 투표 흐름이 전역 판정을 흔듭니다. v1은 낙인 재배정과 처치에 집중합니다.",
-    abilitySummary: "처치로 한 명을 제거하고, 메피스토 낙인으로 대상의 직업을 비밀리에 재배정합니다.",
+    passive: "사탄의 마: 처치 성공 시 자신을 제외한 전원의 투표가치 -1 — 마을은 표로 악마를 처형할 수 없습니다(투표 독점). 천사팀 전체 투표가치가 0이 되면 모든 조사가 '악마'로 판정됩니다. 메피스토 낙인으로 직업을 재배정합니다.",
+    abilitySummary: "처치로 한 명을 제거하며 전원의 투표가치를 깎고(사탄의 마), 메피스토 낙인으로 대상의 직업을 비밀리에 재배정합니다.",
     demonTeam: true,
     night: {
       actionType: "demon_kill",
       label: "처치하기",
-      prompt: "조력자와 상의하여 오늘 밤 처치할 대상을 고르세요.",
+      prompt: "조력자와 상의하여 오늘 밤 처치할 대상을 고르세요. 처치에 성공하면 사탄의 마로 자신을 제외한 전원의 투표가치가 깎입니다.",
       excludeSelf: true,
       kind: "kill",
     },
@@ -302,7 +302,7 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     abilitySummary: "잔불 대검: 한 명에게 하루 무적을 부여합니다. 단죄: 대상에 폭열을 새기고, 폭열된 자를 다시 베면 소멸시킵니다(부활 불가, 2회).",
     night: { actionType: "arthur_emberblade", label: "잔불 대검", prompt: "오늘 밤 하루 무적을 부여할 대상을 고르세요.", excludeSelf: true },
     extraNights: [
-      { actionType: "arthur_judge", label: "단죄", prompt: "단죄할 대상을 고르세요. 처음엔 폭열을 새기고, 폭열된 자를 다시 베면 소멸합니다.", excludeSelf: true },
+      { actionType: "arthur_judge", label: "단죄", prompt: "단죄할 대상을 고르세요. 타락자(악마팀)면 폭열을 새기고, 폭열된 타락자를 다시 단죄하면 소멸시킵니다. 결백자(천사·중립)면 해치지 않고 하루 무적을 부여합니다. (2회)", excludeSelf: true },
     ],
   },
   seika: {
@@ -394,13 +394,13 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
   ],
   uno: [
     { kind: "패시브", name: "군인의 사명", text: "악마 효과를 1회 제거할 수 있는 사명 효과를 가집니다.", status: "partial" },
-    { kind: "능력", name: "투쟁", text: "대상 소속 카운트 +1과 군인의 사명을 부여합니다. 우노의 명예는 천사팀 카운트와 투표가치를 키웁니다.", actionType: "uno_struggle", status: "partial" },
+    { kind: "능력", name: "투쟁", text: "대상 소속 카운트 +1을 부여합니다. 우노는 명예로 천사팀 카운트 +1과 투표가치 +10을 갖습니다 — 이 투표가치는 사탄의 마(-1)를 뚫고 살아남아, 악마가 투표를 독점해도 우노만은 표를 행사할 수 있습니다.", actionType: "uno_struggle", status: "live" },
     { kind: "능력2", name: "용맹함", text: "전원에게 투쟁을 발동합니다. 우노가 투표한 대상은 사망 기록과 소속이 공개됩니다. 1회성입니다.", actionType: "uno_valor", status: "partial" },
   ],
   arthur: [
     { kind: "패시브", name: "여명의 기사", text: "어떤 효과로도 탈락하지 않지만, 결백한 천사팀 탈락 조건이 쌓이면 함께 탈락합니다.", status: "partial" },
     { kind: "능력", name: "잔불이 꺼지기 전에", text: "대상에게 해오름을 주고 잔불 대검을 충전합니다.", status: "planned" },
-    { kind: "능력2", name: "잔불 대검", text: "결백자에게 하루 무적을 주고, 타락자에게는 소멸로 이어지는 폭열을 남깁니다.", actionType: "arthur_emberblade", status: "partial" },
+    { kind: "능력2", name: "잔불 대검(단죄)", text: "결백자(천사·중립)에게는 하루 무적을 주고, 타락자(악마팀)에게는 폭열을 새깁니다. 폭열된 타락자를 다시 단죄하면 소멸합니다(부활 불가). 결백자를 단죄해도 죽지 않습니다 — 무오사살.", actionType: "arthur_judge", status: "live" },
   ],
   seika: [
     { kind: "패시브", name: "별이 떠오른 밤", text: "초신성 폭발 다음 밤은 의심을 생략하고 밤 대화가 길어집니다.", status: "planned" },
@@ -413,7 +413,7 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
     { kind: "능력2", name: "악보 교체", text: "투표를 여러 명에게 행사하고, 악보 변경으로 다음 투표 흐름을 바꿉니다.", status: "planned" },
   ],
   demon: [
-    { kind: "패시브", name: "사탄의 마", text: "능력 성공 시 전원 투표가치가 내려갑니다. 천사팀 전체가 0이 되면 조사와 취급이 악마로 기웁니다.", status: "planned" },
+    { kind: "패시브", name: "사탄의 마", text: "처치 성공 시 자신을 제외한 전원의 투표가치가 -1 내려갑니다(악마 투표 독점 — 마을은 표로 악마를 처형할 수 없습니다). 생존 천사팀 전체의 투표가치가 0이 되면 모든 조사가 '악마'로 판정됩니다.", status: "live" },
     { kind: "특수 패시브", name: "메피스토의 낙인", text: "투표 대상에게 낙인을 통지하고, 대악마가 직업 삭제와 새 천사 직업 배정을 일으킵니다.", actionType: "daeakma_brand", status: "live" },
     { kind: "능력", name: "만악의 근원 / 감시", text: "대상을 탈락시키고, 낙인 적용자가 있으면 감시가 추가됩니다.", actionType: "demon_kill", status: "partial" },
     { kind: "능력2", name: "압도적인 존재감", text: "전원의 지정 대상을 낙인 적용자로 바꾸고, 공포로 횟수 제한과 중첩 효과를 손실시킵니다. 1회성입니다.", actionType: "daeakma_dominion", status: "partial" },
