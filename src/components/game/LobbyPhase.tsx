@@ -76,7 +76,6 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
   const [kickPending, setKickPending] = useState<string | null>(null);
   const [confirmKick, setConfirmKick] = useState<string | null>(null);
   const [leavePending, setLeavePending] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [neutralPending, setNeutralPending] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [aiPending, setAiPending] = useState(false);
@@ -136,22 +135,8 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
     }
   }
 
-  const inviteUrl = process.env.NEXT_PUBLIC_DISCORD_INVITE_URL;
-
   // 로비 무대용: ready 상태를 토큰 sub 로. (alive 는 로비에선 전원 true 취급)
   const stagePlayers = players.map((p) => ({ ...p, alive: true }));
-
-  async function copyInvite() {
-    const url = inviteUrl ?? (typeof window !== "undefined" ? window.location.href : "");
-    if (!url) return;
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
-    } catch {
-      setActionError("클립보드 복사에 실패했어요. 직접 링크를 공유해주세요.");
-    }
-  }
 
   async function leave() {
     if (!gameJwt || !match.id) return;
@@ -216,14 +201,7 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
   const sheetContent = (
     <>
       <div>
-        <p className="text-sm text-white/45">{minPlayers}명부터 시작할 수 있어요. 같은 채널 친구를 초대하세요.</p>
-        <button
-          type="button"
-          onClick={copyInvite}
-          className="mt-3 w-full rounded-md border border-white/15 bg-white/[0.04] px-3 py-2 text-sm text-white/75 transition-colors hover:bg-white/[0.08]"
-        >
-          {copied ? "복사됨 ✓" : "초대 링크 복사"}
-        </button>
+        <p className="text-sm text-white/45">{minPlayers}명부터 시작할 수 있어요.</p>
       </div>
 
       {isHost ? (

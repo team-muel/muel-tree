@@ -16,7 +16,7 @@ export const GOMDORI_RULES = {
    */
   phases: {
     // 30초 (2026-06-12, 8→30 — backend manifest 동기): 악마/조력자 변종 선택 창.
-    roleAssign: { key: "role_assign", label: "직업 배정", detail: "비밀리에 역할 전달 · 악마/조력자는 변종 선택", durationSec: 12 },
+    roleAssign: { key: "role_assign", label: "준비 시간", detail: "비밀리에 역할 전달 · 악마/조력자는 변종 선택", durationSec: 12 },
     nightSuspect: { key: "night_suspect", label: "의심", detail: "의심 투표 — 최다 의심자는 그 밤 능력 불가", durationSec: 10 },
     night: { key: "night", label: "밤", detail: "악마와 능력자들이 밤 능력 행사", durationSec: 20 },
     nightResolve: { key: "night_resolve", label: "밤 정리", detail: "능력 결과 처리", durationSec: 3 },

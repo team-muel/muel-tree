@@ -194,7 +194,7 @@ export function VerdictPhase({ match, players, myPlayer, gameJwt, events = [] }:
 
       {/* 최후의 반론 채팅 — 산 자는 변론/설득, 사망자는 읽기+영혼 채팅(RLS). */}
       {myPlayer && !myPlayer.alive ? (
-        <BottomSheet title="관전 · 영혼 채팅" defaultOpen={false}>
+        <BottomSheet title="관전 · 영혼 채팅" defaultOpen>
           <MatchChat
             matchId={match.id}
             gameJwt={gameJwt}
