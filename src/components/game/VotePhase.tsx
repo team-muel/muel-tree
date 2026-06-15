@@ -151,10 +151,10 @@ export function VotePhase({ match, players, myPlayer, gameJwt, events = [] }: Vo
 
         <div className="mt-4 flex justify-center">
           <Button
-            variant="ghost"
+            variant="outline"
             onClick={() => handleVote(null)}
             disabled={isSubmitting}
-            className="w-full max-w-[200px] border-[#2b2118]/25 text-[#5c4d3c] hover:bg-[#2b2118]/5"
+            className="w-full max-w-[200px]"
           >
             {selectedTarget === null && submitted ? "기권 완료 ✓" : "기권하기"}
           </Button>

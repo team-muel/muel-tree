@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes } from "react";
 
-type Variant = "primary" | "danger" | "amber" | "ghost" | "indigo";
+type Variant = "primary" | "danger" | "amber" | "ghost" | "indigo" | "outline";
 
 // 변형별 활성 색. 비활성은 공통(대비 확보 + 커서). focus-visible 링으로 키보드 접근성.
 const VARIANTS: Record<Variant, string> = {
@@ -9,6 +9,9 @@ const VARIANTS: Record<Variant, string> = {
   indigo: "bg-indigo-400 text-slate-950 hover:bg-indigo-300",
   danger: "bg-red-400 text-slate-950 hover:bg-red-300",
   ghost: "border border-white/20 bg-transparent text-white/80 hover:bg-white/5",
+  // 밝은 면(양피지 패널 등)용 외곽선 — 어두운 글씨로 대비 확보(ghost 의 흰 글씨가
+  // 밝은 배경에서 안 보이던 문제 대체, 투표 기권 버튼 등).
+  outline: "border border-[#2b2118]/35 bg-[#2b2118]/[0.05] text-[#2b2118] hover:bg-[#2b2118]/12",
 };
 
 /**
