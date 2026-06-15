@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 /**
  * MatchChat — Feign식 중앙 채팅. 채널은 서버(match-chat)가 페이즈+상태로 결정한다.
@@ -19,6 +20,35 @@ type ChatRow = {
   channel?: string;
   created_at?: string;
 };
+
+// AI 용병 브랜드 마크(PlayerToken 과 동일 톤) — 채팅 아바타도 로비 토큰처럼 정체를 드러낸다.
+const AI_CHAT_VIS: Record<string, { glyph: string; bg: string }> = {
+  chatgpt: { glyph: "✺", bg: "#10a37f" },
+  gemini: { glyph: "✦", bg: "#3b82f6" },
+  claude: { glyph: "✳", bg: "#d97757" },
+};
+
+// 채팅 행 왼쪽 프로필 사진(로비 Discord 아바타 토큰과 같은 방식): 아바타 → AI 브랜드 → 이니셜.
+function ChatAvatar({ player }: { player?: PlayerSummary }) {
+  const name = player?.displayName ?? "?";
+  const aiVis = player?.isAi && player.aiProvider ? AI_CHAT_VIS[player.aiProvider] ?? null : null;
+  const base = "h-7 w-7 shrink-0 overflow-hidden rounded-full border border-white/15 text-[0.6875rem] font-semibold";
+  if (player?.avatarUrl) {
+    return <img src={player.avatarUrl} alt="" className={`${base} object-cover`} />;
+  }
+  if (aiVis) {
+    return (
+      <span className={`${base} inline-flex items-center justify-center text-white`} style={{ backgroundColor: aiVis.bg }} aria-hidden="true">
+        {aiVis.glyph}
+      </span>
+    );
+  }
+  return (
+    <span className={`${base} inline-flex items-center justify-center bg-white/10 text-white/70`} aria-hidden="true">
+      {name.trim() ? Array.from(name.trim())[0].toUpperCase() : "?"}
+    </span>
+  );
+}
 
 export function MatchChat({
   matchId,
@@ -122,24 +152,37 @@ export function MatchChat({
         ) : (
           chats.map((chat) => {
             const isMe = chat.sender_user_id === myPlayer?.userId;
-            const sender = players.find((p) => p.userId === chat.sender_user_id)?.displayName || "알 수 없음";
+            const senderPlayer = players.find((p) => p.userId === chat.sender_user_id);
+            const sender = senderPlayer?.displayName || "알 수 없음";
             const isGhost = chat.channel === "dead";
+            const bubble = (
+              <div
+                className={`max-w-full break-words rounded-lg px-3 py-2 text-sm ${
+                  isMe
+                    ? `rounded-tr-sm ${isGhost ? "bg-white/10 text-white/80" : mineBubble}`
+                    : `rounded-tl-sm ${isGhost ? "bg-white/[0.06] text-white/70" : "bg-white/10 text-white"}`
+                }`}
+              >
+                {chat.message}
+              </div>
+            );
+            if (isMe) {
+              return (
+                <div key={chat.id} className="flex flex-col items-end">
+                  <div className="max-w-[85%]">{bubble}</div>
+                </div>
+              );
+            }
+            // 남이 친 메시지: 로비 아바타 토큰처럼 프로필 사진을 왼쪽에 둬 누가 쳤는지 바로 보이게.
             return (
-              <div key={chat.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
-                {!isMe && (
-                  <div className="mb-1 flex items-center gap-1 pl-1 text-[0.625rem] text-white/40">
+              <div key={chat.id} className="flex items-start gap-2">
+                <ChatAvatar player={senderPlayer} />
+                <div className="min-w-0 max-w-[85%]">
+                  <div className="mb-1 flex items-center gap-1 pl-0.5 text-[0.625rem] text-white/50">
                     {sender}
                     {isGhost ? <span className="rounded-full bg-white/10 px-1.5 text-[0.5625rem] text-white/45">영혼</span> : null}
                   </div>
-                )}
-                <div
-                  className={`max-w-[85%] break-words rounded-lg px-3 py-2 text-sm ${
-                    isMe
-                      ? `rounded-tr-sm ${isGhost ? "bg-white/10 text-white/80" : mineBubble}`
-                      : `rounded-tl-sm ${isGhost ? "bg-white/[0.06] text-white/70" : "bg-white/10 text-white"}`
-                  }`}
-                >
-                  {chat.message}
+                  {bubble}
                 </div>
               </div>
             );
