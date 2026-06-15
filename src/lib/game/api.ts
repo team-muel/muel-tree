@@ -271,6 +271,19 @@ export async function sendChat(
   );
 }
 
+// 토론(day) 시간 조절 — 유저당 그 토론 1회(총량). cut -20초 / extend +10초.
+export async function adjustDiscussionTime(
+  matchId: string,
+  direction: "cut" | "extend",
+  gameJwt: string,
+): Promise<{ success: boolean; expectedEndedAt: string }> {
+  return postJson<{ matchId: string; direction: "cut" | "extend" }, { success: boolean; expectedEndedAt: string }>(
+    "match-adjust-time",
+    { matchId, direction },
+    { gameJwt },
+  );
+}
+
 export async function listMatches(
   discordChannelId: string,
   gameJwt: string,
