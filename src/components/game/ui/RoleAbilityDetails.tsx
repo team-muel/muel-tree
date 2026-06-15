@@ -45,8 +45,9 @@ export function RoleAbilityDetails({
   const sectionClass = compact
     ? "rounded-md border border-white/10 bg-black/15 px-2.5 py-2"
     : "rounded-lg border border-white/10 bg-black/20 px-3 py-2";
-  const titleClass = "text-[0.625rem] font-semibold uppercase tracking-widest text-white/35";
-  const bodyClass = compact ? "mt-1 text-[0.6875rem] leading-4 text-white/50" : "mt-1 text-xs leading-5 text-white/55";
+  // 능력 글자 약간 확대(피드백) — rem 기반이라 디스플레이 스케일과 함께 일괄 커진다.
+  const titleClass = "text-[0.75rem] font-semibold uppercase tracking-widest text-white/40";
+  const bodyClass = compact ? "mt-1 text-[0.8125rem] leading-5 text-white/55" : "mt-1 text-sm leading-6 text-white/60";
 
   return (
     <div className={compact ? "space-y-2" : "space-y-3"}>

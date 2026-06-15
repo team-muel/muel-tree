@@ -13,7 +13,7 @@ import { submitAction } from "@/lib/game/api";
 import { getGameSupabase } from "@/lib/game/client";
 import { PlayerToken } from "@/components/game/ui/PlayerToken";
 import { GameStage } from "@/components/game/ui/GameStage";
-import { BottomSheet } from "@/components/game/ui/BottomSheet";
+import { DockableChatPanel } from "@/components/game/ui/DockableChatPanel";
 import { MatchChat } from "@/components/game/ui/MatchChat";
 import { resolveMyStatusEffects } from "@/config/status-effects";
 
@@ -194,7 +194,7 @@ export function VerdictPhase({ match, players, myPlayer, gameJwt, events = [] }:
 
       {/* 최후의 반론 채팅 — 산 자는 변론/설득, 사망자는 읽기+영혼 채팅(RLS). */}
       {myPlayer && !myPlayer.alive ? (
-        <BottomSheet title="관전 · 영혼 채팅" defaultOpen>
+        <DockableChatPanel matchId={match.id} title="관전 · 영혼 채팅" defaultOpen>
           <MatchChat
             matchId={match.id}
             gameJwt={gameJwt}
@@ -204,9 +204,9 @@ export function VerdictPhase({ match, players, myPlayer, gameJwt, events = [] }:
             placeholder="영혼끼리 대화..."
             emptyHint="영혼들과 대화하세요 (산 자에겐 보이지 않습니다)"
           />
-        </BottomSheet>
+        </DockableChatPanel>
       ) : (
-        <BottomSheet title="최후의 반론 · 마을 채팅" defaultOpen>
+        <DockableChatPanel matchId={match.id} title="최후의 반론 · 마을 채팅" defaultOpen>
           <MatchChat
             matchId={match.id}
             gameJwt={gameJwt}
@@ -216,7 +216,7 @@ export function VerdictPhase({ match, players, myPlayer, gameJwt, events = [] }:
             placeholder="변론하거나 설득하세요..."
             emptyHint="처형 전 마지막 대화입니다"
           />
-        </BottomSheet>
+        </DockableChatPanel>
       )}
     </div>
   );
