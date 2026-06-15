@@ -20,7 +20,7 @@ import { RoleCodex } from "@/components/game/ui/RoleCodex";
 
 const STATE_LINE: Record<string, { label: string; line: string }> = {
   lobby: { label: "로비", line: "참가자를 모으는 중" },
-  role_assign: { label: "직업 배정", line: "정체를 확인하세요" },
+  role_assign: { label: "준비 시간", line: "정체를 확인하고 변종을 선택하세요" },
   night: { label: "밤", line: "능력의 시간 — 조용히 움직이세요" },
   night_suspect: { label: "의심", line: "의심 투표 — 최다 의심자는 능력 봉인" },
   night_resolve: { label: "밤 정리", line: "밤의 결과를 정리하는 중" },
@@ -164,7 +164,7 @@ export function StatusDock({
 
           <div className="min-w-0 flex-1">
             <div className="flex items-baseline gap-2">
-              {dayNumber ? (
+              {dayNumber && status !== "role_assign" ? (
                 <span className="shrink-0 font-mono text-[0.625rem] text-white/40">{dayNumber}일차</span>
               ) : null}
               <span className="shrink-0 text-sm font-semibold text-white">{state.label}</span>

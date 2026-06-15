@@ -66,11 +66,14 @@ export function MatchChat({
   disabledHint,
   accent = "town",
   channels,
+  systemNotices,
 }: {
   matchId: string;
   gameJwt: string;
   myPlayer: PlayerSummary | null;
   players: PlayerSummary[];
+  /** 채팅창 안에 표시할 시스템 통지(예: 토론 시간 조절) — 가운데 정렬 회색 라인. */
+  systemNotices?: Array<{ id: string; text: string }>;
   placeholder?: string;
   emptyHint?: string;
   /** false 면 입력창을 잠근다(예: 발화 불가 페이즈). */
@@ -168,8 +171,8 @@ export function MatchChat({
               <div
                 className={`max-w-full break-words rounded-lg px-3 py-2 text-sm ${
                   isMe
-                    ? `rounded-tr-sm ${isGhost ? "bg-white/10 text-white/80" : mineBubble}`
-                    : `rounded-tl-sm ${isGhost ? "bg-white/[0.06] text-white/70" : "bg-white/10 text-white"}`
+                    ? `rounded-tr-sm ${isGhost ? "bg-violet-500/25 text-violet-100" : mineBubble}`
+                    : `rounded-tl-sm ${isGhost ? "bg-violet-500/15 text-violet-200 ring-1 ring-violet-400/20" : "bg-white/10 text-white"}`
                 }`}
               >
                 {chat.message}
@@ -197,6 +200,13 @@ export function MatchChat({
             );
           })
         )}
+        {(systemNotices ?? []).map((n) => (
+          <div key={n.id} className="flex items-center gap-2 py-0.5 text-[0.625rem] text-white/40">
+            <span className="h-px flex-1 bg-white/10" />
+            <span className="shrink-0">{n.text}</span>
+            <span className="h-px flex-1 bg-white/10" />
+          </div>
+        ))}
         <div ref={endRef} />
       </div>
       <div className="border-t border-white/5 pt-3">
