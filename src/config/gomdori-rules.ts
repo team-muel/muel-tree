@@ -16,12 +16,12 @@ export const GOMDORI_RULES = {
    */
   phases: {
     // 30초 (2026-06-12, 8→30 — backend manifest 동기): 악마/조력자 변종 선택 창.
-    roleAssign: { key: "role_assign", label: "직업 배정", detail: "비밀리에 역할 전달 · 악마/조력자는 변종 선택", durationSec: 30 },
-    nightSuspect: { key: "night_suspect", label: "의심", detail: "의심 투표 — 최다 의심자는 그 밤 능력 불가", durationSec: 30 },
-    night: { key: "night", label: "밤", detail: "악마와 능력자들이 밤 능력 행사", durationSec: 60 },
+    roleAssign: { key: "role_assign", label: "직업 배정", detail: "비밀리에 역할 전달 · 악마/조력자는 변종 선택", durationSec: 12 },
+    nightSuspect: { key: "night_suspect", label: "의심", detail: "의심 투표 — 최다 의심자는 그 밤 능력 불가", durationSec: 10 },
+    night: { key: "night", label: "밤", detail: "악마와 능력자들이 밤 능력 행사", durationSec: 20 },
     nightResolve: { key: "night_resolve", label: "밤 정리", detail: "능력 결과 처리", durationSec: 3 },
     day: { key: "day", label: "아침", detail: "사건 공개와 토론", durationSec: 180 },
-    vote: { key: "vote", label: "투표", detail: "처형 후보 지목", durationSec: 60 },
+    vote: { key: "vote", label: "투표", detail: "처형 후보 지목", durationSec: 10 },
     verdict: { key: "verdict", label: "판결", detail: "찬반으로 처형 확정", durationSec: 60 },
   },
 
@@ -50,7 +50,7 @@ export const GOMDORI_RULES = {
   firstNight: {
     // 2026-06-15 설계 변경: 첫 밤도 일반 밤처럼 능력 사용(대악마 처치 등). silent 해제.
     skipsAbilities: false,
-    durationSec: 60,
+    durationSec: 20,
     silentMessage: "첫 밤은 모두가 잠듭니다. 아침을 기다리세요.",
   },
 
