@@ -31,21 +31,29 @@ export function PhaseTimer({
   const left = Math.max(0, Math.ceil((target - now) / 1000));
   const mm = Math.floor(left / 60);
   const ss = left % 60;
-  const display = left <= 0 ? "곧 전환" : mm > 0 ? `${mm}:${String(ss).padStart(2, "0")}` : `${ss}초`;
+  // 만료(left<=0): 서버 크론이 곧 전환을 수행한다. 정지로 보이지 않게 펄스 점 + "곧 전환 중"
+  // 으로 살아있음을 보인다(타이머가 0에서 멈춘 듯한 "멈췄나?" 오해 방지).
+  const transitioning = left <= 0;
+  const display = transitioning ? "곧 전환 중" : mm > 0 ? `${mm}:${String(ss).padStart(2, "0")}` : `${ss}초`;
   const urgent = left > 0 && left <= 10;
 
   return (
     <div
       role="timer"
-      aria-label={`${label ? label + " " : ""}남은 시간 ${left}초`}
+      aria-label={transitioning ? `${label ? label + " " : ""}곧 전환 중` : `${label ? label + " " : ""}남은 시간 ${left}초`}
       className={`pointer-events-none inline-flex select-none items-center gap-2 rounded-full border px-3 py-1 font-mono text-sm tabular-nums shadow-lg backdrop-blur ${
         urgent
           ? "border-red-500/40 bg-red-950/50 text-red-200"
-          : "border-white/15 bg-black/40 text-white/75"
+          : transitioning
+            ? "border-white/15 bg-black/40 text-white/60"
+            : "border-white/15 bg-black/40 text-white/75"
       }`}
     >
       {label ? (
         <span className="text-[0.625rem] uppercase tracking-widest opacity-60">{label}</span>
+      ) : null}
+      {transitioning ? (
+        <span aria-hidden="true" className="h-1.5 w-1.5 animate-pulse rounded-full bg-white/70" />
       ) : null}
       <span aria-hidden="true">{display}</span>
     </div>
