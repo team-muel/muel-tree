@@ -206,15 +206,18 @@ export function VerdictPhase({ match, players, myPlayer, gameJwt, events = [] }:
           />
         </DockableChatPanel>
       ) : (
-        <DockableChatPanel matchId={match.id} title="최후의 반론 · 마을 채팅" defaultOpen>
+        <DockableChatPanel matchId={match.id} title="마을 채팅" defaultOpen>
           <MatchChat
             matchId={match.id}
             gameJwt={gameJwt}
             myPlayer={myPlayer}
             players={players}
             channels={["town", "dead"]}
-            placeholder="변론하거나 설득하세요..."
-            emptyHint="처형 전 마지막 대화입니다"
+            // 최후의 반론 — 발언은 처형 후보(지목된 본인)만. 나머지는 변론을 듣는다.
+            canSend={myPlayer?.userId === candidateUserId}
+            placeholder="결백을 호소하세요..."
+            disabledHint="최후의 반론 — 후보자만 발언할 수 있어요"
+            emptyHint="처형 전, 후보자의 최후의 반론을 듣는 중"
           />
         </DockableChatPanel>
       )}
