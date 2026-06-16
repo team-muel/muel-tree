@@ -17,6 +17,58 @@ import { roleLabel, roleMeta } from "@/config/gomdori-roles";
 import { MyRolePanel } from "@/components/game/ui/MyRolePanel";
 import { SettingsSheet } from "@/components/game/ui/SettingsSheet";
 import { RoleCodex } from "@/components/game/ui/RoleCodex";
+import { adjustDiscussionTime } from "@/lib/game/api";
+
+// 토론 시간 조절 — 카운트다운 바로 곁에서(독 우측, 타이머 옆) 본인이 직접 −20초/+10초.
+// 살아있는 참가자가 이번 토론에 1회(총량). 상단 별도 버튼 → 하단 프로필 독으로 이동(2026-06-16):
+// 시간이 시각적으로 흐르는 그 자리에서 조절한다.
+function DiscussionTimeAdjust({ matchId, gameJwt }: { matchId: string; gameJwt: string }) {
+  const [pending, setPending] = useState(false);
+  const [used, setUsed] = useState(false);
+
+  const adjust = async (direction: "cut" | "extend") => {
+    if (pending || used) return;
+    setPending(true);
+    try {
+      await adjustDiscussionTime(matchId, direction, gameJwt);
+      setUsed(true);
+    } catch {
+      // 이미 조절했거나 단계가 아니면 소진 처리(서버가 권위).
+      setUsed(true);
+    } finally {
+      setPending(false);
+    }
+  };
+
+  if (used) {
+    return <span className="shrink-0 text-[0.625rem] text-white/35">조절함</span>;
+  }
+
+  const btn =
+    "flex h-7 items-center rounded-md border px-1.5 font-mono text-[0.6875rem] font-semibold tabular-nums transition-colors disabled:opacity-40";
+  return (
+    <div className="flex shrink-0 items-center gap-1" role="group" aria-label="토론 시간 조절(이번 토론 1회)">
+      <button
+        type="button"
+        onClick={() => adjust("cut")}
+        disabled={pending}
+        aria-label="토론 시간 20초 단축"
+        className={`${btn} border-rose-300/25 text-rose-200/90 hover:bg-rose-400/15`}
+      >
+        −20
+      </button>
+      <button
+        type="button"
+        onClick={() => adjust("extend")}
+        disabled={pending}
+        aria-label="토론 시간 10초 연장"
+        className={`${btn} border-emerald-300/25 text-emerald-200/90 hover:bg-emerald-400/15`}
+      >
+        +10
+      </button>
+    </div>
+  );
+}
 
 const STATE_LINE: Record<string, { label: string; line: string }> = {
   lobby: { label: "로비", line: "참가자를 모으는 중" },
@@ -47,6 +99,7 @@ export function StatusDock({
   profilePanel,
   expanded,
   onExpandedChange,
+  dayAdjust,
 }: {
   status?: string;
   dayNumber?: number;
@@ -64,6 +117,8 @@ export function StatusDock({
   /** 제공되면 펼침 상태를 외부에서 제어한다. */
   expanded?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
+  /** 아침(토론) 페이즈에서 살아있는 본인이 시간을 조절할 수 있을 때만 전달. 타이머 곁에 노출. */
+  dayAdjust?: { matchId: string; gameJwt: string } | null;
 }) {
   const [internalExpanded, setInternalExpanded] = useState(false);
   // 도감(전 직업 안내) — 인게임 진입점. 로비 설정 안에만 있던 도감을 내 프로필에서도 연다.
@@ -171,6 +226,10 @@ export function StatusDock({
               <span className="truncate text-xs text-white/50">{state.line}</span>
             </div>
           </div>
+
+          {status === "day" && dayAdjust ? (
+            <DiscussionTimeAdjust matchId={dayAdjust.matchId} gameJwt={dayAdjust.gameJwt} />
+          ) : null}
 
           {phaseEndsAt ? (
             <div className="shrink-0">
