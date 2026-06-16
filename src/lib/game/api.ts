@@ -176,14 +176,21 @@ export async function startMatch(
   );
 }
 
+// 로비 게임 설정 변경(M3-1). 보낸 키만 서버 allowlist 머지: neutral(중립 등장),
+// pace(게임 시간 프리셋+페이즈별 오버라이드 — 서버가 매니페스트 기준으로 정제).
+export type PacePatch = { preset?: string; overrides?: Record<string, number> };
+
 export async function updateMatchSettings(
   matchId: string,
-  settings: { neutral: NeutralMode },
+  settings: { neutral?: NeutralMode; pace?: PacePatch },
   gameJwt: string,
 ): Promise<{ success: boolean; match: MatchSummary }> {
-  return postJson<{ matchId: string; neutral: NeutralMode }, { success: boolean; match: MatchSummary }>(
+  const patch: Record<string, unknown> = { matchId };
+  if (settings.neutral !== undefined) patch.neutral = settings.neutral;
+  if (settings.pace !== undefined) patch.pace = settings.pace;
+  return postJson<Record<string, unknown>, { success: boolean; match: MatchSummary }>(
     "match-settings",
-    { matchId, neutral: settings.neutral },
+    patch,
     { gameJwt },
   );
 }

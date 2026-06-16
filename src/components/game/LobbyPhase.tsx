@@ -26,6 +26,7 @@ import { GOMDORI_RULES } from "@/config/gomdori-rules";
 import { GameStage } from "@/components/game/ui/GameStage";
 import { BottomSheet } from "@/components/game/ui/BottomSheet";
 import { SettingsSheet } from "@/components/game/ui/SettingsSheet";
+import { PaceSettings } from "@/components/game/ui/PaceSettings";
 import { RoleCodex } from "@/components/game/ui/RoleCodex";
 import { useDisplay } from "@/lib/game/display";
 
@@ -328,6 +329,14 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
             : `중립은 ${minPlayers}인부터 등장할 수 있어요. 그 전까지는 자동(미등장)입니다.`}
         </p>
       </div>
+
+      <PaceSettings
+        matchId={match.id}
+        settings={match.settings}
+        isHost={!!isHost}
+        gameJwt={gameJwt}
+        onError={setActionError}
+      />
 
       <div className="rounded-md border border-white/10 bg-black/20 p-3">
         <div className="text-xs uppercase tracking-widest text-white/35">규칙 요약</div>
