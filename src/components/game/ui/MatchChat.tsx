@@ -162,9 +162,14 @@ export function MatchChat({
 
   const sendColor =
     accent === "circle"
-      ? "bg-rose-500/20 text-rose-300 focus-within:border-rose-500/50"
-      : "bg-amber-500/20 text-amber-200 focus-within:border-amber-400/50";
-  const mineBubble = accent === "circle" ? "bg-rose-500/20 text-rose-100" : "bg-amber-500/15 text-amber-50";
+      ? "bg-rose-500/25 text-rose-100 focus-within:border-rose-500/60"
+      : "bg-amber-500/25 text-amber-50 focus-within:border-amber-400/60";
+  // 콘트라스트 (2026-06-16 복구): 어두운 배경(slate-950/92) 위에서 bg-white/10 은
+  // 너무 흐릿했다. 채팅 거품을 진하게 + 테두리 한 줄을 둬 메시지 경계를 또렷이.
+  const mineBubble = accent === "circle"
+    ? "bg-rose-500/30 text-rose-50 ring-1 ring-rose-300/25"
+    : "bg-amber-500/25 text-amber-50 ring-1 ring-amber-300/25";
+  const theirBubble = "bg-white/15 text-white ring-1 ring-white/15";
 
   return (
     <div className="flex h-72 flex-col">
@@ -179,10 +184,10 @@ export function MatchChat({
             const isGhost = chat.channel === "dead";
             const bubble = (
               <div
-                className={`max-w-full break-words rounded-lg px-3 py-2 text-sm ${
+                className={`max-w-full break-words rounded-lg px-3 py-2 text-sm shadow-sm ${
                   isMe
-                    ? `rounded-tr-sm ${isGhost ? "bg-violet-500/25 text-violet-100" : mineBubble}`
-                    : `rounded-tl-sm ${isGhost ? "bg-violet-500/15 text-violet-200 ring-1 ring-violet-400/20" : "bg-white/10 text-white"}`
+                    ? `rounded-tr-sm ${isGhost ? "bg-violet-500/30 text-violet-50 ring-1 ring-violet-300/25" : mineBubble}`
+                    : `rounded-tl-sm ${isGhost ? "bg-violet-500/20 text-violet-100 ring-1 ring-violet-400/25" : theirBubble}`
                 }`}
               >
                 {chat.message}

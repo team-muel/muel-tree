@@ -35,7 +35,8 @@ export const GOMDORI_RULES = {
    * - clamp[phase]: 스케일/오버라이드 결과를 강제하는 안전 구간 [min,max] 초.
    */
   pace: {
-    tunablePhases: ["firstNight", "nightSuspect", "night", "day", "vote", "verdict"],
+    // firstNight 은 능력 비활성 안내 구간 — 페이스 영향 받지 않는 시스템 페이즈.
+    tunablePhases: ["nightSuspect", "night", "day", "vote", "verdict"],
     defaultPreset: "standard",
     presets: {
       blitz: { label: "빠르게", detail: "짧고 빠른 한 판", scale: 0.6 },
@@ -43,7 +44,6 @@ export const GOMDORI_RULES = {
       relaxed: { label: "느긋", detail: "충분한 토론", scale: 1.6 },
     },
     clamp: {
-      firstNight: { min: 10, max: 90 },
       nightSuspect: { min: 5, max: 30 },
       night: { min: 15, max: 90 },
       day: { min: 60, max: 600 },
@@ -67,17 +67,15 @@ export const GOMDORI_RULES = {
   ],
 
   /**
-   * 첫째 밤 (phase_number === 1) 룰.
+   * 첫째 밤 (phase_number === 1) 룰 — vault canon §34.
    *
-   * BoW Gomdori 마피아 규칙 (2026-05-31 결정):
-   * - 직업 배정 → 첫 밤 → 아침. 첫 밤은 모든 능력 비활성.
-   * - 이유: 시민 정보 누적 전에 첫 능력으로 게임 결판나는 것 방지.
-   * - 첫 밤 duration 은 짧음 (안내성).
+   * 직업 배정 → silent first night (8초 안내) → 아침 → 밤 → ...
+   * skipsAbilities=true: 정보 누적 전 첫 능력으로 결판나는 것 방지.
+   * 페이스 설정과 무관(고정 8초). backend 매니페스트와 동기.
    */
   firstNight: {
-    // 2026-06-15 설계 변경: 첫 밤도 일반 밤처럼 능력 사용(대악마 처치 등). silent 해제.
-    skipsAbilities: false,
-    durationSec: 20,
+    skipsAbilities: true,
+    durationSec: 8,
     silentMessage: "첫 밤은 모두가 잠듭니다. 아침을 기다리세요.",
   },
 
@@ -148,9 +146,9 @@ export const PACE_BASE_DURATIONS: PhaseDurations = {
   firstNight: GOMDORI_RULES.firstNight.durationSec,
 };
 
-// 오버라이드 슬라이더/표시용 페이즈 라벨(체감 시간 순).
+// 오버라이드 슬라이더/표시용 페이즈 라벨(체감 시간 순). firstNight 은 silent 시스템
+// 구간이라 페이스 슬라이더에 노출하지 않는다(vault canon §34).
 export const PACE_PHASE_LABEL: Record<string, string> = {
-  firstNight: "첫 밤",
   nightSuspect: "의심",
   night: "밤",
   day: "아침(토론)",

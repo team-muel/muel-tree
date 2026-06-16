@@ -10,9 +10,9 @@
  * - 교체 가능.
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
-import { submitAction, sendChat } from "@/lib/game/api";
+import { submitAction } from "@/lib/game/api";
 import { getGameSupabase } from "@/lib/game/client";
 import { GOMDORI_RULES } from "@/config/gomdori-rules";
 import { GLOW } from "@/config/design-tokens";
@@ -23,6 +23,7 @@ import { GameStage } from "@/components/game/ui/GameStage";
 import { BottomSheet } from "@/components/game/ui/BottomSheet";
 import { MyRolePanel } from "@/components/game/ui/MyRolePanel";
 import { StatusDock } from "@/components/game/ui/StatusDock";
+import { MatchChat } from "@/components/game/ui/MatchChat";
 
 type NightPhaseProps = {
   match: MatchSummary;
@@ -34,8 +35,6 @@ type NightPhaseProps = {
   dayNumber?: number;
   statusDockInline?: boolean;
 };
-
-type ChatRow = { id: string; sender_user_id: string; message: string; created_at?: string };
 
 type NightAbility = {
   actionType: string;
@@ -161,6 +160,11 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
   const suspectedUserId = (suspicionEvent?.payload?.user_id as string | null | undefined) ?? null;
   const iAmSuspected = !!suspectedUserId && suspectedUserId === myPlayer?.userId;
 
+  // 일식의 밤 (vault canon 팬텀): backend phase_started 가 eclipse_active 를 실어 보낸다.
+  // events 는 최신 우선 정렬이라 가장 가까운 phase_started 한 건만 읽으면 된다.
+  const lastPhaseStarted = (events ?? []).find((e) => e.event_type === "phase_started");
+  const eclipseNight = lastPhaseStarted?.payload?.eclipse_active === true;
+
   const role = myPlayer?.role;
   const abilities = buildAbilities(role, myPlayer?.userId);
 
@@ -187,13 +191,8 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
   const [showMyProfile, setShowMyProfile] = useState(false);
   const [pendingTarget, setPendingTarget] = useState<string | null>(null);
 
-  const [chatMessage, setChatMessage] = useState("");
-  const [chats, setChats] = useState<ChatRow[]>([]);
-  const [chatError, setChatError] = useState<string | null>(null);
-  const chatEndRef = useRef<HTMLDivElement>(null);
   const [chatOpen, setChatOpen] = useState(false);
-  const [seenChats, setSeenChats] = useState(0);
-  const unreadChats = chatOpen ? 0 : Math.max(0, chats.length - seenChats);
+  const [circleUnread, setCircleUnread] = useState(0);
 
   useEffect(() => {
     if (!match.id || !gameJwt) return;
@@ -226,35 +225,24 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
   // 로건(영구)만 circleChat=true. 팬텀 페어·루나·엘런·타락자는 회로 없음.
   const circleChat = myPlayer?.circleChat === true;
 
+  // 회로 채팅 미읽음 카운트 — 시트 닫혀 있을 때만 누적, 열면 0. demon_circle 채널 한정.
   useEffect(() => {
     if (!circleChat || !match.id || !gameJwt) return;
-
     let cancelled = false;
     const supabase = getGameSupabase(gameJwt);
-
-    supabase.schema("mafia").from("match_chats")
-      .select("*")
-      .eq("match_id", match.id)
-      .eq("channel", "demon_circle")
-      .order("created_at", { ascending: true })
-      .then(({ data }) => {
-        if (!cancelled && data) setChats(data as ChatRow[]);
-      });
-
-    // 채널 격리(2026-06-15): town/dead 가 생기면서 채널 미필터 구독은 낮 채팅까지 끌어온다.
-    // 악마 속삭임 패널은 demon_circle 만.
-    const channel = supabase.channel(`night-chat-${match.id}`)
+    const channel = supabase.channel(`night-chat-unread-${match.id}`)
       .on("postgres_changes", { event: "INSERT", schema: "mafia", table: "match_chats", filter: `match_id=eq.${match.id}` }, (payload) => {
-        const row = payload.new as ChatRow & { channel?: string };
-        if (row.channel === "demon_circle") setChats(prev => [...prev, row]);
+        const row = payload.new as { channel?: string };
+        if (cancelled || row.channel !== "demon_circle") return;
+        setCircleUnread((n) => n + 1);
       })
       .subscribe();
-
-    return () => {
-      cancelled = true;
-      supabase.removeChannel(channel);
-    };
+    return () => { cancelled = true; supabase.removeChannel(channel); };
   }, [match.id, circleChat, gameJwt]);
+
+  useEffect(() => {
+    if (chatOpen) setCircleUnread(0);
+  }, [chatOpen]);
 
   useEffect(() => {
     if (!match.id || !gameJwt || !myPlayer?.userId) return;
@@ -319,28 +307,6 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
     };
   }, [match.id, gameJwt, myPlayer?.userId, role]);
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chats]);
-
-  useEffect(() => {
-    if (chatOpen) setSeenChats(chats.length);
-  }, [chatOpen, chats.length]);
-
-  const handleSendChat = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatMessage.trim()) return;
-    const msg = chatMessage;
-    setChatMessage("");
-    setChatError(null);
-    try {
-      await sendChat(match.id, msg, gameJwt);
-    } catch {
-      setChatError("채팅 전송 실패");
-      setChatMessage(msg);
-    }
-  };
-
   // 능력 즉시 제출 함수
   const handleSubmit = async (ability: NightAbility, target: string | null) => {
     setBusy(true);
@@ -367,58 +333,6 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
   };
 
   const demonChat = circleChat && myPlayer?.alive;
-
-  const chatPanel = (
-    <div className="flex h-72 flex-col">
-      <div className="flex-1 space-y-3 overflow-y-auto pr-1">
-        {chats.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-sm text-white/20">
-            대화를 시작하세요
-          </div>
-        ) : (
-          chats.map((chat) => {
-            const isMe = chat.sender_user_id === myPlayer?.userId;
-            const sender = players.find((p) => p.userId === chat.sender_user_id)?.displayName || "알 수 없음";
-            return (
-              <div key={chat.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
-                {!isMe && <div className="mb-1 pl-1 text-[0.625rem] text-white/40">{sender}</div>}
-                <div
-                  className={`max-w-[85%] break-words rounded-lg px-3 py-2 text-sm ${
-                    isMe ? "rounded-tr-sm bg-rose-500/20 text-rose-100" : "rounded-tl-sm bg-white/10 text-white"
-                  }`}
-                >
-                  {chat.message}
-                </div>
-              </div>
-            );
-          })
-        )}
-        <div ref={chatEndRef} />
-      </div>
-      <div className="border-t border-white/5 pt-3">
-        {chatError ? (
-          <p role="alert" className="mb-2 text-xs text-rose-300">{chatError}</p>
-        ) : null}
-        <form onSubmit={handleSendChat} className="flex gap-2">
-          <input
-            type="text"
-            value={chatMessage}
-            onChange={(e) => setChatMessage(e.target.value)}
-            placeholder="메시지 입력..."
-            aria-label="악마 팀 채팅 메시지"
-            className="min-w-0 flex-1 rounded border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-rose-500/50 focus:outline-none"
-          />
-          <button
-            type="submit"
-            disabled={!chatMessage.trim()}
-            className="whitespace-nowrap rounded bg-rose-500/20 px-3 text-sm font-medium text-rose-300 disabled:opacity-50"
-          >
-            전송
-          </button>
-        </form>
-      </div>
-    </div>
-  );
 
   const selectedTargetId = currentType ? selectedMap[currentType] ?? null : null;
   const stageSelectedId = selectedTargetId ?? pendingTarget;
@@ -501,6 +415,13 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
           같은 편 — <span className="font-semibold">{circleAlly.displayName}</span>
           {" "}({roleMeta(circleAlly.role)?.label ?? circleAlly.role})
           {circleChat ? "" : " · 접선 불가, 정체 통지만"}
+        </div>
+      ) : null}
+
+      {eclipseNight && !isFirstNight ? (
+        <div className="rounded-xl border border-violet-400/25 bg-violet-950/40 px-3 py-2 text-xs text-violet-100/90">
+          <span aria-hidden="true" className="mr-1.5">🌑</span>
+          일식 — 팬텀이 아침을 밀어내고 밤을 한 번 더 열었습니다. 다음 아침엔 팬텀이 소멸합니다.
         </div>
       ) : null}
 
@@ -667,8 +588,17 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
       />
 
       {demonChat ? (
-        <BottomSheet title="악마의 속삭임" badge={unreadChats} onOpenChange={setChatOpen}>
-          {chatPanel}
+        <BottomSheet title="악마의 속삭임" badge={circleUnread} onOpenChange={setChatOpen}>
+          <MatchChat
+            matchId={match.id}
+            gameJwt={gameJwt}
+            myPlayer={myPlayer}
+            players={players}
+            channels={["demon_circle"]}
+            accent="circle"
+            placeholder="악마끼리 속삭임..."
+            emptyHint="대화를 시작하세요"
+          />
         </BottomSheet>
       ) : null}
       {nightDock}
