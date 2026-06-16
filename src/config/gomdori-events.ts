@@ -42,10 +42,9 @@ export const GOMDORI_EVENT_COPY: Record<string, GomdoriEventCopy> = {
     audience: "public", tone: "danger", icon: "⚖️",
     line: (p, n) => `${n(p.user_id)} 님이 처형됨`,
   },
-  execution_blocked_shield: {
-    audience: "public", tone: "warn", icon: "🛡️",
-    line: () => "보호막이 처형을 막아냈다",
-  },
+  // execution_blocked_shield (구) — vault canon §8 회귀로 폐지. shield 는 능력 기반
+  // 탈락에만 적용되고 vote 처형은 막지 못한다(아서 여명의 기사 패시브 포함). backend 가
+  // 이 이벤트를 더 이상 발행하지 않으므로 레지스트리에서도 제거.
   suspicion_revealed: {
     audience: "public", tone: "info", icon: "🔎",
     line: (p, n) => (p.user_id ? `의심 지목: ${n(p.user_id)}` : "의심 부결"),
