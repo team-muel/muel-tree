@@ -31,11 +31,18 @@ and model fallback.
 - hardcoding model policy in many routes
 - storing or displaying secrets
 
-## Weave Extraction Migration Target
+## Weave Memory Surface
 
-The current Weave dream submission route performs Gemini extraction and
-embedding inside the web route. Keep the route ownership, but migrate extraction
-toward schema-validated structured output.
+Weave is now positioned as the Muel memory correction surface. The route should
+prioritize reading Muel's memory view, collecting correct/wrong feedback, and
+letting users teach Muel facts directly. Legacy dream rows remain part of the
+graph, but the product should not be described as mainly a dream diary.
+
+## Legacy Dream Extraction Migration Target
+
+The legacy Weave dream submission route performs Gemini extraction and embedding
+inside the web route. Keep the route ownership, but migrate extraction toward
+schema-validated structured output.
 
 Target behavior:
 

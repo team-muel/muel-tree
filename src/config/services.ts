@@ -59,11 +59,11 @@ export const services = [
     status: "beta",
     statusLabel: "베타",
     operatingModel: "Discord Activity + Supabase Vector",
-    description: "꿈을 기록하고 비슷한 기록을 연결해 공개 그래프로 보여주는 첫 번째 Muel Activity입니다.",
+    description: "Muel이 나와 우리를 어떻게 기억하는지 보고, 맞으면 확인하고 틀리면 바로잡는 기억 교정 Activity입니다.",
     sectionClassName:
       "bg-gradient-to-br from-[#5B21B6] to-[#DB2777] text-white",
-    primaryAction: { label: "일기 열기", href: "/weave" },
-    note: "Discord 안에서는 앱 런처에서 일기를 실행하면 인증과 기록 저장이 이어집니다.",
+    primaryAction: { label: "Weave 열기", href: "/weave" },
+    note: "Discord 안에서 Weave를 열면 내 기억을 확인·교정하고, Muel이 알아야 할 것을 직접 알려줄 수 있습니다.",
   },
   {
     slug: "server",
@@ -97,13 +97,13 @@ export const teamUpdates = [
   {
     date: "2026년 5월",
     category: "Memory",
-    text: "대화 로그, 꿈 기록, 임베딩 검색 기반으로 기억 구조 확장",
+    text: "대화 로그, 사용자 교정, 임베딩 검색 기반으로 기억 구조 확장",
     href: "#server",
   },
   {
     date: "2026년 5월",
     category: "Weave",
-    text: "꿈 기록과 공개 그래프 베타 운영",
+    text: "Muel memory correction surface 베타 운영",
     href: "#weave",
   },
 ];
