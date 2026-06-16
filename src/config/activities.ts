@@ -17,10 +17,10 @@ export type MuelActivity = {
 export const activities: MuelActivity[] = [
   {
     slug: "weave",
-    name: "일기",
+    name: "Weave",
     route: "/weave",
     serviceSlug: "weave",
-    description: "꿈을 기록하고 연결하는 인터랙티브 앱",
+    description: "Muel이 기억하는 나와 우리를 확인하고 교정하는 Activity",
     discordClientId: process.env.NEXT_PUBLIC_WEAVE_DISCORD_CLIENT_ID,
   },
   {

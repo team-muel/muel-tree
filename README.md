@@ -6,14 +6,14 @@
 
 - **Muel** — Bot
 - **Gomdori** — Game, operated as a `Discord <-> Toss` experience
-- **Weave (일기)** — App, operated as a `Discord <-> Toss` experience. Discord command: `/일기`, Activity route: `/weave`
+- **Weave** — Muel memory correction surface, operated as a `Discord <-> Toss` experience. Activity route: `/weave`
 - **Server** — Discord (live, invite: https://discord.gg/NdBHcbXpjh)
 - **Team** — updates and public-facing notices
 
 ## Current Routes
 
 - `/` — Muel landing page
-- `/weave` — 일기 Activity (Discord command `/일기`)
+- `/weave` — Weave Activity for viewing and correcting what Muel remembers
 - `/force` — force-layout test surface
 - `/payment/success`, `/payment/fail` — Toss Payments return pages
 - `/api/dreams` — public graph data (content excluded, tag/keywords/emotions only)
@@ -33,7 +33,7 @@ To add a new Activity: register it in `src/config/activities.ts`, add the matchi
 
 - **Supabase**: `dreams`, `dream_connections`, `service_events`, `sources`, `muel_profiles`, `muel_profile_identities`
 - Discord users are upserted into `muel_profiles` on first interaction via `upsertDiscordMuelProfile`
-- Dreams and service events reference `muel_profile_id` for cross-service identity
+- Weave memory, legacy dream rows, and service events reference `muel_profile_id` for cross-service identity
 
 ## Service Registry
 
@@ -41,7 +41,7 @@ Public service names, labels, routes, statuses, CTA links, and operating models 
 
 ## Operations Docs
 
-- `docs/weave-operations.md` — Weave entry, save, error UX, and release checklist
+- `docs/weave-operations.md` — Weave entry, memory correction UX, legacy dream save, and release checklist
 - `docs/supabase-data-flow.md` — current Supabase tables and planned data flow
 
 ## Deployments

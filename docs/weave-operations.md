@@ -1,12 +1,16 @@
-# Weave (일기) Operations
+# Weave Operations
 
-Weave is the first production candidate for the Muel `Discord <-> Toss` service model. Discord command: `/일기`.
+Weave is Muel's memory correction surface: a place where members can see what
+Muel thinks it knows, mark it correct or wrong, and teach Muel facts it should
+remember. It is also the first production candidate for the Muel
+`Discord <-> Toss` service model. The older dream-journal flow remains as a
+legacy data source inside Weave, not the center of the product position.
 
 ## Public Surface
 
 - **Landing section**: `Weave` in `/`
 - **Activity route**: `/weave`
-- **Discord command**: `/일기`
+- **Discord entry**: Activity launcher / Muel navigation
 - **Operating model**: `Discord <-> Toss`
 - **Current status**: beta
 - **State layer**: Supabase
@@ -33,9 +37,19 @@ Weave is the first production candidate for the Muel `Discord <-> Toss` service 
 - Writing is disabled unless Discord auth succeeds.
 - Authenticated graph reads include the user's private Muel knowledge nodes in addition to public/community nodes.
 
-### Save
+### Memory Correction
 
-- The user writes a dream in the bottom input.
+- Authenticated users can see their private Muel memory nodes.
+- Users can mark a memory as correct or wrong.
+- Wrong/disputed memory is excluded from later recall; confirmed memory stays
+  available to Muel.
+- Users can directly teach Muel a fact through the "알려주기" panel.
+- Directly taught facts are written through the Weave memo endpoint and mirrored
+  into `weave_nodes`.
+
+### Legacy Dream Save
+
+- The legacy dream flow writes dream content into the graph when present.
 - `/api/dreams/submit` checks the request origin.
 - `/api/dreams/submit` verifies the Discord access token against `https://discord.com/api/users/@me`.
 - The server trims and validates dream content.
@@ -71,6 +85,7 @@ Weave is the first production candidate for the Muel `Discord <-> Toss` service 
 - Authenticated Discord users can save one dream.
 - Failed Gemini or Supabase calls show a readable failure message.
 - The graph remains usable after a failed save.
+- Memory feedback updates are reflected without requiring a reload.
 - Build passes with no blocking type or lint errors.
 
 ## Next Data Decisions

@@ -6,7 +6,8 @@ Supabase is the shared state layer behind Muel services. The public product name
 
 ### `dreams`
 
-Used by Weave.
+Legacy Weave dream records. These are still displayed inside Weave, but they no
+longer define Weave's primary product position.
 
 Observed fields from the app:
 
@@ -33,7 +34,7 @@ Dream reads happen in `/api/dreams` with the Supabase anon key. The public dream
 
 ### `dream_connections`
 
-Used by Weave to connect similar dreams.
+Used by the legacy dream graph to connect similar dreams.
 
 Observed fields from the app:
 
@@ -43,7 +44,7 @@ Observed fields from the app:
 
 ### `weave_nodes`
 
-ADR-002 multi-source knowledge nodes produced primarily by `muel-bot` and consumed by `muel-tree`.
+ADR-002 multi-source knowledge nodes produced primarily by `muel-bot` and consumed by `muel-tree`. This is the primary data model for Weave's memory correction surface.
 
 Observed fields from the app:
 
@@ -107,7 +108,7 @@ Current allowed providers are `discord` and `toss`.
 
 ### `sources`
 
-Used by Muel Bot's `/구독` utility for YouTube video/community post subscriptions.
+Used by `muel-bot`'s `/구독` utility for YouTube video/community post subscriptions.
 
 This remains a server-side utility table. It should not define the public Muel product structure.
 
@@ -141,6 +142,9 @@ Discord Activity
   -> /weave
   -> /api/discord/token
   -> Discord OAuth token
+  -> /api/weave/me (private Muel memory read)
+  -> /api/weave/feedback (correct/wrong memory feedback)
+  -> /api/weave/memo (direct user-taught memory)
   -> /api/dreams (public + authenticated private graph read)
   -> /api/dreams/submit
   -> Supabase muel_profiles / muel_profile_identities
@@ -153,7 +157,7 @@ Discord Activity
 ```
 
 ```text
-Muel Bot
+`muel-bot`
   -> research / subscription / memo event
   -> insert_weave_node RPC
   -> weave_nodes + optional weave_node_embeddings
