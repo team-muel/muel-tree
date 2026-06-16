@@ -38,13 +38,19 @@ type LobbyPhaseProps = {
   onLeave: () => void | Promise<void>;
 };
 
-function Chip({ label, value }: { label: string; value: string }) {
+// 메타 정보는 테두리 친 알약(chip) 대신 라벨-값 스택의 '스탯 스트립'으로 —
+// 가는 구분선으로만 끊어 대시보드 헤더처럼 읽히게(촌스러운 알약 제거, 2026-06-16).
+function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <span className="inline-flex max-w-full items-baseline gap-1.5 rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs">
-      <span className="shrink-0 text-white/35">{label}</span>
-      <span className="truncate text-white/80">{value}</span>
-    </span>
+    <div className="flex min-w-0 flex-col gap-0.5">
+      <span className="text-[0.625rem] font-medium uppercase tracking-[0.14em] text-white/30">{label}</span>
+      <span className="truncate text-sm font-semibold text-white/85">{value}</span>
+    </div>
   );
+}
+
+function StatDivider() {
+  return <span aria-hidden="true" className="h-7 w-px self-center bg-white/10" />;
 }
 
 function Requirement({ met, label }: { met: boolean; label: string }) {
@@ -401,12 +407,22 @@ export function LobbyPhase({ match, players, myPlayer, gameJwt, onLeave }: Lobby
             </button>
           </div>
         </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Chip label="참가" value={`${total} / ${match.maxPlayers}`} />
-          <Chip label="준비" value={`${readyCount} / ${nonHost.length}`} />
-          <Chip label="방장" value={hostLabel} />
-          <Chip label="구성" value={compositionLabel} />
+        <div className="mt-4 flex flex-wrap items-end gap-x-5 gap-y-2">
+          <Stat label="참가" value={`${total} / ${match.maxPlayers}`} />
+          <StatDivider />
+          <Stat label="준비" value={`${readyCount} / ${nonHost.length}`} />
+          <StatDivider />
+          <Stat label="방장" value={hostLabel} />
+          <StatDivider />
+          <Stat
+            label="중립"
+            value={neutralMode === "auto" ? "자동" : neutralMode === "on" ? "등장" : "제외"}
+          />
         </div>
+        <p className="mt-3 flex items-baseline gap-2 text-sm text-white/55">
+          <span className="text-[0.625rem] font-medium uppercase tracking-[0.14em] text-white/30">구성</span>
+          <span className="truncate">{compositionLabel}</span>
+        </p>
       </div>
 
       {/* 무대 — 모인 사람들이 아바타로 배회한다 (Feign 최소구조) */}
