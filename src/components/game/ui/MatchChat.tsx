@@ -88,6 +88,16 @@ export function MatchChat({
   const [message, setMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  // 실시간 채널 토픽은 인스턴스마다 고유해야 한다. supabase client 는 토픽 이름으로
+  // 채널을 식별·재사용하므로, 같은 matchId 의 패널이 둘 이상(낮 마을 + 영혼 채팅,
+  // 프리뷰 다중 마운트) 동시에 뜨면 두 번째가 이미 subscribe() 된 채널에 .on() 을
+  // 걸다 "cannot add postgres_changes callbacks after subscribe()" 로 죽었다.
+  // 인스턴스 고유 id 로 토픽을 분리해 충돌을 없앤다.
+  const topicIdRef = useRef<string>("");
+  if (!topicIdRef.current) {
+    const scope = channels && channels.length > 0 ? channels.join("_") : "all";
+    topicIdRef.current = `${scope}-${Math.random().toString(36).slice(2, 10)}`;
+  }
   // 채팅 아바타 클릭 → 정체 추측 시트(토큰과 같은 localStorage 저장소).
   const { guesses, save } = useInspectGuesses(matchId);
   const [inspectId, setInspectId] = useState<string | null>(null);
@@ -113,7 +123,7 @@ export function MatchChat({
       });
 
     const channel = supabase
-      .channel(`match-chat-${matchId}`)
+      .channel(`match-chat-${matchId}-${topicIdRef.current}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "mafia", table: "match_chats", filter: `match_id=eq.${matchId}` },
