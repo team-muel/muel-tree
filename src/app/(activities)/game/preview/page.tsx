@@ -256,11 +256,12 @@ function PreviewSection({
           <StatusDock
             status={toneKey}
             dayNumber={hideRole ? undefined : 2}
-            phaseEndsAt={null}
+            phaseEndsAt={toneKey === "day" ? new Date(Date.now() + 90_000).toISOString() : null}
             myRole={hideRole ? undefined : me.role ?? undefined}
             myFaction={me.faction ?? undefined}
             myName={me.displayName}
             myAvatarUrl={me.avatarUrl}
+            dayAdjust={toneKey === "day" && me.alive ? { matchId: "preview", gameJwt: "preview" } : null}
             inline
           />
         ) : null}

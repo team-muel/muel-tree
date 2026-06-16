@@ -483,7 +483,7 @@ function GameShell({ session }: { session: ActivitySession }) {
 
   if (match.status === "day") {
     return (
-      <GameFrame status="day" phaseEndsAt={phaseEndsAt} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} myName={myPlayer?.displayName} myAvatarUrl={myPlayer?.avatarUrl} dayNumber={currentPhase?.phaseNumber}>
+      <GameFrame status="day" phaseEndsAt={phaseEndsAt} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} myName={myPlayer?.displayName} myAvatarUrl={myPlayer?.avatarUrl} dayNumber={currentPhase?.phaseNumber} dayAdjust={myPlayer?.alive ? { matchId: match.id, gameJwt } : null}>
         <DayPhase match={match} players={players} events={events} myPlayer={myPlayer} gameJwt={gameJwt} phaseEndsAt={phaseEndsAt} />
       </GameFrame>
     );
@@ -534,6 +534,7 @@ function GameFrame({
   myAvatarUrl,
   dayNumber,
   hideStatusDock = false,
+  dayAdjust,
   keyArt = false,
 }: {
   children: React.ReactNode;
@@ -545,6 +546,8 @@ function GameFrame({
   myAvatarUrl?: string | null;
   dayNumber?: number;
   hideStatusDock?: boolean;
+  /** 아침(토론) 페이즈에서 살아있는 본인의 시간 조절 — 하단 독 타이머 곁에 노출. */
+  dayAdjust?: { matchId: string; gameJwt: string } | null;
   /**
    * 진입·로딩 계열 화면의 풀블리드 키 아트(night-muse) 배경 (2026-06-12).
    * object-cover + focal 로 어떤 종횡비에서도 시선점이 살고, quality 90 으로
@@ -588,6 +591,7 @@ function GameFrame({
           myFaction={myFaction}
           myName={myName}
           myAvatarUrl={myAvatarUrl}
+          dayAdjust={dayAdjust}
         />
       ) : null}
       {status === "night" || status === "night_suspect" ? <NightSky /> : null}
