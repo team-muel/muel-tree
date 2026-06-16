@@ -31,6 +31,8 @@ type RevealedPlayer = {
   changed?: boolean;
 };
 
+const FACTION_KO: Record<string, string> = { angel: "천사", demon: "악마", neutral: "중립" };
+
 function revealMap(payload: Record<string, unknown> | undefined): Map<string, RevealedPlayer> {
   const list = Array.isArray(payload?.players) ? (payload.players as RevealedPlayer[]) : [];
   return new Map(list.filter((p) => typeof p?.user_id === "string").map((p) => [p.user_id, p]));
@@ -90,9 +92,11 @@ export function ResultPhase({ match, players, events, onLeave }: ResultPhaseProp
           // reveal payload 가 있으면 최종 정체(변환 반영)를 우선한다 (M4-1).
           const reveal = revealed.get(p.userId);
           const startRole = reveal?.role ?? p.role;
+          const startFaction = reveal?.faction ?? p.faction;
           const role = reveal?.final_role ?? p.role;
           const faction = reveal?.final_faction ?? p.faction;
           const transformed = reveal?.changed === true;
+          const factionChanged = transformed && startFaction !== faction;
           const isDemonFaction = faction === "demon";
           const isNeutralFaction = faction === "neutral"; // 파스아(W6)
 
@@ -125,8 +129,16 @@ export function ResultPhase({ match, players, events, onLeave }: ResultPhaseProp
                 {roleLabel(role) || role || "알 수 없음"}
               </div>
               {transformed ? (
-                <div className="mt-2 text-[0.6875rem] text-white/45">
-                  {(roleLabel(startRole) || startRole) + " → " + (roleLabel(role) || role)}
+                <div className="mt-2 text-[0.6875rem] text-white/55">
+                  <span>{roleLabel(startRole) || startRole}</span>
+                  {factionChanged ? (
+                    <span className="text-white/35">({FACTION_KO[startFaction ?? ""] ?? startFaction})</span>
+                  ) : null}
+                  <span className="mx-1 text-white/35">→</span>
+                  <span className={factionChanged ? "font-semibold" : ""}>{roleLabel(role) || role}</span>
+                  {factionChanged ? (
+                    <span className="text-white/35">({FACTION_KO[faction ?? ""] ?? faction})</span>
+                  ) : null}
                 </div>
               ) : null}
             </div>
