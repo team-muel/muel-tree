@@ -289,13 +289,13 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     label: "미즐렛",
     title: "행복을 파는 가게",
     faction: "angel",
-    reveal: "행복을 파는 가게의 주인. 매일 밤 탈락한 한 명을 되살릴 수 있습니다.",
-    passive: "행복을 파는 가게: 원본에서는 탈락자가 생존자보다 많아지면 다수 복귀를 일으킵니다.",
-    abilitySummary: "디저트 선물(부활): 탈락한 한 명을 되살립니다(1회). 디저트 선물(버프): 생존자에게 디저트를 주어 그 밤 보호합니다.",
+    reveal: "행복을 파는 가게의 주인. 디저트로 위로하고, 와인으로 정화하며, 어둠이 깊어지면 다수를 부활시킵니다.",
+    passive: "행복을 파는 가게: 탈락자가 생존자보다 많아지면 가장 최근 탈락 2명을 복귀시키고 미즐렛은 탈락합니다(소멸·부활불가 무시, 1회). 디저트를 준 대상과는 다과회 채팅 회로가 열리고, 고급 와인 발동 시 디저트 보유자 전원이 미즐렛과 회식 채팅(현재 backend 이벤트 신호 — Discord plumbing 후속).",
+    abilitySummary: "디저트 선물(부활): 탈락한 한 명을 되살립니다(1회). 디저트 선물(버프): 생존자를 보호하고 다과회 채팅 회로를 엽니다. 고급 와인(1회): 전원 정화 + 디저트 미제공자 투표가치 -1 + 디저트 보유자 전원과 와인 회식 채팅.",
     night: { actionType: "mizlet_revive", label: "디저트 선물(부활)", prompt: "디저트로 되살릴 탈락자를 고르세요. (1회)" },
     extraNights: [
-      { actionType: "mizlet_dessert", label: "디저트 선물", prompt: "디저트를 줄 생존자를 고르세요. 그 밤 보호받습니다." },
-      { actionType: "mizlet_wine", label: "고급 와인", prompt: "고급 와인 — 전원의 부정 효과를 씻어냅니다. 디저트를 받지 못한 사람은 투표가치 -1. (1회, 대상 없음)", self: true },
+      { actionType: "mizlet_dessert", label: "디저트 선물", prompt: "디저트를 줄 생존자를 고르세요. 그 밤 보호받고 미즐렛과의 다과회 채팅 회로가 열립니다." },
+      { actionType: "mizlet_wine", label: "고급 와인", prompt: "고급 와인 — 전원의 부정 효과를 씻어내고 디저트 보유자 전원과 와인 회식 채팅을 엽니다. 디저트를 받지 못한 사람은 투표가치 -1. (1회, 대상 없음)", self: true },
     ],
   },
   helen: {
@@ -418,8 +418,8 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
   ],
   mizlet: [
     { kind: "패시브", name: "행복을 파는 가게", text: "탈락자가 생존자보다 많아지면 가장 최근 탈락 2명을 복귀(소멸·부활불가 무시)시키고 미즐렛은 탈락합니다. 1회성 역전 패시브입니다.", status: "live" },
-    { kind: "능력", name: "디저트 선물", text: "대상에게 쿠키나 푸딩 효과를 부여해 탈락 시점과 밤 능력 발동을 다룹니다.", actionType: "mizlet_dessert", status: "partial" },
-    { kind: "능력2", name: "고급 와인", text: "전원의 부정 효과를 제거합니다. 디저트를 받지 못한 대상은 투표가치가 내려갑니다. 1회성입니다.", actionType: "mizlet_wine", status: "live" },
+    { kind: "능력", name: "디저트 선물", text: "대상에게 디저트(보호 + remembered 풍 다과회 회로)를 부여하고 미즐렛과의 채팅 회로를 엽니다(현재 backend 이벤트 신호).", actionType: "mizlet_dessert", status: "live" },
+    { kind: "능력2", name: "고급 와인", text: "전원의 부정 효과를 제거하고 디저트 보유자 전원과 와인 회식 채팅을 엽니다. 디저트를 받지 못한 대상은 투표가치 -1. 1회성입니다.", actionType: "mizlet_wine", status: "live" },
   ],
   helen: [
     { kind: "패시브", name: "행복 쉼터 / 추억을 간직하는 법", text: "황금빛 수면을 받은 자는 영혼이 기억되어 탈락 후에도 다시 수면을 받을 수 있으며, 그때 발동되면 부활합니다. 소멸(annihilated)은 부활 불가입니다.", status: "live" },
