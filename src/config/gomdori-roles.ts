@@ -24,6 +24,10 @@ export interface GomdoriNightAction {
   kind?: "kill"; // 처치형(악마 처치/악몽/혼령 방출 등) — demon 블록 처치-UI 판정
   self?: boolean; // 자기 대상(변신/일식) — 대상 그리드 없이 버튼만, target=null 제출
   maxTargets?: number; // 멀티타깃 지정 수(아서 잔불이 꺼지기 전에=3). 미지정/1=단일 대상.
+  // 동적 상한(팬텀 어둠이 내린 도시=매 아침 +1). UI 상한 = maxTargets + maxTargetsPerDay*(dayNumber-1).
+  // dayNumber 기반 하한 근사 — 추가 밤(일식·침묵의 밤)으로 실제 상한이 더 커질 수 있으나 백엔드가
+  // 실제 상한을 강제하므로 과대 선택→거부가 아니라, UI 가 항상 실제 이하만 허용(안전).
+  maxTargetsPerDay?: number;
 }
 
 export interface GomdoriRoleMeta {
@@ -165,13 +169,15 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     title: "침묵의 밤",
     roster: "demon",
     faction: "demon",
-    reveal: "침묵의 밤의 악마. 악몽으로 빠뜨리고(아침에 탈락), 어둠으로 봉인하며, 일식으로 아침을 삼킵니다.",
-    passive: "침묵의 밤: 원본에서는 밤 연장과 접선 제한을 갖습니다. 현재 게임에서는 팬텀-조력자 접선 제한과 다중 밤 능력으로 핵심을 반영합니다.",
-    abilitySummary: "악몽으로 지연 탈락을 만들고, 봉인으로 능력을 막고, 일식으로 다음 아침을 밤으로 바꿉니다.",
+    reveal: "침묵의 밤의 악마. 어둠으로 다수를 봉인하고, 악몽으로 빠뜨리며(아침 탈락), 영면을 쌓아 일괄 처치하고, 침묵의 밤으로 밤을 연장합니다.",
+    passive: "침묵의 밤: 밤 종료 시 밤을 한 번 더 연장(악마팀 재행동). 대가로 생존 천사팀 소속 카운트 +1, 밤 대화 +1분. 팬텀-조력자는 접선(밤 채팅) 불가하나 서로의 정체·직업은 통지받습니다.",
+    abilitySummary: "어둠이 내린 도시(매 아침 봉인 가능 수 +1)로 능력을 막고, 악몽(5회 제한, 미봉인 시 +2 충전)으로 지연 탈락을 만들며, 같은 대상 재지정으로 영면을 쌓아 원할 때 일괄 처치합니다. 침묵의 밤으로 밤을 연장하고, 일식으로 아침을 밤으로 바꿉니다.",
     demonTeam: true,
-    night: { actionType: "phantom_nightmare", label: "악몽", prompt: "악몽에 빠뜨릴 대상을 고르세요. 아침이 되면 탈락합니다(밤 보호로 막지 못함).", excludeSelf: true, kind: "kill" },
+    night: { actionType: "phantom_nightmare", label: "악몽", prompt: "악몽에 빠뜨릴 대상을 고르세요. 아침이 되면 탈락합니다(밤 보호로 막지 못함). 이미 악몽인 대상을 재지정하면 영면이 됩니다. 사용 5회 제한.", excludeSelf: true, kind: "kill" },
     extraNights: [
-      { actionType: "phantom_seal", label: "봉인하기", prompt: "어둠이 내린 도시 — 오늘 밤 능력을 봉인할 대상을 고르세요.", excludeSelf: true },
+      { actionType: "phantom_seal", label: "어둠이 내린 도시", prompt: "오늘 밤 능력을 봉인할 대상을 고르세요(아침마다 +1명, 같은 대상 연속 지목 불가). 봉인은 그 밤만 유효합니다.", excludeSelf: true, maxTargets: 2, maxTargetsPerDay: 1 },
+      { actionType: "phantom_reap", label: "영면 발동", prompt: "쌓아둔 영면 대상을 전원 일괄 처치합니다.", self: true },
+      { actionType: "phantom_silentnight", label: "침묵의 밤", prompt: "밤을 한 번 더 연장합니다(악마팀 재행동). 대가로 생존 천사팀 카운트 +1, 밤 대화 +1분.", self: true },
       { actionType: "phantom_eclipse", label: "일식", prompt: "일식 — 다음 아침을 밤으로 바꿉니다. 단, 그 아침에 당신은 소멸합니다. (1회)", self: true },
     ],
   },
