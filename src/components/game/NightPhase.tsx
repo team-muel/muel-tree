@@ -168,6 +168,15 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
   const role = myPlayer?.role;
   const abilities = buildAbilities(role, myPlayer?.userId);
 
+  // 멀티타깃 지정 수 — manifest(maxTargets)에서만 끌어온다. 직업/숫자 하드코딩 없이 재사용.
+  const nightMeta = role ? roleMeta(role) : null;
+  const maxTargetsByAction: Record<string, number> = {};
+  if (nightMeta?.night?.maxTargets) maxTargetsByAction[nightMeta.night.actionType] = nightMeta.night.maxTargets;
+  for (const ex of nightMeta?.extraNights ?? []) {
+    if (ex.maxTargets) maxTargetsByAction[ex.actionType] = ex.maxTargets;
+  }
+  const maxTargetsFor = (actionType: string) => maxTargetsByAction[actionType] ?? 1;
+
   const myEffects = resolveMyStatusEffects(myPlayer?.userId, events ?? []);
   const isNightLocked = iAmSuspected || myEffects.includes("sealed");
   const lockReason = iAmSuspected
@@ -190,6 +199,8 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
   // 자신의 프로필 패널 토글 및 선 지목 저장용 상태
   const [showMyProfile, setShowMyProfile] = useState(false);
   const [pendingTarget, setPendingTarget] = useState<string | null>(null);
+  // 멀티타깃 능력의 누적 선택(actionType → 대상 userId 배열). 확정 버튼으로 한 번에 제출.
+  const [multiSelected, setMultiSelected] = useState<Record<string, string[]>>({});
 
   const [chatOpen, setChatOpen] = useState(false);
   const [circleUnread, setCircleUnread] = useState(0);
@@ -332,6 +343,23 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
     setSelectedMap((m) => ({ ...m, [ability.actionType]: myPlayer.userId }));
   };
 
+  // 멀티타깃 확정 제출(아서 잔불이 꺼지기 전에 등). 대표 대상=첫째, 전체는 targetUserIds 로 전송.
+  const handleSubmitMulti = async (ability: NightAbility, targets: string[]) => {
+    if (!targets.length) return;
+    setBusy(true);
+    setActionError(null);
+    try {
+      await submitAction(match.id, ability.actionType, targets[0], gameJwt, targets);
+      setDoneMap((m) => ({ ...m, [ability.actionType]: true }));
+      setSelectedMap((m) => ({ ...m, [ability.actionType]: targets[0] }));
+      setPendingTarget(null);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "행동 실패");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const demonChat = circleChat && myPlayer?.alive;
 
   const selectedTargetId = currentType ? selectedMap[currentType] ?? null : null;
@@ -352,6 +380,9 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
       void handleSelfSubmit(ability);
       return;
     }
+
+    // 멀티타깃은 능력 선택만으로 제출하지 않는다 — 대상을 토글로 누적한 뒤 확정 버튼으로 제출.
+    if (maxTargetsFor(ability.actionType) > 1) return;
 
     if (!pendingTarget) return;
 
@@ -389,6 +420,22 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
     if (!current.eligible(target)) {
       setPendingTarget(id);
       setActionError(current.emptyNote ?? "선택한 능력으로는 그 대상을 지정할 수 없습니다.");
+      setShowMyProfile(true);
+      return;
+    }
+
+    // 멀티타깃: 대상을 토글로 누적(상한까지). 즉시 발동하지 않고 확정 버튼을 기다린다.
+    const maxT = maxTargetsFor(current.actionType);
+    if (maxT > 1) {
+      const actionType = current.actionType;
+      setMultiSelected((m) => {
+        const cur = m[actionType] ?? [];
+        const next = cur.includes(id)
+          ? cur.filter((x) => x !== id)
+          : (cur.length >= maxT ? cur : [...cur, id]);
+        return { ...m, [actionType]: next };
+      });
+      setActionError(null);
       setShowMyProfile(true);
       return;
     }
@@ -501,6 +548,32 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
               </div>
             )}
           </div>
+
+          {current && maxTargetsFor(current.actionType) > 1 ? (
+            <div className="rounded-xl border border-amber-300/20 bg-amber-400/[0.05] p-3 text-xs text-white/70">
+              <div className="mb-2">
+                선택한 대상 {(multiSelected[current.actionType] ?? []).length} / {maxTargetsFor(current.actionType)}
+                {(multiSelected[current.actionType] ?? []).length ? (
+                  <span className="ml-1 font-semibold text-amber-200">
+                    {(multiSelected[current.actionType] ?? [])
+                      .map((id) => players.find((p) => p.userId === id)?.displayName)
+                      .filter(Boolean)
+                      .join(", ")}
+                  </span>
+                ) : (
+                  <span className="ml-1 text-white/40">무대에서 대상을 눌러 추가/해제하세요.</span>
+                )}
+              </div>
+              <button
+                type="button"
+                disabled={busy || isNightLocked || (multiSelected[current.actionType] ?? []).length === 0}
+                onClick={() => void handleSubmitMulti(current, multiSelected[current.actionType] ?? [])}
+                className="w-full rounded-lg border border-amber-300/40 bg-amber-400/10 px-3 py-2 text-xs font-semibold text-amber-100 transition hover:bg-amber-400/20 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                확정 ({(multiSelected[current.actionType] ?? []).length}명 지정)
+              </button>
+            </div>
+          ) : null}
 
           <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-center text-xs text-white/55">
             {investigationResult ? (
