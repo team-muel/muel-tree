@@ -161,11 +161,14 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     title: "진실을 가리는 암흑",
     roster: "helper",
     faction: "demon",
-    reveal: "진실을 가리는 조력자. 악마를 살해·처형 1회로부터 보호합니다.",
-    passive: "진실을 가리는 암흑: 악마와 접선하고 악마의 첫 치명적 탈락을 보호합니다. v1에서는 보호막 1회로 축약됩니다.",
-    abilitySummary: "약간의 위선: 매일 밤 한 명의 정체(진영)를 알아내 악마팀에 정찰 정보를 줍니다. 악마 생존을 보존하는 조력자입니다.",
+    reveal: "진실을 가리는 조력자. 악마를 살해·처형 1회로부터 보호하고, 두 번째 밤 동안 정체를 알아내며 마지막엔 급습으로 통지를 가립니다.",
+    passive: "진실을 가리는 암흑: 악마와 접선하고 악마의 첫 치명적 탈락을 보호합니다. 보호막은 두 번째 밤 종료 시 자동 만료됩니다(canon — 가인 생존 여부 무관).",
+    abilitySummary: "약간의 위선: 매일 밤 한 명의 정체(진영)를 알아내고, 대상의 다음 능력을 한 밤 연기합니다. 위선 대상이 악마에 탈락하면 다음 위선은 처치로 전환됩니다. 급습(1회): 대상에 통지 차단 표식을 남기고 다음 아침까지 악마와 대화하는 회로를 엽니다.",
     demonTeam: true,
-    night: { actionType: "gain_hypocrisy", label: "약간의 위선", prompt: "정체를 알아낼 대상을 고르세요. 그 진영이 통지됩니다.", excludeSelf: true },
+    night: { actionType: "gain_hypocrisy", label: "약간의 위선", prompt: "정체를 알아낼 대상을 고르세요. 그 진영이 통지되고 대상의 다음 능력이 한 밤 연기됩니다.", excludeSelf: true },
+    extraNights: [
+      { actionType: "gain_raid", label: "급습", prompt: "급습으로 대상의 통지를 한 라운드 차단합니다. (1회) 가인은 급습 충전을 얻고, 회로가 열리면 악마와 다음 아침까지 대화할 수 있습니다.", excludeSelf: true },
+    ],
   },
   // --- 기본 로스터: 악마 풀 (전부 v1 처치) ---
   phantom: {
@@ -463,9 +466,9 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
     { kind: "능력2", name: "누명씌우기", text: "대상이 히든 포지션 효과를 받게 합니다. 이 효과로 탈락이 발생하면 강화됩니다.", status: "planned" },
   ],
   gain: [
-    { kind: "패시브", name: "진실을 가리는 암흑", text: "악마와 접선·대화하고, 악마가 처형 또는 탈락할 때 1회 없던 일로 만듭니다.", status: "live" },
+    { kind: "패시브", name: "진실을 가리는 암흑", text: "악마와 접선·대화하고, 악마가 처형 또는 탈락할 때 1회 없던 일로 만듭니다. 두 번째 밤 종료 시 보호막이 자동 만료됩니다(가인 생존 여부 무관).", status: "live" },
     { kind: "능력", name: "약간의 위선", text: "매일 밤 한 명의 정체(진영)를 알아내 악마팀에 정찰 정보를 주고, 대상의 다음 능력을 한 밤 연기합니다. 위선 대상이 밤에 탈락하면 다음 위선은 처치로 전환됩니다.", actionType: "gain_hypocrisy", status: "live" },
-    { kind: "능력2", name: "급습", text: "대상의 통지를 삭제하고 급습을 충전합니다. 다음 아침까지 악마와 대화합니다. 1회성입니다.", status: "planned" },
+    { kind: "능력2", name: "급습", text: "대상의 통지를 한 라운드 차단하고 가인의 급습을 1 충전합니다. 다음 아침까지 악마와 대화하는 채팅 회로는 후속이며 현재는 이벤트 신호만 발사됩니다. 1회성입니다.", actionType: "gain_raid", status: "live" },
   ],
   luna: [
     { kind: "패시브", name: "달빛이 비치는 우물", text: "루나가 투표·의심한 대상에게 달빛을 남기고, 달의 힘이 10 이상 차면 효과를 발동합니다.", status: "live" },
