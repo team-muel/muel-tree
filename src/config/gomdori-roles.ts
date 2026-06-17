@@ -394,7 +394,7 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
     { kind: "능력", name: "용의자 색출", text: "대상에게 +5 투표가치 / +10 의심가치를 받는 표로 가산합니다. 다음 집계에 반영됩니다.", actionType: "romaz_suspect", status: "live" },
   ],
   rainer: [
-    { kind: "패시브", name: "백호", text: "백호 소환 시 천사팀 카운트 +3을 지속합니다. v1에서는 무한게임 방지를 위해 축약 보너스로 적용됩니다.", actionType: "rainer_summon", status: "live" },
+    { kind: "패시브", name: "백호", text: "백호 소환 시 천사팀 카운트 +3을 얻고, 탈락 뒤에도 사후 지속 +3을 남깁니다. 1회성입니다.", actionType: "rainer_summon", status: "live" },
   ],
   dordan: [
     { kind: "패시브", name: "침착한 탐정", text: "누군가 탈락하면 투표 대상을 범인으로 지목하고, 범인이 그날 밤 지정하는 대상이 도르단에게 알려집니다.", status: "partial" },
@@ -409,17 +409,17 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
   mizlet: [
     { kind: "패시브", name: "행복을 파는 가게", text: "탈락자가 생존자보다 많아지면 가장 최근 탈락 2명을 복귀(소멸·부활불가 무시)시키고 미즐렛은 탈락합니다. 1회성 역전 패시브입니다.", status: "live" },
     { kind: "능력", name: "디저트 선물", text: "대상에게 쿠키나 푸딩 효과를 부여해 탈락 시점과 밤 능력 발동을 다룹니다.", actionType: "mizlet_dessert", status: "partial" },
-    { kind: "능력2", name: "고급 와인", text: "전원의 부정 효과를 제거합니다. 디저트를 받지 못한 대상은 투표가치가 내려가며, 대화 연결은 후속입니다.", actionType: "mizlet_wine", status: "partial" },
+    { kind: "능력2", name: "고급 와인", text: "전원의 부정 효과를 제거합니다. 디저트를 받지 못한 대상은 투표가치가 내려갑니다. 1회성입니다.", actionType: "mizlet_wine", status: "live" },
   ],
   helen: [
     { kind: "패시브", name: "행복 쉼터", text: "시작 시 전원에게 헬렌 존재를 알리고, 수면 대상과 영혼 기억을 공유합니다.", status: "planned" },
     { kind: "능력", name: "황금빛 수면", text: "대상을 수면 상태로 만들어 부정 효과를 막고 행동을 보류합니다.", actionType: "helen_sleep", status: "live" },
-    { kind: "능력2", name: "자유로운 새", text: "탈락자 한 명을 추가로 되살립니다. 수면 기억 기반 복귀 흐름은 후속입니다.", actionType: "helen_freebird", status: "partial" },
+    { kind: "능력2", name: "자유로운 새", text: "탈락자 한 명을 추가로 되살립니다. 1회성입니다.", actionType: "helen_freebird", status: "live" },
   ],
   uno: [
     { kind: "패시브", name: "군인의 사명", text: "악마 효과를 1회 제거할 수 있는 사명 효과를 가집니다.", status: "partial" },
     { kind: "능력", name: "투쟁", text: "대상 소속 카운트 +1을 부여합니다. 우노는 명예로 천사팀 카운트 +1과 투표가치 +10을 갖습니다 — 이 투표가치는 사탄의 마(-1)를 뚫고 살아남아, 악마가 투표를 독점해도 우노만은 표를 행사할 수 있습니다.", actionType: "uno_struggle", status: "live" },
-    { kind: "능력2", name: "용맹함", text: "전원에게 투쟁을 발동합니다. 우노가 투표한 대상은 사망 기록과 소속이 공개됩니다. 1회성입니다.", actionType: "uno_valor", status: "partial" },
+    { kind: "능력2", name: "용맹함", text: "자신을 정화하고 전원에게 투쟁을 발동합니다. 우노가 투표한 대상은 사망 기록과 소속이 공개·처형되고, 천사를 죽이면 우노가 다음 밤 봉인됩니다. 1회성입니다.", actionType: "uno_valor", status: "live" },
   ],
   arthur: [
     { kind: "패시브", name: "여명의 기사", text: "어떤 효과로도 밤에 탈락하지 않습니다. 단 결백한 천사팀이 3명 이상 탈락하면 다음 아침 함께 탈락합니다. 결백 천사 탈락 1명당 잔불 대검 +1 충전, 충전 3 이상이면 위용(해오름 결백 천사 1명당 투표가치 +3)이 켜집니다.", status: "live" },
@@ -429,28 +429,29 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
   seika: [
     { kind: "패시브", name: "별이 떠오른 밤", text: "초신성을 터뜨린 다음 밤은 의심 투표를 생략하고 곧장 밤으로 넘어갑니다.", status: "live" },
     { kind: "능력", name: "초신성", text: "대상이 받는 부여 효과를 제거하고 그 밤 능력을 봉인합니다. 반복 적용 시 영구 봉인으로 커집니다.", actionType: "seika_supernova", status: "live" },
-    { kind: "능력2", name: "자신만 아플 거야", text: "전원에게 걸린 부여 효과를 모두 씻어냅니다(전원 정화, 1회). 악마팀 효과 누적 시 소멸·악마팀 공개 downside 는 후속.", actionType: "seika_absorb", status: "live" },
+    { kind: "능력2", name: "자신만 아플 거야", text: "전원에게 걸린 부여 효과를 모두 씻어냅니다(전원 정화, 1회). 악마팀 효과를 흡수하면 소멸과 악마팀 공개 카운트다운이 함께 걸립니다.", actionType: "seika_absorb", status: "live" },
   ],
   luru: [
-    { kind: "패시브", name: "아름다운 영혼을 위한 소나타", text: "매료 3명 이상이면 즉시 연주가 시작되고, 하루 동안 전원의 투표 흐름을 바꿉니다.", actionType: "luru_sonata", status: "partial" },
+    { kind: "패시브", name: "아름다운 영혼을 위한 소나타", text: "매료 3명 이상이면 즉시 연주가 시작되어 전원을 정화하고, 그 밤 루루를 무적으로 만듭니다.", actionType: "luru_sonata", status: "live" },
     { kind: "능력", name: "영혼을 만지는 음색", text: "대상을 매료해 처형 투표 권한을 루루에게 양도시킵니다.", actionType: "luru_charm", status: "live" },
-    { kind: "능력2", name: "악보 교체", text: "자투 악보로 자신의 투표가치를 +1 올립니다. 무투와 다중 투표 재설계는 후속입니다.", actionType: "luru_score", status: "partial" },
+    { kind: "능력2", name: "악보 교체", text: "자투 악보로 자신의 투표가치를 +1 올립니다. 1회성입니다.", actionType: "luru_score", status: "live" },
   ],
   demon: [
     { kind: "패시브", name: "사탄의 마", text: "처치 성공 시 자신을 제외한 전원의 투표가치가 -1 내려갑니다(악마 투표 독점 — 마을은 표로 악마를 처형할 수 없습니다). 생존 천사팀 전체의 투표가치가 0이 되면 모든 조사가 '악마'로 판정됩니다.", status: "live" },
     { kind: "특수 패시브", name: "메피스토의 낙인", text: "투표 대상에게 낙인을 통지하고, 대악마가 직업 삭제와 새 천사 직업 배정을 일으킵니다.", actionType: "daeakma_brand", status: "live" },
     { kind: "능력", name: "만악의 근원 / 감시", text: "대상을 탈락시키고, 낙인 적용자가 있으면 감시가 추가됩니다.", actionType: "demon_kill", status: "partial" },
-    { kind: "능력2", name: "압도적인 존재감", text: "전원의 지정 대상을 낙인 적용자로 바꾸고, 공포로 횟수 제한과 중첩 효과를 손실시킵니다. 1회성입니다.", actionType: "daeakma_dominion", status: "partial" },
+    { kind: "능력2", name: "압도적인 존재감", text: "자신을 제외한 전원을 압도해 그 밤 능력을 봉인합니다. 1회성입니다.", actionType: "daeakma_dominion", status: "live" },
   ],
   phantom: [
-    { kind: "패시브", name: "침묵의 밤", text: "밤 종료 시 밤을 연장할 수 있습니다. 팬텀과 조력자는 접선할 수 없지만 서로의 정체와 직업은 통지됩니다.", status: "partial" },
-    { kind: "특수 패시브", name: "어둠이 내린 도시", text: "매 밤 직업 봉인 대상을 늘려갑니다. 무지목 시 악몽 충전으로 전환됩니다.", actionType: "phantom_seal", status: "partial" },
+    { kind: "패시브", name: "침묵의 밤", text: "밤 종료 시 능력 사용 가능 밤을 한 번 더 열고, 생존 천사팀 카운트를 +1 보상합니다. 팬텀과 조력자는 접선할 수 없지만 서로의 정체와 직업은 통지됩니다.", actionType: "phantom_silentnight", status: "live" },
+    { kind: "특수 패시브", name: "어둠이 내린 도시", text: "매 밤 직업 봉인 대상을 늘려갑니다. 전날 같은 대상은 연속 봉인할 수 없고, 무지목 시 악몽 충전으로 전환됩니다.", actionType: "phantom_seal", status: "live" },
     { kind: "능력", name: "악몽", text: "대상을 악몽에 빠뜨리고, 연속되면 영면으로 격상합니다. 악몽은 아침 탈락으로 이어집니다.", actionType: "phantom_nightmare", status: "live" },
+    { kind: "능력2", name: "영면 발동", text: "쌓아둔 영면 대상을 한꺼번에 탈락시킵니다.", actionType: "phantom_reap", status: "live" },
     { kind: "능력2", name: "일식", text: "다음 아침을 밤으로 변경합니다. 대신 아침이 오면 팬텀은 소멸합니다. 1회성입니다.", actionType: "phantom_eclipse", status: "live" },
   ],
   malen: [
-    { kind: "패시브", name: "악령 마야", text: "매 밤 한 명에게 빙의해 행동을 막고 악마팀 카운트로 셉니다. 마야가 말렌에게 빙의하면 그 밤 모든 효과를 무시합니다.", actionType: "malen_possess", status: "partial" },
-    { kind: "특수 패시브", name: "악담", text: "탈락자가 생기면 혼을 생성하고, 혼이 시체로 바뀌어 투표·의심·능력 보조를 합니다.", status: "partial" },
+    { kind: "패시브", name: "악령 마야", text: "매 밤 한 명에게 빙의해 그 밤 행동을 막고, 다음 밤 마비를 남기며 악마팀 카운트로 셉니다. 마야가 말렌에게 빙의하면 그 밤 모든 효과를 무시합니다.", actionType: "malen_possess", status: "live" },
+    { kind: "특수 패시브", name: "악담", text: "탈락자가 생기면 혼을 생성하고, 혼이 2개 쌓이면 시체와 악마팀 카운트로 바뀝니다.", status: "live" },
     { kind: "능력", name: "혼령 방출", text: "1회차에는 혼령 표식을 남기고, 표식이 있는 대상을 다시 방출하면 영에게 잠식되어 탈락 + 그 투표가치가 말렌에게 조공됩니다.", actionType: "malen_release", status: "live" },
     { kind: "능력2", name: "신출귀몰", text: "혼령 표식을 수거해 다음 밤 시체를 소환합니다. 1회성입니다.", status: "planned" },
   ],
@@ -462,24 +463,24 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
   ],
   gain: [
     { kind: "패시브", name: "진실을 가리는 암흑", text: "악마와 접선·대화하고, 악마가 처형 또는 탈락할 때 1회 없던 일로 만듭니다.", status: "partial" },
-    { kind: "능력", name: "약간의 위선", text: "매일 밤 한 명의 정체(진영)를 알아내 악마팀에 정찰 정보를 줍니다. 효과 연기·급습은 후속.", actionType: "gain_hypocrisy", status: "live" },
+    { kind: "능력", name: "약간의 위선", text: "매일 밤 한 명의 정체(진영)를 알아내 악마팀에 정찰 정보를 주고, 대상의 다음 능력을 한 밤 연기합니다. 위선 대상이 밤에 탈락하면 다음 위선은 처치로 전환됩니다.", actionType: "gain_hypocrisy", status: "live" },
     { kind: "능력2", name: "급습", text: "대상의 통지를 삭제하고 급습을 충전합니다. 다음 아침까지 악마와 대화합니다. 1회성입니다.", status: "planned" },
   ],
   luna: [
-    { kind: "패시브", name: "달빛이 비치는 우물", text: "루나가 투표·의심한 대상에게 달빛을 남기고, 달의 힘이 가득 차면 효과를 발동합니다.", status: "live" },
-    { kind: "능력", name: "고요한 적막", text: "달빛 대상 수에 따라 달의 힘을 충전하고, 가득 차면 토론과 투표 흐름을 바꿉니다.", actionType: "luna_moonlight", status: "live" },
+    { kind: "패시브", name: "달빛이 비치는 우물", text: "루나가 투표·의심한 대상에게 달빛을 남기고, 달의 힘이 10 이상 차면 효과를 발동합니다.", status: "live" },
+    { kind: "능력", name: "고요한 적막", text: "달빛 대상 수에 따라 달의 힘을 충전하고, 가득 차면 토론과 투표 흐름을 바꿉니다. 악마팀 대상에게는 추가로 +3을 얻습니다.", actionType: "luna_moonlight", status: "live" },
     { kind: "능력2", name: "공포 속에 밀어 넣다", text: "대상에게 달빛 저주를 남깁니다. 달의 힘이 가득 차면 대상은 직업을 잃고 악마팀이 됩니다.", actionType: "luna_corrupt", status: "live" },
   ],
   logen: [
-    { kind: "패시브", name: "부서진 펜던트", text: "시작 시 악마와 접선합니다. 악마팀에 지워지지 않는 펜던트 효과를 남깁니다.", status: "partial" },
+    { kind: "패시브", name: "부서진 펜던트", text: "시작 시 악마와 접선합니다. 악마팀에 지워지지 않는 펜던트 효과를 남기고, 펜던트가 3개 이상 쌓이면 대상 수 보너스를 얻습니다.", status: "live" },
     { kind: "능력", name: "네 안에 없는 것", text: "대상의 가장 가까운 밤 능력 효과가 소멸한다는 통지와 펜던트를 적용합니다.", actionType: "logen_nullify", status: "live" },
   ],
   ellen: [
-    { kind: "패시브", name: "박해자 / 해체된 퍼즐", text: "홀수날에만, 엘런이 직전에 투표한 대상의 받는-투표가치를 올려 처형대로 밀어냅니다(별도 지목 없이 자기 투표를 따라감). 투표마다 누진·해체된 퍼즐 상태 전환은 후속.", actionType: "ellen_persecute", status: "live" },
+    { kind: "패시브", name: "박해자 / 해체된 퍼즐", text: "홀수날에만, 엘런이 직전에 투표한 대상의 받는-투표가치를 올려 처형대로 밀어냅니다. 같은 대상을 다시 박해하면 +3/+6/+9로 누진됩니다.", actionType: "ellen_persecute", status: "live" },
     { kind: "능력", name: "비치지 않는 자아", text: "후속 다단계 능력입니다. 현재 v1은 박해 투표 무게 증가로 축약되어 있습니다.", status: "planned" },
   ],
   pasua: [
-    { kind: "패시브", name: "구원자", text: "시작 전 파스아 존재를 전원에게 통지합니다. 생존자 중 파스아 팀이 충분히 커지면 즉시 승리합니다.", status: "live" },
+    { kind: "패시브", name: "구원자", text: "시작 전 파스아 존재를 전원에게 통지합니다. 생존 교세가 max(3, ceil(인원/3)) 이상이면 즉시 승리합니다.", status: "live" },
     { kind: "능력", name: "포교", text: "대상을 포교합니다. 악마와 중립은 포교할 수 없고, 전향자는 파스아 승리를 따릅니다.", actionType: "pasua_convert", status: "live" },
     { kind: "능력2", name: "신앙", text: "대상을 탈락시킵니다. 악마는 탈락하지 않습니다.", actionType: "pasua_faith", status: "live" },
   ],
