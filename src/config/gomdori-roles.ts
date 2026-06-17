@@ -23,6 +23,7 @@ export interface GomdoriNightAction {
   excludeSelf?: boolean; // 자신 제외 대상
   kind?: "kill"; // 처치형(악마 처치/악몽/혼령 방출 등) — demon 블록 처치-UI 판정
   self?: boolean; // 자기 대상(변신/일식) — 대상 그리드 없이 버튼만, target=null 제출
+  targetDead?: boolean; // 탈락자 대상(헬렌 자유로운 새 등 추가 부활) — 무대에 죽은 자만 노출
   maxTargets?: number; // 멀티타깃 지정 수(아서 잔불이 꺼지기 전에=3). 미지정/1=단일 대상.
   // 동적 상한(팬텀 어둠이 내린 도시=매 아침 +1). UI 상한 = maxTargets + maxTargetsPerDay*(dayNumber-1).
   // dayNumber 기반 하한 근사 — 추가 밤(일식·침묵의 밤)으로 실제 상한이 더 커질 수 있으나 백엔드가
@@ -256,8 +257,11 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     faction: "angel",
     reveal: "탐정. 매일 밤 한 명의 정체를 조사할 수 있습니다.",
     passive: "침착한 탐정: 누군가 탈락할 때마다 단서가 쌓입니다. 단서가 3개 모이면 조사가 정확한 직업까지 밝혀냅니다(정밀 조사).",
-    abilitySummary: "조사하기: 악마인지 확인합니다. 단서 3개부터는 정확한 직업까지 알아냅니다.",
+    abilitySummary: "조사하기: 악마인지 확인합니다. 단서 3개부터는 정확한 직업까지 알아냅니다. 잠입 수사: 관찰 대상이 그 밤 탈락하면 그 밤 부정 효과를 모두 무시합니다(불심검문).",
     night: { actionType: "police_investigate", label: "조사하기", prompt: "오늘 밤 정체를 알아볼 사람을 고르세요. (단서 3개부터 정밀 조사)", excludeSelf: true },
+    extraNights: [
+      { actionType: "dordan_infiltrate", label: "잠입 수사", prompt: "밤 동안 관찰할 대상을 고르세요. 그 대상이 그 밤 탈락하면 불심검문 발동 — 당신은 그 밤 부정 효과를 모두 무시합니다.", excludeSelf: true },
+    ],
   },
   habreterus: {
     label: "하브레터스",
@@ -265,8 +269,11 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     faction: "angel",
     reveal: "생명의 언약을 맺는 치료자. 매일 밤 한 명을 보호할 수 있습니다.",
     passive: "임종 선언/소명: 원본에서는 치료 실패와 소명 쿨다운이 연결됩니다. v1은 밤 보호에 집중합니다.",
-    abilitySummary: "치료하기: 오늘 밤 공격받을 수 있는 사람을 보호합니다.",
+    abilitySummary: "치료하기: 오늘 밤 공격받을 수 있는 사람을 보호합니다. 삶이 있는 곳으로: 의심 가는 악마를 지목 — 적중하면 그 밤 악마 효과에 면역됩니다.",
     night: { actionType: "doctor_heal", label: "치료하기", prompt: "오늘 밤 공격으로부터 보호할 사람을 고르세요. (자기 자신 포함)" },
+    extraNights: [
+      { actionType: "habreterus_deduce", label: "삶이 있는 곳으로", prompt: "악마라 의심되는 대상을 지목하세요. 적중하면(악마 처치자) 그 밤 받은 부정 효과를 모두 무시합니다.", excludeSelf: true },
+    ],
   },
   mizlet: {
     label: "미즐렛",
@@ -278,6 +285,7 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     night: { actionType: "mizlet_revive", label: "디저트 선물(부활)", prompt: "디저트로 되살릴 탈락자를 고르세요. (1회)" },
     extraNights: [
       { actionType: "mizlet_dessert", label: "디저트 선물", prompt: "디저트를 줄 생존자를 고르세요. 그 밤 보호받습니다." },
+      { actionType: "mizlet_wine", label: "고급 와인", prompt: "고급 와인 — 전원의 부정 효과를 씻어냅니다. 디저트를 받지 못한 사람은 투표가치 -1. (1회, 대상 없음)", self: true },
     ],
   },
   helen: {
@@ -290,6 +298,7 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     night: { actionType: "helen_revive", label: "수면(부활)", prompt: "수면으로 되살릴 탈락자를 고르세요. (1회)" },
     extraNights: [
       { actionType: "helen_sleep", label: "황금빛 수면", prompt: "재워서 지킬 생존자를 고르세요. 그 밤 죽음·부정효과를 막지만 행동은 봉인됩니다." },
+      { actionType: "helen_freebird", label: "자유로운 새", prompt: "자유로운 새 — 탈락한 한 명을 추가로 되살립니다. (1회)", targetDead: true },
     ],
   },
   uno: {
@@ -338,6 +347,7 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     night: { actionType: "luru_charm", label: "영혼을 만지는 음색", prompt: "매료해 처형 투표를 양도받을 대상을 고르세요.", excludeSelf: true },
     extraNights: [
       { actionType: "luru_sonata", label: "소나타", prompt: "아름다운 영혼을 위한 소나타 — 전원의 부정 효과를 씻고 그 밤 무적이 됩니다. (매료 3 필요, 대상 없음)", self: true },
+      { actionType: "luru_score", label: "악보 교체", prompt: "악보 교체(자투) — 당신의 투표가치가 +1 됩니다. (1회, 대상 없음)", self: true },
     ],
   },
   // --- W6 v1 중립 ---

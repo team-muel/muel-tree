@@ -58,15 +58,24 @@ function buildAbilities(role: string | null | undefined, myUserId: string | null
   // 문자열(label/prompt/actionType)은 manifest 단일 출처 — 여기엔 대상 조건만 더한다.
   if (!meta?.night) return [];
 
-  // 치료 계열 — 자기 자신 포함 보호.
+  // 치료 계열 — 자기 자신 포함 보호. 하브레터스는 상호추리(extraNights) 보조 능력도.
   if (role === "doctor" || role === "habreterus") {
-    return [{
+    const main: NightAbility = {
       actionType: meta.night.actionType,
       label: meta.night.label,
       prompt: meta.night.prompt,
       confirm: true,
       eligible: (p) => p.alive,
-    }];
+    };
+    const extras: NightAbility[] = (meta.extraNights ?? []).map((extra) => ({
+      actionType: extra.actionType,
+      label: extra.label,
+      prompt: extra.prompt,
+      self: extra.self,
+      confirm: true,
+      eligible: aliveNotMe, // 상호추리 = 생존 대상(자기 제외)
+    }));
+    return [main, ...extras];
   }
 
   // 부활 계열 — 메인(부활)은 탈락자만. 헬렌은 생존자 수면(extraNights) 보조 능력도.
@@ -84,7 +93,10 @@ function buildAbilities(role: string | null | undefined, myUserId: string | null
       label: extra.label,
       prompt: extra.prompt,
       confirm: true,
-      eligible: aliveNotMe, // 수면은 생존자 대상
+      self: extra.self, // 미즐렛 고급 와인 = 무대상(전원)
+      // 탈락자 대상(헬렌 자유로운 새)은 죽은 자만, 그 외 보조(수면/와인)는 생존자.
+      eligible: extra.targetDead ? (p) => !p.alive : aliveNotMe,
+      emptyNote: extra.targetDead ? "아직 되살릴 탈락자가 없습니다." : undefined,
     }));
     return [revive, ...extras];
   }
