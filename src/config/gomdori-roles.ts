@@ -399,22 +399,22 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
   dordan: [
     { kind: "패시브", name: "침착한 탐정", text: "누군가 탈락하면 투표 대상을 범인으로 지목하고, 범인이 그날 밤 지정하는 대상이 도르단에게 알려집니다.", status: "partial" },
     { kind: "능력", name: "단서 수집 / 사건의 전말", text: "단서 3개 이상에서 정밀 조사로 악마를 정확히 식별하면 사건의 전말이 발동 — 다음 아침을 생략하고 그 악마를 곧장 판결대에 세웁니다.", actionType: "police_investigate", status: "live" },
-    { kind: "능력2", name: "잠입 수사", text: "대상을 밤 동안 관찰합니다. 탈락과 연결되면 불심검문이 발동해 그 밤 부정 효과를 무시합니다.", status: "planned" },
+    { kind: "능력2", name: "잠입 수사", text: "대상을 밤 동안 관찰합니다. 탈락과 연결되면 불심검문이 발동해 그 밤 부정 효과를 무시합니다.", actionType: "dordan_infiltrate", status: "live" },
   ],
   habreterus: [
     { kind: "패시브", name: "임종 선언", text: "치료 실패로 탈락한 날 투표가치가 내려가고 소명 효과가 남습니다.", status: "planned" },
     { kind: "능력", name: "생명의 언약", text: "대상을 치료합니다. 그 밤 실제 공격을 막아내면(소명) 하브레터스의 투표가치가 +3 오릅니다.", actionType: "doctor_heal", status: "live" },
-    { kind: "능력2", name: "삶이 있는 곳으로", text: "게임 시작 시 악마에게 존재가 알려지고, 매 밤 악마와 하브레터스가 서로를 추리하는 서브게임을 엽니다.", status: "planned" },
+    { kind: "능력2", name: "삶이 있는 곳으로", text: "악마라 의심되는 대상을 지목합니다. 적중하면 그 밤 악마 효과에 면역됩니다. 악마측 역추리는 후속입니다.", actionType: "habreterus_deduce", status: "partial" },
   ],
   mizlet: [
     { kind: "패시브", name: "행복을 파는 가게", text: "탈락자가 생존자보다 많아지면 가장 최근 탈락 2명을 복귀(소멸·부활불가 무시)시키고 미즐렛은 탈락합니다. 1회성 역전 패시브입니다.", status: "live" },
     { kind: "능력", name: "디저트 선물", text: "대상에게 쿠키나 푸딩 효과를 부여해 탈락 시점과 밤 능력 발동을 다룹니다.", actionType: "mizlet_dessert", status: "partial" },
-    { kind: "능력2", name: "고급 와인", text: "디저트를 받은 대상의 부정 효과를 제거하고 미즐렛과 대화하게 합니다.", status: "planned" },
+    { kind: "능력2", name: "고급 와인", text: "전원의 부정 효과를 제거합니다. 디저트를 받지 못한 대상은 투표가치가 내려가며, 대화 연결은 후속입니다.", actionType: "mizlet_wine", status: "partial" },
   ],
   helen: [
     { kind: "패시브", name: "행복 쉼터", text: "시작 시 전원에게 헬렌 존재를 알리고, 수면 대상과 영혼 기억을 공유합니다.", status: "planned" },
     { kind: "능력", name: "황금빛 수면", text: "대상을 수면 상태로 만들어 부정 효과를 막고 행동을 보류합니다.", actionType: "helen_sleep", status: "live" },
-    { kind: "능력2", name: "자유로운 새", text: "다음 아침 탈락자들이 생존 행동을 할 수 있게 만들고, 수면으로 복귀 흐름을 이어갑니다.", actionType: "helen_revive", status: "partial" },
+    { kind: "능력2", name: "자유로운 새", text: "탈락자 한 명을 추가로 되살립니다. 수면 기억 기반 복귀 흐름은 후속입니다.", actionType: "helen_freebird", status: "partial" },
   ],
   uno: [
     { kind: "패시브", name: "군인의 사명", text: "악마 효과를 1회 제거할 수 있는 사명 효과를 가집니다.", status: "partial" },
@@ -434,7 +434,7 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
   luru: [
     { kind: "패시브", name: "아름다운 영혼을 위한 소나타", text: "매료 3명 이상이면 즉시 연주가 시작되고, 하루 동안 전원의 투표 흐름을 바꿉니다.", actionType: "luru_sonata", status: "partial" },
     { kind: "능력", name: "영혼을 만지는 음색", text: "대상을 매료해 처형 투표 권한을 루루에게 양도시킵니다.", actionType: "luru_charm", status: "live" },
-    { kind: "능력2", name: "악보 교체", text: "투표를 여러 명에게 행사하고, 악보 변경으로 다음 투표 흐름을 바꿉니다.", status: "planned" },
+    { kind: "능력2", name: "악보 교체", text: "자투 악보로 자신의 투표가치를 +1 올립니다. 무투와 다중 투표 재설계는 후속입니다.", actionType: "luru_score", status: "partial" },
   ],
   demon: [
     { kind: "패시브", name: "사탄의 마", text: "처치 성공 시 자신을 제외한 전원의 투표가치가 -1 내려갑니다(악마 투표 독점 — 마을은 표로 악마를 처형할 수 없습니다). 생존 천사팀 전체의 투표가치가 0이 되면 모든 조사가 '악마'로 판정됩니다.", status: "live" },
