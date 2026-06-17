@@ -250,11 +250,14 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     title: "박해자",
     roster: "helper",
     faction: "demon",
-    reveal: "박해자. 당신이 투표한 사람을 처형대로 몰아갑니다.",
-    passive: "박해자/해체된 퍼즐: 원본에서는 홀수날 투표 압박과 자아 해체 상태를 다룹니다. v1은 자기 투표 대상의 무게 증가에 집중합니다.",
-    abilitySummary: "박해: 당신이 직전에 투표한 대상이 다음 집계에서 받는 처형 투표 무게를 키웁니다(별도 지목 없이 자기 투표를 따라감).",
+    reveal: "박해자. 당신이 투표한 사람을 처형대로 몰아갑니다. 해체된 퍼즐(1회)로 자아를 망가뜨려 2밤 가치 상실 후 자해 박해로 영구 전환할 수 있습니다.",
+    passive: "박해자/해체된 퍼즐: 홀수날 박해는 직전 투표 대상의 받는 표를 +3/+6/+9 누진. 해체된 퍼즐 발동 후 2밤 동안 투표·의심·능력 가치가 모두 상실되고, 그 다음 밤 자동 회복(selfRecovered)됩니다. 회복 이후 박해는 자신을 대상으로 누진됩니다.",
+    abilitySummary: "박해: 자기 투표 대상의 받는 표를 누진합니다. 해체된 퍼즐(1회): 자아를 망가뜨려 2밤 가치 상실 후 자동 회복 — 회복 후 박해는 자해 누진으로 영구 전환됩니다.",
     demonTeam: true,
-    night: { actionType: "ellen_persecute", label: "박해", prompt: "당신이 직전에 투표한 대상을 처형대로 몰아갑니다. (대상 없음 — 자기 투표를 따라감)", self: true },
+    night: { actionType: "ellen_persecute", label: "박해", prompt: "당신이 직전에 투표한 대상을 처형대로 몰아갑니다. 자아 회복 후엔 자기 자신이 박해 대상이 됩니다.", self: true },
+    extraNights: [
+      { actionType: "ellen_shatter", label: "해체된 퍼즐", prompt: "해체된 퍼즐 — 자아를 망가뜨립니다. 2밤 동안 투표·의심·능력 가치 모두 상실 후 자동 회복되며, 그 이후 박해는 자해로 영구 전환됩니다. (1회, 대상 없음)", self: true },
+    ],
   },
   // --- 기본 로스터: 천사 풀 ---
   dordan: {
@@ -484,8 +487,8 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
     { kind: "능력", name: "네 안에 없는 것", text: "대상의 가장 가까운 밤 능력 효과가 소멸한다는 통지와 펜던트를 적용합니다.", actionType: "logen_nullify", status: "live" },
   ],
   ellen: [
-    { kind: "패시브", name: "박해자 / 해체된 퍼즐", text: "홀수날에만, 엘런이 직전에 투표한 대상의 받는-투표가치를 올려 처형대로 밀어냅니다. 같은 대상을 다시 박해하면 +3/+6/+9로 누진됩니다.", actionType: "ellen_persecute", status: "live" },
-    { kind: "능력", name: "비치지 않는 자아", text: "후속 다단계 능력입니다. 현재 v1은 박해 투표 무게 증가로 축약되어 있습니다.", status: "planned" },
+    { kind: "패시브", name: "박해자 / 해체된 퍼즐", text: "홀수날에만, 엘런이 직전에 투표한 대상의 받는-투표가치를 올려 처형대로 밀어냅니다. 같은 대상을 다시 박해하면 +3/+6/+9로 누진됩니다. 해체된 퍼즐 후 자아 회복 시 자해 박해로 영구 전환됩니다.", actionType: "ellen_persecute", status: "live" },
+    { kind: "능력", name: "비치지 않는 자아 (해체된 퍼즐)", text: "자아를 망가뜨려 2밤 동안 투표·의심·능력 가치를 모두 상실합니다. 그 다음 밤 자동 회복(selfRecovered)되며, 회복 후 박해는 자해 누진으로 영구 전환됩니다. 1회 제한입니다.", actionType: "ellen_shatter", status: "live" },
   ],
   pasua: [
     { kind: "패시브", name: "구원자", text: "시작 전 파스아 존재를 전원에게 통지합니다. 생존 교세가 max(3, ceil(인원/3)) 이상이면 즉시 승리합니다.", status: "live" },
