@@ -463,7 +463,7 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
     { kind: "능력2", name: "누명씌우기", text: "대상이 히든 포지션 효과를 받게 합니다. 이 효과로 탈락이 발생하면 강화됩니다.", status: "planned" },
   ],
   gain: [
-    { kind: "패시브", name: "진실을 가리는 암흑", text: "악마와 접선·대화하고, 악마가 처형 또는 탈락할 때 1회 없던 일로 만듭니다.", status: "partial" },
+    { kind: "패시브", name: "진실을 가리는 암흑", text: "악마와 접선·대화하고, 악마가 처형 또는 탈락할 때 1회 없던 일로 만듭니다.", status: "live" },
     { kind: "능력", name: "약간의 위선", text: "매일 밤 한 명의 정체(진영)를 알아내 악마팀에 정찰 정보를 주고, 대상의 다음 능력을 한 밤 연기합니다. 위선 대상이 밤에 탈락하면 다음 위선은 처치로 전환됩니다.", actionType: "gain_hypocrisy", status: "live" },
     { kind: "능력2", name: "급습", text: "대상의 통지를 삭제하고 급습을 충전합니다. 다음 아침까지 악마와 대화합니다. 1회성입니다.", status: "planned" },
   ],
