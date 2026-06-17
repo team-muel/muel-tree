@@ -190,13 +190,14 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     title: "강령술사",
     roster: "demon",
     faction: "demon",
-    reveal: "악령 마야의 강령술사. 혼령을 방출해 처치하고, 한 명에게 빙의해 묶습니다.",
-    passive: "악령 마야: 원본에서는 빙의와 혼/시체 축적을 다룹니다. v1은 빙의의 행동 봉인과 악마팀 카운트 전환에 집중합니다.",
-    abilitySummary: "혼령 방출로 처치하고, 빙의로 대상의 밤 행동을 막으며 그 라운드 악마팀으로 셉니다.",
+    reveal: "악령 마야의 강령술사. 혼령을 방출하고, 빙의로 묶고, 신출귀몰로 시체를 부립니다.",
+    passive: "악령 마야: 빙의와 혼/시체 축적을 다룹니다. 혼 2개는 시체로 바뀌고, 신출귀몰은 혼령 표식을 다음 밤 시체로 소환합니다.",
+    abilitySummary: "혼령 방출로 표식을 남기거나 잠식시키고, 빙의로 대상의 밤 행동을 막으며 그 라운드 악마팀으로 셉니다. 신출귀몰은 혼령 표식을 수거해 다음 밤 시체를 소환합니다.",
     demonTeam: true,
     night: { actionType: "malen_release", label: "혼령 방출", prompt: "혼령으로 처치할 대상을 고르세요.", excludeSelf: true, kind: "kill" },
     extraNights: [
       { actionType: "malen_possess", label: "빙의", prompt: "빙의할 대상을 고르세요. 그 밤 행동을 못 하고 악마팀으로 셈됩니다.", excludeSelf: true },
+      { actionType: "malen_elusive", label: "신출귀몰", prompt: "무대의 혼령 표식을 수거해 다음 밤 시체를 소환합니다. (1회, 대상 없음)", self: true },
     ],
   },
   besto: {
@@ -453,7 +454,7 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
     { kind: "패시브", name: "악령 마야", text: "매 밤 한 명에게 빙의해 그 밤 행동을 막고, 다음 밤 마비를 남기며 악마팀 카운트로 셉니다. 마야가 말렌에게 빙의하면 그 밤 모든 효과를 무시합니다.", actionType: "malen_possess", status: "live" },
     { kind: "특수 패시브", name: "악담", text: "탈락자가 생기면 혼을 생성하고, 혼이 2개 쌓이면 시체와 악마팀 카운트로 바뀝니다.", status: "live" },
     { kind: "능력", name: "혼령 방출", text: "1회차에는 혼령 표식을 남기고, 표식이 있는 대상을 다시 방출하면 영에게 잠식되어 탈락 + 그 투표가치가 말렌에게 조공됩니다.", actionType: "malen_release", status: "live" },
-    { kind: "능력2", name: "신출귀몰", text: "혼령 표식을 수거해 다음 밤 시체를 소환합니다. 1회성입니다.", status: "planned" },
+    { kind: "능력2", name: "신출귀몰", text: "혼령 표식을 수거해 다음 밤 시체를 소환합니다. 1회성입니다.", actionType: "malen_elusive", status: "live" },
   ],
   besto: [
     { kind: "패시브", name: "두 번째 자아", text: "밤마다 솔과 하베스토 판정을 바꿉니다. 조사, 투표가치, 의심 지목 조건을 흔듭니다.", actionType: "besto_shift", status: "live" },
