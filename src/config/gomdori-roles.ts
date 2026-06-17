@@ -348,7 +348,8 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     night: { actionType: "luru_charm", label: "영혼을 만지는 음색", prompt: "매료해 처형 투표를 양도받을 대상을 고르세요.", excludeSelf: true },
     extraNights: [
       { actionType: "luru_sonata", label: "소나타", prompt: "아름다운 영혼을 위한 소나타 — 전원의 부정 효과를 씻고 그 밤 무적이 됩니다. (매료 3 필요, 대상 없음)", self: true },
-      { actionType: "luru_score", label: "악보 교체", prompt: "악보 교체(자투) — 당신의 투표가치가 +1 됩니다. (1회, 대상 없음)", self: true },
+      { actionType: "luru_score", label: "악보 교체(자투)", prompt: "악보 교체(자투) — 당신의 투표가치가 +1 됩니다. (1회, 대상 없음)", self: true },
+      { actionType: "luru_mute", label: "악보 교체(무투)", prompt: "악보 교체(무투) — 다음 아침의 처형·찬반 투표를 2배 행사합니다. (1회, 대상 없음)", self: true },
     ],
   },
   // --- W6 v1 중립 ---
@@ -435,7 +436,8 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
   luru: [
     { kind: "패시브", name: "아름다운 영혼을 위한 소나타", text: "매료 3명 이상이면 즉시 연주가 시작되어 전원을 정화하고, 그 밤 루루를 무적으로 만듭니다.", actionType: "luru_sonata", status: "live" },
     { kind: "능력", name: "영혼을 만지는 음색", text: "대상을 매료해 처형 투표 권한을 루루에게 양도시킵니다.", actionType: "luru_charm", status: "live" },
-    { kind: "능력2", name: "악보 교체", text: "자투 악보로 자신의 투표가치를 +1 올립니다. 1회성입니다.", actionType: "luru_score", status: "live" },
+    { kind: "능력2", name: "악보 교체 (자투)", text: "자투 악보로 자신의 투표가치를 +1 올립니다. 1회성입니다.", actionType: "luru_score", status: "live" },
+    { kind: "능력2", name: "악보 교체 (무투)", text: "무투 악보로 다음 아침의 처형·찬반 투표를 2배 행사합니다. 1회성입니다.", actionType: "luru_mute", status: "live" },
   ],
   demon: [
     { kind: "패시브", name: "사탄의 마", text: "처치 성공 시 자신을 제외한 전원의 투표가치가 -1 내려갑니다(악마 투표 독점 — 마을은 표로 악마를 처형할 수 없습니다). 생존 천사팀 전체의 투표가치가 0이 되면 모든 조사가 '악마'로 판정됩니다.", status: "live" },
