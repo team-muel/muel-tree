@@ -169,11 +169,17 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
   const abilities = buildAbilities(role, myPlayer?.userId);
 
   // 멀티타깃 지정 수 — manifest(maxTargets)에서만 끌어온다. 직업/숫자 하드코딩 없이 재사용.
+  // 동적 상한(maxTargetsPerDay)은 dayNumber 로 성장(팬텀 어둠이 내린 도시 = 2 + (day-1)). dayNumber
+  // 기반 하한 근사라 백엔드 실제 상한 이하만 허용 → 과대 선택 거부 없음(안전).
   const nightMeta = role ? roleMeta(role) : null;
+  const dayIdx = Math.max(0, (dayNumber ?? 1) - 1);
+  const dynMax = (m?: { maxTargets?: number; maxTargetsPerDay?: number }) =>
+    m?.maxTargets ? m.maxTargets + (m.maxTargetsPerDay ?? 0) * dayIdx : undefined;
   const maxTargetsByAction: Record<string, number> = {};
-  if (nightMeta?.night?.maxTargets) maxTargetsByAction[nightMeta.night.actionType] = nightMeta.night.maxTargets;
+  { const v = dynMax(nightMeta?.night); if (v) maxTargetsByAction[nightMeta!.night!.actionType] = v; }
   for (const ex of nightMeta?.extraNights ?? []) {
-    if (ex.maxTargets) maxTargetsByAction[ex.actionType] = ex.maxTargets;
+    const v = dynMax(ex);
+    if (v) maxTargetsByAction[ex.actionType] = v;
   }
   const maxTargetsFor = (actionType: string) => maxTargetsByAction[actionType] ?? 1;
 

@@ -7,6 +7,7 @@
  */
 
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
+import { submitAction } from "@/lib/game/api";
 import { MOOD } from "@/config/design-tokens";
 import { eventLines } from "@/config/gomdori-events";
 import { resolveMyStatusEffects } from "@/config/status-effects";
@@ -36,6 +37,18 @@ const PERSONAL_TONE_CLS: Record<string, string> = {
 
 export function DayPhase({ match, players, events, myPlayer, gameJwt, phaseEndsAt }: DayPhaseProps) {
   const [renderAliveDeaths, setRenderAliveDeaths] = useState(true);
+  // 팬텀 영면 낮 발동: 쌓아둔 영면을 처형 시간에 일괄 처치(백엔드 즉시 처리). 생존 팬텀 전용.
+  const [reapBusy, setReapBusy] = useState(false);
+  const [reapDone, setReapDone] = useState(false);
+  const canReap = myPlayer?.alive && myPlayer?.role === "phantom";
+  const triggerReap = async () => {
+    if (!myPlayer) return;
+    setReapBusy(true);
+    try {
+      await submitAction(match.id, "phantom_reap", null, gameJwt);
+      setReapDone(true);
+    } catch { /* 영면 없음 등 — 무시 */ } finally { setReapBusy(false); }
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => setRenderAliveDeaths(false), 600);
@@ -159,6 +172,20 @@ export function DayPhase({ match, players, events, myPlayer, gameJwt, phaseEndsA
               {l.text}
             </div>
           ))}
+        </div>
+      ) : null}
+
+      {canReap ? (
+        <div className="mx-1 mb-1 mt-2 flex items-center justify-between rounded-xl border border-violet-300/20 bg-violet-500/10 px-3 py-2 text-xs text-violet-100">
+          <span>영면 발동 — 쌓아둔 영면 대상을 지금(처형 시간) 일괄 처치합니다.</span>
+          <button
+            type="button"
+            disabled={reapBusy || reapDone}
+            onClick={() => void triggerReap()}
+            className="ml-3 shrink-0 rounded-lg border border-violet-300/40 bg-violet-400/15 px-3 py-1.5 font-semibold text-violet-50 transition hover:bg-violet-400/25 disabled:opacity-40"
+          >
+            {reapDone ? "발동 완료" : reapBusy ? "발동 중…" : "영면 발동"}
+          </button>
         </div>
       ) : null}
 
