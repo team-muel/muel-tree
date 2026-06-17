@@ -28,6 +28,9 @@ export interface GomdoriNightAction {
   // dayNumber 기반 하한 근사 — 추가 밤(일식·침묵의 밤)으로 실제 상한이 더 커질 수 있으나 백엔드가
   // 실제 상한을 강제하므로 과대 선택→거부가 아니라, UI 가 항상 실제 이하만 허용(안전).
   maxTargetsPerDay?: number;
+  // 본인 동적 보너스를 상한에 더한다(로건 부서진 펜던트 3+ → +2). 값은 myPlayer.targetBonus
+  // (뷰 target_bonus, 본인 전용)에서 온다. 엔진 ActiveAbility.targetCountCounter 와 짝.
+  maxTargetsSelfBonus?: boolean;
 }
 
 export interface GomdoriRoleMeta {
@@ -233,7 +236,7 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     passive: "부서진 펜던트: 시작 시 악마와 접선하고 악마팀에 지워지지 않는 펜던트 효과를 남깁니다.",
     abilitySummary: "네 안에 없는 것: 대상이 가장 가까운 밤에 발동하는 능력 효과를 소멸시킵니다(표식은 쓸 때까지 남습니다).",
     demonTeam: true,
-    night: { actionType: "logen_nullify", label: "네 안에 없는 것", prompt: "다음 능력을 소멸시킬 대상을 고르세요.", excludeSelf: true },
+    night: { actionType: "logen_nullify", label: "네 안에 없는 것", prompt: "다음 능력을 소멸시킬 대상을 고르세요(펜던트 3+ 시 여러 명).", excludeSelf: true, maxTargets: 1, maxTargetsSelfBonus: true },
   },
   ellen: {
     label: "엘런",

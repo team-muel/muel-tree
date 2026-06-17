@@ -173,8 +173,10 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
   // 기반 하한 근사라 백엔드 실제 상한 이하만 허용 → 과대 선택 거부 없음(안전).
   const nightMeta = role ? roleMeta(role) : null;
   const dayIdx = Math.max(0, (dayNumber ?? 1) - 1);
-  const dynMax = (m?: { maxTargets?: number; maxTargetsPerDay?: number }) =>
-    m?.maxTargets ? m.maxTargets + (m.maxTargetsPerDay ?? 0) * dayIdx : undefined;
+  // 본인 동적 보너스(로건 부서진 펜던트 3+ → +2). 뷰 target_bonus(본인 전용)에서 온다.
+  const selfTargetBonus = myPlayer?.targetBonus ?? 0;
+  const dynMax = (m?: { maxTargets?: number; maxTargetsPerDay?: number; maxTargetsSelfBonus?: boolean }) =>
+    m?.maxTargets ? m.maxTargets + (m.maxTargetsPerDay ?? 0) * dayIdx + (m.maxTargetsSelfBonus ? selfTargetBonus : 0) : undefined;
   const maxTargetsByAction: Record<string, number> = {};
   { const v = dynMax(nightMeta?.night); if (v) maxTargetsByAction[nightMeta!.night!.actionType] = v; }
   for (const ex of nightMeta?.extraNights ?? []) {

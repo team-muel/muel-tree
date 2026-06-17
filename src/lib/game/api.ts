@@ -122,6 +122,11 @@ export type PlayerSummary = {
   isAi?: boolean;
   /** AI 프로바이더 — 'chatgpt' | 'gemini' | 'claude'. AI 토큰 브랜드/라벨에 쓰인다. */
   aiProvider?: string | null;
+  /**
+   * 본인 전용 동적 멀티타깃 보너스(뷰 target_bonus) — 로건 부서진 펜던트 3+ 시 +2 등.
+   * 타인 행은 null(능력 한도는 비밀). NightPhase 가 능력 지정 한도에 더한다.
+   */
+  targetBonus?: number;
 };
 
 export async function resolveMatch(

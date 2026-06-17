@@ -700,5 +700,6 @@ function mapPlayerRow(row: Record<string, unknown>): PlayerSummary {
     circleChat: row.circle_chat === true,
     isAi: row.is_ai === true,
     aiProvider: typeof row.ai_provider === "string" ? row.ai_provider : null,
+    targetBonus: typeof row.target_bonus === "number" ? row.target_bonus : 0,
   };
 }
