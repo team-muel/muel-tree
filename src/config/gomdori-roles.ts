@@ -105,8 +105,8 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     roster: "demon",
     faction: "demon",
     reveal: "만악의 근원, 대악마. 처치하고, 메피스토 낙인으로 한 명의 정체를 뒤바꿉니다.",
-    passive: "사탄의 마: 처치 성공 시 자신을 제외한 전원의 투표가치 -1 — 마을은 표로 악마를 처형할 수 없습니다(투표 독점). 천사팀 전체 투표가치가 0이 되면 모든 조사가 '악마'로 판정됩니다. 메피스토 낙인으로 직업을 재배정합니다.",
-    abilitySummary: "처치로 한 명을 제거하며 전원의 투표가치를 깎고(사탄의 마), 메피스토 낙인으로 대상의 직업을 비밀리에 재배정합니다.",
+    passive: "사탄의 마: 처치 성공 시 자신을 제외한 전원의 투표가치 -1 — 마을은 표로 악마를 처형할 수 없습니다(투표 독점). 생존 천사팀 전체의 투표가치가 0 이하로 떨어지면 모든 조사·취급 효과가 '악마'로 판정되어 카운트와 승리 판정에도 자동 반영됩니다(살아있는 대악마가 영역을 유지하는 동안). 메피스토 낙인으로 직업을 재배정합니다.",
+    abilitySummary: "처치로 한 명을 제거하며 전원의 투표가치를 깎고(사탄의 마 — 천사팀 0 시 전 효과·승리에서도 악마 판정), 메피스토 낙인으로 대상의 직업을 비밀리에 재배정합니다.",
     demonTeam: true,
     night: {
       actionType: "demon_kill",
@@ -438,7 +438,7 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
     { kind: "능력2", name: "악보 교체", text: "자투 악보로 자신의 투표가치를 +1 올립니다. 1회성입니다.", actionType: "luru_score", status: "live" },
   ],
   demon: [
-    { kind: "패시브", name: "사탄의 마", text: "처치 성공 시 자신을 제외한 전원의 투표가치가 -1 내려갑니다(악마 투표 독점 — 마을은 표로 악마를 처형할 수 없습니다). 생존 천사팀 전체의 투표가치가 0이 되면 모든 조사가 '악마'로 판정됩니다.", status: "live" },
+    { kind: "패시브", name: "사탄의 마", text: "처치 성공 시 자신을 제외한 전원의 투표가치가 -1 내려갑니다(악마 투표 독점 — 마을은 표로 악마를 처형할 수 없습니다). 생존 천사팀 전체의 투표가치가 0 이하로 떨어지면 모든 조사·취급 효과가 '악마' 로 판정되어 카운트와 승리 판정에도 자동 반영됩니다(살아있는 대악마가 영역을 유지하는 동안).", status: "live" },
     { kind: "특수 패시브", name: "메피스토의 낙인", text: "투표 대상에게 낙인을 통지하고, 대악마가 직업 삭제와 새 천사 직업 배정을 일으킵니다.", actionType: "daeakma_brand", status: "live" },
     { kind: "능력", name: "만악의 근원 / 감시", text: "대상을 탈락시키고, 낙인 적용자가 있으면 감시가 추가됩니다.", actionType: "demon_kill", status: "partial" },
     { kind: "능력2", name: "압도적인 존재감", text: "자신을 제외한 전원을 압도해 그 밤 능력을 봉인합니다. 1회성입니다.", actionType: "daeakma_dominion", status: "live" },
