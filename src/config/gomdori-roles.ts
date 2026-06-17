@@ -418,8 +418,8 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
     { kind: "능력2", name: "자유로운 새", text: "탈락자 한 명을 추가로 되살립니다. 1회성입니다.", actionType: "helen_freebird", status: "live" },
   ],
   uno: [
-    { kind: "패시브", name: "군인의 사명", text: "악마 효과를 1회 제거할 수 있는 사명 효과를 가집니다.", status: "partial" },
-    { kind: "능력", name: "투쟁", text: "대상 소속 카운트 +1을 부여합니다. 우노는 명예로 천사팀 카운트 +1과 투표가치 +10을 갖습니다 — 이 투표가치는 사탄의 마(-1)를 뚫고 살아남아, 악마가 투표를 독점해도 우노만은 표를 행사할 수 있습니다.", actionType: "uno_struggle", status: "live" },
+    { kind: "패시브", name: "군인의 사명", text: "투쟁 2회로 충전된 대상은 악마 효과 1회를 제거합니다.", status: "live" },
+    { kind: "능력", name: "투쟁", text: "대상 소속 카운트 +1과 사명 충전 +1을 부여합니다. 우노는 명예로 천사팀 카운트 +1과 투표가치 +10을 갖습니다 — 이 투표가치는 사탄의 마(-1)를 뚫고 살아남아, 악마가 투표를 독점해도 우노만은 표를 행사할 수 있습니다.", actionType: "uno_struggle", status: "live" },
     { kind: "능력2", name: "용맹함", text: "자신을 정화하고 전원에게 투쟁을 발동합니다. 우노가 투표한 대상은 사망 기록과 소속이 공개·처형되고, 천사를 죽이면 우노가 다음 밤 봉인됩니다. 1회성입니다.", actionType: "uno_valor", status: "live" },
   ],
   arthur: [
