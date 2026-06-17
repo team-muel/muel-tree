@@ -189,6 +189,22 @@ export const GOMDORI_EVENT_COPY: Record<string, GomdoriEventCopy> = {
     audience: "personal", tone: "good", icon: "✨",
     line: () => "초신성이 당신의 고통을 대신 받아갔습니다 — 걸려 있던 효과가 씻겼습니다.",
   },
+
+  // ── T2/T0/T3 신규 ───────────────────────────────────────────
+  // 도르단 잠입 수사 — 관찰 대상이 그 밤 탈락 → 불심검문(그 밤 부정효과 무시).
+  stakeout_triggered: {
+    audience: "personal", tone: "good", icon: "🕵️",
+    line: () => "불심검문 발동 — 관찰하던 대상이 탈락해 그 밤 부정 효과를 모두 무시했습니다.",
+  },
+  // 하브레터스 상호추리 — 적중/빗나감.
+  deduce_hit: {
+    audience: "personal", tone: "good", icon: "🎯",
+    line: (p, n) => `상호추리 적중 — ${n(p.target)}은(는) 악마. 그 밤 악마 효과에 면역되었습니다.`,
+  },
+  deduce_miss: {
+    audience: "personal", tone: "info", icon: "🌫️",
+    line: (p, n) => `상호추리 빗나감 — ${n(p.target)}은(는) 악마가 아니었습니다.`,
+  },
 };
 
 export type GomdoriEventLine = { id: string; icon: string; tone: GomdoriEventTone; text: string };
