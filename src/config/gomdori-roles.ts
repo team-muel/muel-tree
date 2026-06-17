@@ -133,15 +133,19 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     label: "라이너",
     title: "백호의 소환자",
     faction: "angel",
-    reveal: "수호신 백호의 소환자. 백호를 소환해 천사팀 카운트를 늘려 마을을 지킵니다.",
-    passive: "백호: 소환하면 천사팀 카운트가 늘어납니다(소환 전에는 미보유). canon 은 +3, v1 은 축약된 보너스입니다.",
-    abilitySummary: "백호 소환: 한 번 발동해 천사팀 카운트를 영구히 늘립니다(1회).",
+    reveal: "수호신 백호의 소환자. 백호 소환으로 천사팀 카운트를 늘리고, 강한 의지로 대상을 관찰해 백호의 거친 포효를 충전합니다.",
+    passive: "수호신 백호: 1회 소환으로 천사팀 카운트 +3을 영구 획득(생존 무관). 강한 의지 2회 누적 시 거친 포효 발동 토대(거친 포효 자동 발동은 후속).",
+    abilitySummary: "백호 소환(1회): 천사팀 카운트 +3. 강한 의지: 한 명을 관찰하고 강한 의지 +1(같은 대상 연속 지목 불가). 관찰 대상이 그 밤 탈락하면 강한 의지 +2 추가. 그날의 저항(1회, 첫 밤 불가): 백호 한 마리 추가 소환 — 천사팀 카운트 +1 + 강한 의지 +1.",
     night: {
       actionType: "rainer_summon",
       label: "백호 소환",
       prompt: "백호를 소환해 천사팀 카운트를 늘립니다. (1회, 대상 없음)",
       self: true,
     },
+    extraNights: [
+      { actionType: "rainer_resolve", label: "강한 의지", prompt: "관찰할 대상을 고르세요(같은 대상 연속 지목 불가). 강한 의지 +1, 관찰 대상이 그 밤 탈락하면 추가 +2.", excludeSelf: true },
+      { actionType: "rainer_resistance", label: "그날의 저항", prompt: "그날의 저항 — 백호 한 마리 추가 소환합니다. 천사팀 카운트 +1, 강한 의지 +1. (1회)", self: true },
+    ],
   },
   romaz: {
     label: "로마즈",
@@ -395,7 +399,9 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
     { kind: "능력", name: "용의자 색출", text: "대상에게 +5 투표가치 / +10 의심가치를 받는 표로 가산합니다. 다음 집계에 반영됩니다.", actionType: "romaz_suspect", status: "live" },
   ],
   rainer: [
-    { kind: "패시브", name: "백호", text: "백호 소환 시 천사팀 카운트 +3을 얻고, 탈락 뒤에도 사후 지속 +3을 남깁니다. 1회성입니다.", actionType: "rainer_summon", status: "live" },
+    { kind: "패시브", name: "수호신 백호", text: "백호 소환 시 천사팀 카운트 +3을 얻고, 탈락 뒤에도 사후 지속 +3을 남깁니다. 1회성입니다.", actionType: "rainer_summon", status: "live" },
+    { kind: "능력", name: "강한 의지", text: "대상을 관찰하고 강한 의지 +1을 얻습니다(같은 대상 연속 지목 불가). 관찰 대상이 그 밤 탈락하면 강한 의지 +2가 추가됩니다.", actionType: "rainer_resolve", status: "live" },
+    { kind: "능력2", name: "그날의 저항", text: "백호 한 마리를 추가 소환합니다 — 천사팀 카운트 +1 + 강한 의지 +1. 1회성이며 첫 밤에는 발동되지 않습니다.", actionType: "rainer_resistance", status: "live" },
   ],
   dordan: [
     { kind: "패시브", name: "침착한 탐정", text: "누군가 탈락하면 투표 대상을 범인으로 지목하고, 범인이 그날 밤 지정한 대상이 도르단에게 비공개로 알려집니다.", status: "live" },
