@@ -118,6 +118,7 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     extraNights: [
       { actionType: "daeakma_brand", label: "메피스토 낙인", prompt: "낙인을 찍을 대상을 고르세요. 그 직업이 삭제되고 다른 정체로 비밀리에 재배정됩니다.", excludeSelf: true },
       { actionType: "daeakma_dominion", label: "압도적 존재감", prompt: "압도적 존재감 — 이번 밤 전원의 능력을 봉인합니다. (1회, 대상 없음)", self: true },
+      { actionType: "demon_deduce", label: "역추리", prompt: "삶이 있는 곳으로 — 하브레터스로 의심되는 대상을 지목합니다. 적중하면 하브레터스가 다음 처치로 탈락하며 치료 효과를 무시합니다.", excludeSelf: true },
     ],
   },
   helper: {
@@ -276,10 +277,10 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     label: "하브레터스",
     title: "치료자",
     faction: "angel",
-    reveal: "생명의 언약을 맺는 치료자. 매일 밤 한 명을 보호할 수 있습니다.",
-    passive: "임종 선언/소명: 원본에서는 치료 실패와 소명 쿨다운이 연결됩니다. v1은 밤 보호에 집중합니다.",
-    abilitySummary: "치료하기: 오늘 밤 공격받을 수 있는 사람을 보호합니다. 삶이 있는 곳으로: 의심 가는 악마를 지목 — 적중하면 그 밤 악마 효과에 면역됩니다.",
-    night: { actionType: "doctor_heal", label: "치료하기", prompt: "오늘 밤 공격으로부터 보호할 사람을 고르세요. (자기 자신 포함)" },
+    reveal: "생명의 언약을 맺는 치료자. 매일 밤 한 명을 보호합니다. 삶이 있는 곳으로 — 악마와 서로 정체를 추리하는 위험한 양방향 게임을 펼칩니다.",
+    passive: "임종 선언/소명: 그 라운드 누군가 탈락하면 자기 투표가치 -1 + 천사팀 카운트 +1 + 부정효과 정화 + 소명 3일 쿨다운(생명의 언약 성공 시 -1일). 삶이 있는 곳으로: 매 밤 양방향 추리 — 하브 적중 시 그 밤 악마 효과 면역, 악마 적중 시 다음 처치(치료 무시)로 하브 탈락.",
+    abilitySummary: "치료하기: 오늘 밤 공격으로부터 보호합니다. 성공 시 투표가치 +3 + 소명 쿨다운 -1. 삶이 있는 곳으로: 의심 가는 악마를 지목 — 적중하면 그 밤 악마 효과 면역.",
+    night: { actionType: "doctor_heal", label: "치료하기", prompt: "오늘 밤 공격으로부터 보호할 사람을 고르세요. (자기 자신 포함) 성공 시 투표가치 +3 + 소명 쿨다운 -1." },
     extraNights: [
       { actionType: "habreterus_deduce", label: "삶이 있는 곳으로", prompt: "악마라 의심되는 대상을 지목하세요. 적중하면(악마 처치자) 그 밤 받은 부정 효과를 모두 무시합니다.", excludeSelf: true },
     ],
@@ -411,9 +412,9 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
     { kind: "능력2", name: "잠입 수사", text: "대상을 밤 동안 관찰합니다. 탈락과 연결되면 불심검문이 발동해 그 밤 부정 효과를 무시합니다.", actionType: "dordan_infiltrate", status: "live" },
   ],
   habreterus: [
-    { kind: "패시브", name: "임종 선언", text: "치료 실패로 탈락한 날 투표가치가 내려가고 소명 효과가 남습니다.", status: "planned" },
-    { kind: "능력", name: "생명의 언약", text: "대상을 치료합니다. 그 밤 실제 공격을 막아내면(소명) 하브레터스의 투표가치가 +3 오릅니다.", actionType: "doctor_heal", status: "live" },
-    { kind: "능력2", name: "삶이 있는 곳으로", text: "악마라 의심되는 대상을 지목합니다. 적중하면 그 밤 악마 효과에 면역됩니다. 악마측 역추리는 후속입니다.", actionType: "habreterus_deduce", status: "partial" },
+    { kind: "패시브", name: "임종 선언", text: "그 라운드 누군가 탈락하면 하브레터스의 투표가치가 -1, 천사팀 카운트가 +1, 부정 효과가 모두 씻기고 소명 3일 쿨다운에 들어갑니다. 생명의 언약 성공 시 쿨다운이 추가로 -1 단축됩니다.", status: "live" },
+    { kind: "능력", name: "생명의 언약", text: "대상을 치료합니다. 그 밤 실제 공격을 막아내면(소명) 하브레터스의 투표가치가 +3 오르고 소명 대기가 -1일 단축됩니다.", actionType: "doctor_heal", status: "live" },
+    { kind: "능력2", name: "삶이 있는 곳으로", text: "악마라 의심되는 대상을 지목합니다. 적중하면(악마 처치자) 그 밤 받은 부정 효과를 모두 무시합니다. 악마측은 대악마의 역추리로 하브레터스를 적중시키면 치료를 무시하고 다음 처치로 탈락시킵니다.", actionType: "habreterus_deduce", status: "live" },
   ],
   mizlet: [
     { kind: "패시브", name: "행복을 파는 가게", text: "탈락자가 생존자보다 많아지면 가장 최근 탈락 2명을 복귀(소멸·부활불가 무시)시키고 미즐렛은 탈락합니다. 1회성 역전 패시브입니다.", status: "live" },
@@ -450,6 +451,7 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
     { kind: "특수 패시브", name: "메피스토의 낙인", text: "투표 대상에게 낙인을 통지하고, 대악마가 직업 삭제와 새 천사 직업 배정을 일으킵니다.", actionType: "daeakma_brand", status: "live" },
     { kind: "능력", name: "만악의 근원 / 감시", text: "대상을 탈락시키고, 낙인 적용자가 있으면 감시가 추가됩니다.", actionType: "demon_kill", status: "partial" },
     { kind: "능력2", name: "압도적인 존재감", text: "자신을 제외한 전원을 압도해 그 밤 능력을 봉인합니다. 1회성입니다.", actionType: "daeakma_dominion", status: "live" },
+    { kind: "능력2", name: "역추리 (삶이 있는 곳으로)", text: "하브레터스로 의심되는 대상을 지목합니다. 적중하면 그 밤 치료 효과를 무시하고 다음 처치로 하브레터스를 탈락시킵니다.", actionType: "demon_deduce", status: "live" },
   ],
   phantom: [
     { kind: "패시브", name: "침묵의 밤", text: "밤 종료 시 능력 사용 가능 밤을 한 번 더 열고, 생존 천사팀 카운트를 +1 보상합니다. 팬텀과 조력자는 접선할 수 없지만 서로의 정체와 직업은 통지됩니다.", actionType: "phantom_silentnight", status: "live" },
