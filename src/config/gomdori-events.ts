@@ -65,6 +65,23 @@ export const GOMDORI_EVENT_COPY: Record<string, GomdoriEventCopy> = {
     audience: "public", tone: "info", icon: "🏁",
     line: () => "게임 종료",
   },
+  // 우노 용맹함 — 투표 대상의 소속을 마을 전체에 공개.
+  role_revealed: {
+    audience: "public", tone: "info", icon: "🎖️",
+    line: (p, n) => {
+      const f = p.faction === "demon" ? "악마팀" : p.faction === "neutral" ? "중립" : "천사";
+      return `${n(p.user_id)} 님의 소속이 드러났다 — ${f}`;
+    },
+  },
+  // 세이카 '자신만 아플 거야' — 소멸 이틀 뒤 악마팀 전원 공개.
+  demons_revealed: {
+    audience: "public", tone: "danger", icon: "🩸",
+    line: (p, n) => {
+      const ids = Array.isArray(p.demons) ? (p.demons as unknown[]) : [];
+      const names = ids.map((id) => n(id)).filter((x) => x && x !== "누군가").join(", ");
+      return names ? `세이카의 희생이 악마팀의 정체를 드러냈다 — ${names}` : "악마팀의 정체가 드러났다";
+    },
+  },
 
   // ── 당사자 전용: 어젯밤 나에게 일어난 일 ────────────────────────
   silenced: {
@@ -154,6 +171,23 @@ export const GOMDORI_EVENT_COPY: Record<string, GomdoriEventCopy> = {
   circle_expired: {
     audience: "personal", tone: "warn", icon: "🌫️",
     line: () => "진실을 가리는 암흑이 걷혔습니다 — 악마와의 대화가 끊겼습니다.",
+  },
+
+  // ── T1 배치2 신규 ───────────────────────────────────────────
+  // 우노 명예 실추 — 천사 동료를 벤 자기 처벌(다음 밤 봉인).
+  honor_disgraced: {
+    audience: "personal", tone: "warn", icon: "🎖️",
+    line: () => "명예 실추 — 동료를 벤 대가로 다음 밤 당신의 행동이 막힙니다.",
+  },
+  // 가인 약간의 위선 — 대상의 다음 능력 한 밤 연기.
+  hypocrisy_delayed: {
+    audience: "personal", tone: "warn", icon: "⏳",
+    line: () => "약간의 위선에 걸렸습니다 — 당신의 다음 능력이 한 밤 미뤄집니다.",
+  },
+  // 세이카 초신성 흡수 — 대상의 부여 효과를 세이카가 대신 받아 정화.
+  absorbed: {
+    audience: "personal", tone: "good", icon: "✨",
+    line: () => "초신성이 당신의 고통을 대신 받아갔습니다 — 걸려 있던 효과가 씻겼습니다.",
   },
 };
 
