@@ -302,12 +302,12 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     label: "헬렌",
     title: "황금빛 수면",
     faction: "angel",
-    reveal: "황금빛 수면의 천사. 생존자를 재워 지키거나, 탈락한 한 명을 되살립니다.",
-    passive: "행복 쉼터: 원본에서는 전원에게 존재가 알려지고 수면 대상과 영혼 기억을 공유합니다.",
-    abilitySummary: "황금빛 수면: 생존자를 재우면 그 밤 죽음·부정효과로부터 보호합니다(행동은 봉인). 탈락자에게 쓰면 되살립니다(1회).",
+    reveal: "황금빛 수면의 천사. 생존자를 재워 지키고, 한 번 잠들었던 자는 죽음 이후에도 다시 재워 되살릴 수 있습니다.",
+    passive: "행복 쉼터/추억을 간직하는 법: 황금빛 수면을 받은 자는 영혼이 기억되어, 탈락 후에도 같은 헬렌의 수면을 다시 받을 수 있습니다. 추억된 탈락자에게 수면을 발동하면 그 자리에서 부활합니다(소멸은 부활 불가).",
+    abilitySummary: "황금빛 수면: 생존자를 재우면 그 밤 죽음·부정효과로부터 보호합니다(행동은 봉인). 한 번 잠들었던 추억된 탈락자에게 다시 쓰면 부활시킵니다(canon 수면으로 깨면 복귀). 자유로운 새(1회): 탈락한 한 명을 추가로 되살립니다.",
     night: { actionType: "helen_revive", label: "수면(부활)", prompt: "수면으로 되살릴 탈락자를 고르세요. (1회)" },
     extraNights: [
-      { actionType: "helen_sleep", label: "황금빛 수면", prompt: "재워서 지킬 생존자를 고르세요. 그 밤 죽음·부정효과를 막지만 행동은 봉인됩니다." },
+      { actionType: "helen_sleep", label: "황금빛 수면", prompt: "재워서 지킬 대상을 고르세요. 처음 잠든 자는 영혼이 기억되어 이후 탈락해도 다시 재울 수 있고, 추억된 탈락자는 수면이 발동되면 부활합니다." },
       { actionType: "helen_freebird", label: "자유로운 새", prompt: "자유로운 새 — 탈락한 한 명을 추가로 되살립니다. (1회)", targetDead: true },
     ],
   },
@@ -422,8 +422,8 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
     { kind: "능력2", name: "고급 와인", text: "전원의 부정 효과를 제거합니다. 디저트를 받지 못한 대상은 투표가치가 내려갑니다. 1회성입니다.", actionType: "mizlet_wine", status: "live" },
   ],
   helen: [
-    { kind: "패시브", name: "행복 쉼터", text: "시작 시 전원에게 헬렌 존재를 알리고, 수면 대상과 영혼 기억을 공유합니다.", status: "planned" },
-    { kind: "능력", name: "황금빛 수면", text: "대상을 수면 상태로 만들어 부정 효과를 막고 행동을 보류합니다.", actionType: "helen_sleep", status: "live" },
+    { kind: "패시브", name: "행복 쉼터 / 추억을 간직하는 법", text: "황금빛 수면을 받은 자는 영혼이 기억되어 탈락 후에도 다시 수면을 받을 수 있으며, 그때 발동되면 부활합니다. 소멸(annihilated)은 부활 불가입니다.", status: "live" },
+    { kind: "능력", name: "황금빛 수면", text: "대상을 수면 상태로 만들어 부정 효과·죽음을 막고 영혼을 기억시킵니다. 한 번 기억된 자는 탈락 후에도 다시 잠들어 부활할 수 있습니다.", actionType: "helen_sleep", status: "live" },
     { kind: "능력2", name: "자유로운 새", text: "탈락자 한 명을 추가로 되살립니다. 1회성입니다.", actionType: "helen_freebird", status: "live" },
   ],
   uno: [
