@@ -23,6 +23,7 @@ export interface GomdoriNightAction {
   excludeSelf?: boolean; // 자신 제외 대상
   kind?: "kill"; // 처치형(악마 처치/악몽/혼령 방출 등) — demon 블록 처치-UI 판정
   self?: boolean; // 자기 대상(변신/일식) — 대상 그리드 없이 버튼만, target=null 제출
+  maxTargets?: number; // 멀티타깃 지정 수(아서 잔불이 꺼지기 전에=3). 미지정/1=단일 대상.
 }
 
 export interface GomdoriRoleMeta {
@@ -298,12 +299,12 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     label: "아서",
     title: "여명의 기사",
     faction: "angel",
-    reveal: "여명의 기사. 자신은 보호막을 지니고, 매일 밤 잔불 대검으로 한 명에게 하루 무적을 부여합니다.",
-    passive: "여명의 기사: 원본에서는 탈락 면역을 갖되 결백한 천사들의 희생과 연결됩니다. v1은 자기 보호막 1회로 축약됩니다.",
-    abilitySummary: "잔불 대검: 한 명에게 하루 무적을 부여합니다. 단죄: 대상에 폭열을 새기고, 폭열된 자를 다시 베면 소멸시킵니다(부활 불가, 2회).",
-    night: { actionType: "arthur_emberblade", label: "잔불 대검", prompt: "오늘 밤 하루 무적을 부여할 대상을 고르세요.", excludeSelf: true },
+    reveal: "여명의 기사. 어떤 효과로도 밤에 탈락하지 않으며, 충전한 잔불 대검으로 타락자를 식별해 소멸시키거나 결백자를 지킵니다.",
+    passive: "여명의 기사: 밤 효과로 탈락하지 않습니다. 단 결백한 천사팀이 3명 이상 탈락하면 다음 아침 함께 탈락합니다. 결백 천사 탈락 1명당 잔불 대검이 1 충전되고, 충전이 3 이상이면 위용(해오름 결백 천사 1명당 투표가치 +3)이 켜집니다.",
+    abilitySummary: "잔불이 꺼지기 전에: 대상에게 해오름을 부여해 결백/타락을 식별하고 잔불 대검을 충전합니다. 잔불 대검: 충전을 1 써서 결백자에겐 하루 무적, 타락자에겐 폭열(다시 베면 소멸). 결백/타락은 진영이 아니라 '부정 효과를 쓴 적 있는가'로 가립니다.",
+    night: { actionType: "arthur_judge", label: "잔불이 꺼지기 전에", prompt: "해오름으로 식별할 대상을 고르세요(최대 3명). 결백/타락을 통지받고 잔불 대검이 1 충전됩니다. ", excludeSelf: true, maxTargets: 3 },
     extraNights: [
-      { actionType: "arthur_judge", label: "단죄", prompt: "단죄할 대상을 고르세요. 타락자(악마팀)면 폭열을 새기고, 폭열된 타락자를 다시 단죄하면 소멸시킵니다. 결백자(천사·중립)면 해치지 않고 하루 무적을 부여합니다. (2회)", excludeSelf: true },
+      { actionType: "arthur_emberblade", label: "잔불 대검", prompt: "충전을 1 써서 한 명을 벱니다. 부정 효과를 쓴 적 있는 '타락자'면 폭열(다시 베면 소멸), 그렇지 않은 '결백자'면 하루 무적을 부여합니다. 충전이 없으면 발동되지 않습니다.", excludeSelf: true },
     ],
   },
   seika: {
@@ -402,9 +403,9 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
     { kind: "능력2", name: "용맹함", text: "전원에게 투쟁을 발동합니다. 우노가 투표한 대상은 사망 기록과 소속이 공개됩니다. 1회성입니다.", actionType: "uno_valor", status: "partial" },
   ],
   arthur: [
-    { kind: "패시브", name: "여명의 기사", text: "어떤 효과로도 탈락하지 않지만, 결백한 천사팀 탈락 조건이 쌓이면 함께 탈락합니다.", status: "partial" },
-    { kind: "능력", name: "잔불이 꺼지기 전에", text: "대상에게 해오름을 주고 잔불 대검을 충전합니다.", status: "planned" },
-    { kind: "능력2", name: "잔불 대검(단죄)", text: "결백자(천사·중립)에게는 하루 무적을 주고, 타락자(악마팀)에게는 폭열을 새깁니다. 폭열된 타락자를 다시 단죄하면 소멸합니다(부활 불가). 결백자를 단죄해도 죽지 않습니다 — 무오사살.", actionType: "arthur_judge", status: "live" },
+    { kind: "패시브", name: "여명의 기사", text: "어떤 효과로도 밤에 탈락하지 않습니다. 단 결백한 천사팀이 3명 이상 탈락하면 다음 아침 함께 탈락합니다. 결백 천사 탈락 1명당 잔불 대검 +1 충전, 충전 3 이상이면 위용(해오름 결백 천사 1명당 투표가치 +3)이 켜집니다.", status: "live" },
+    { kind: "능력", name: "잔불이 꺼지기 전에", text: "대상(최대 3명)에게 해오름을 부여해 결백/타락을 식별하고, 잔불 대검을 1 충전합니다.", actionType: "arthur_judge", status: "live" },
+    { kind: "능력2", name: "잔불 대검", text: "충전을 1 써서 한 명을 벱니다. 부정 효과를 쓴 적 있는 '타락자'에게는 폭열(다시 베면 소멸, 부활 불가), 그렇지 않은 '결백자'에게는 하루 무적. 결백/타락은 진영이 아니라 행위 이력으로 가립니다.", actionType: "arthur_emberblade", status: "live" },
   ],
   seika: [
     { kind: "패시브", name: "별이 떠오른 밤", text: "초신성을 터뜨린 다음 밤은 의심 투표를 생략하고 곧장 밤으로 넘어갑니다.", status: "live" },

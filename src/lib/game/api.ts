@@ -246,10 +246,17 @@ export async function submitAction(
   actionType: string,
   targetUserId: string | null,
   gameJwt: string,
+  // 멀티타깃(아서 잔불이 꺼지기 전에=최대 3명 등). 제네릭 — manifest 의 maxTargets 로만 분기.
+  targetUserIds?: string[],
 ): Promise<{ success: boolean; investigationResult?: string | null }> {
-  return postJson<{ matchId: string; actionType: string; targetUserId: string | null }, { success: boolean; investigationResult?: string | null }>(
+  return postJson<{ matchId: string; actionType: string; targetUserId: string | null; targetUserIds?: string[] }, { success: boolean; investigationResult?: string | null }>(
     "match-action",
-    { matchId, actionType, targetUserId },
+    {
+      matchId,
+      actionType,
+      targetUserId,
+      ...(targetUserIds && targetUserIds.length ? { targetUserIds } : {}),
+    },
     { gameJwt },
   );
 }
