@@ -101,7 +101,7 @@ function RosterStage({
     <div className="rounded-xl border border-white/[0.08] bg-black/15 px-3 pt-3 backdrop-blur-[2px]">
       <div className="flex items-baseline justify-between px-1 text-xs text-white/35">
         <span>이 채널에 모인 사람</span>
-        <span className="rounded-full border border-white/15 bg-white/[0.06] px-2.5 py-0.5 text-white/70">
+        <span className="rounded-full bg-white/[0.06] px-2.5 py-0.5 text-white/70">
           {stagePlayers.length}명
         </span>
       </div>

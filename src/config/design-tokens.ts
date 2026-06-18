@@ -33,7 +33,8 @@ export const MOOD = {
       "rounded-2xl border border-[#2b2118]/10 bg-white/55 backdrop-blur-md shadow-[0_8px_30px_rgba(80,60,20,0.10)]",
     panelStrong:
       "rounded-2xl border border-[#2b2118]/15 bg-white/70 backdrop-blur-xl shadow-[0_12px_40px_rgba(80,60,20,0.14)]",
-    chip: "border border-[#2b2118]/15 bg-white/60 text-[#5c4d3c]",
+    // 메타 칩: 테두리 없는 잔잔한 알약 — 촌스러운 테두리 알약 제거(2026-06-16 결정 유지).
+    chip: "bg-[#2b2118]/[0.05] text-[#5c4d3c]",
   },
   dark: {
     heading: "text-white",
@@ -44,7 +45,7 @@ export const MOOD = {
       "rounded-2xl border border-white/10 border-t-white/20 bg-white/[0.05] backdrop-blur-md",
     panelStrong:
       "rounded-2xl border border-white/15 border-t-white/25 bg-[#171425]/80 backdrop-blur-xl shadow-[0_0_40px_rgba(99,102,241,0.10)]",
-    chip: "border border-white/15 bg-white/[0.06] text-white/70",
+    chip: "bg-white/[0.06] text-white/70",
   },
 } as const;
 
