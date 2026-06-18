@@ -50,8 +50,9 @@ export const MOOD = {
 } as const;
 
 /**
- * 진영 색상 — angel / demon / helper / neutral.
- * 기존 키(primary·accent·bgSoft·border·ring) 유지 + 오버홀 추가:
+ * 진영 색상 — 게임 진영은 셋: 천사(amber) / 악마(rose) / 중립(violet).
+ * 조력자(helper)는 별도 진영이 아니라 *악마 진영* 소속 → demon 과 같은 rose.
+ * (도감 roster 의 '조력자' 탭은 표시 그룹일 뿐 진영이 아님.)
  *  - glow: 광휘 그림자(어둠 위에 빛). 선택/강조 순간에만.
  *  - gemDark / gemLight: 무드별 가독 강조색(라벨·심볼용).
  */
@@ -76,7 +77,19 @@ export const FACTION_COLORS = {
     gemDark: "text-rose-300",
     gemLight: "text-rose-700",
   },
+  // 조력자 = 악마 진영 → demon 과 동일 rose (별도 진영 색 아님).
   helper: {
+    primary: "text-rose-50",
+    accent: "text-rose-300",
+    bgSoft: "bg-rose-950/30",
+    border: "border-rose-400/20",
+    ring: "ring-rose-300/40",
+    glow: "shadow-[0_0_32px_rgba(251,113,133,0.30)]",
+    gemDark: "text-rose-300",
+    gemLight: "text-rose-700",
+  },
+  // 중립 = 독자 진영, violet.
+  neutral: {
     primary: "text-violet-50",
     accent: "text-violet-300",
     bgSoft: "bg-violet-950/30",
@@ -85,16 +98,6 @@ export const FACTION_COLORS = {
     glow: "shadow-[0_0_32px_rgba(196,181,253,0.28)]",
     gemDark: "text-violet-300",
     gemLight: "text-violet-700",
-  },
-  neutral: {
-    primary: "text-white/80",
-    accent: "text-white/45",
-    bgSoft: "bg-white/[0.04]",
-    border: "border-white/10",
-    ring: "ring-white/25",
-    glow: "shadow-[0_0_32px_rgba(255,255,255,0.18)]",
-    gemDark: "text-white/70",
-    gemLight: "text-[#5c4d3c]",
   },
 } as const;
 

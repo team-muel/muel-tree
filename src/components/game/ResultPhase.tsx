@@ -9,6 +9,7 @@
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
 import { roleLabel } from "@/config/gomdori-roles";
 import { GOMDORI_RULES } from "@/config/gomdori-rules";
+import { FACTION_COLORS } from "@/config/design-tokens";
 import { RoleEmblem } from "@/components/game/ui/RoleEmblem";
 import { Button } from "@/components/game/ui/Button";
 import { useState } from "react";
@@ -53,23 +54,13 @@ export function ResultPhase({ match, players, events, onLeave }: ResultPhaseProp
   const isAngelWin = winner === "angels";
   const isNeutralWin = winner === "neutral"; // 파스아 단독 승리(W6)
 
-  const bannerTone = isNeutralWin
-    ? {
-        frame: "border-violet-400/30 bg-violet-950/40 shadow-[0_0_56px_rgba(196,181,253,0.22)]",
-        accent: "text-violet-300/80",
-        title: "text-violet-100",
-      }
-    : isAngelWin
-      ? {
-          frame: "border-amber-400/30 bg-amber-950/40 shadow-[0_0_56px_rgba(252,211,77,0.22)]",
-          accent: "text-amber-300/80",
-          title: "text-amber-100",
-        }
-      : {
-          frame: "border-rose-400/25 bg-rose-950/40 shadow-[0_0_56px_rgba(251,113,133,0.24)]",
-          accent: "text-rose-300/80",
-          title: "text-rose-100",
-        };
+  // 진영 색은 토큰 단일출처(FACTION_COLORS). 천사=amber / 악마=rose / 중립=violet.
+  const winColor = FACTION_COLORS[isNeutralWin ? "neutral" : isAngelWin ? "angel" : "demon"];
+  const bannerTone = {
+    frame: `${winColor.border} ${winColor.bgSoft} ${winColor.glow}`,
+    accent: winColor.accent,
+    title: winColor.primary,
+  };
 
   const winTitle = isNeutralWin ? "파스아 단독 승리!" : isAngelWin ? "천사 진영 승리!" : "악마 진영 승리!";
 
@@ -97,19 +88,10 @@ export function ResultPhase({ match, players, events, onLeave }: ResultPhaseProp
           const faction = reveal?.final_faction ?? p.faction;
           const transformed = reveal?.changed === true;
           const factionChanged = transformed && startFaction !== faction;
-          const isDemonFaction = faction === "demon";
-          const isNeutralFaction = faction === "neutral"; // 파스아(W6)
-
-          const cardTone = isNeutralFaction
-            ? "border-violet-400/20 bg-violet-950/25"
-            : isDemonFaction
-              ? "border-rose-400/20 bg-rose-950/25"
-              : "border-amber-400/20 bg-amber-950/20";
-          const badgeTone = isNeutralFaction
-            ? "bg-violet-400/15 text-violet-300"
-            : isDemonFaction
-              ? "bg-rose-400/15 text-rose-300"
-              : "bg-amber-400/15 text-amber-200";
+          // 진영 색 토큰 단일출처. helper(조력자)는 demon 진영이라 자동으로 rose 로 매핑된다.
+          const cardColor = FACTION_COLORS[(faction ?? "angel") as keyof typeof FACTION_COLORS] ?? FACTION_COLORS.angel;
+          const cardTone = `${cardColor.border} ${cardColor.bgSoft}`;
+          const badgeTone = `${cardColor.bgSoft} ${cardColor.gemDark}`;
 
           return (
             <div
