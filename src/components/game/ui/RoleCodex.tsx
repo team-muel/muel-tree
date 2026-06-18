@@ -16,7 +16,8 @@ import { cleanRoleReveal, RoleAbilityDetails } from "@/components/game/ui/RoleAb
 const FACTION_TABS = [
   { id: "angel", label: "천사", active: "border-amber-200 text-amber-200", text: "text-amber-200" },
   { id: "demon", label: "악마", active: "border-rose-200 text-rose-200", text: "text-rose-200" },
-  { id: "helper", label: "조력자", active: "border-fuchsia-200 text-fuchsia-200", text: "text-fuchsia-200" },
+  // 조력자는 악마 진영(별도 진영 아님) → 악마 탭과 같은 rose. roster 탭은 표시 그룹일 뿐.
+  { id: "helper", label: "조력자", active: "border-rose-200 text-rose-200", text: "text-rose-200" },
   { id: "neutral", label: "중립", active: "border-violet-200 text-violet-200", text: "text-violet-200" },
 ] as const;
 
