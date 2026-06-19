@@ -12,9 +12,8 @@ import { MOOD } from "@/config/design-tokens";
 import { eventLines } from "@/config/gomdori-events";
 import { resolveMyStatusEffects } from "@/config/status-effects";
 import { GameStage } from "@/components/game/ui/GameStage";
-import { DockableChatPanel } from "@/components/game/ui/DockableChatPanel";
 import { SpectatorFeed } from "@/components/game/ui/SpectatorFeed";
-import { MatchChat } from "@/components/game/ui/MatchChat";
+import { TownChat } from "@/components/game/ui/TownChat";
 import { useState, useEffect } from "react";
 
 type DayPhaseProps = {
@@ -102,7 +101,6 @@ export function DayPhase({ match, players, events, myPlayer, gameJwt, phaseEndsA
     report?.phase_id
   );
 
-  const isDead = myPlayer && !myPlayer.alive;
   const ink = MOOD.light;
 
   // 토론 시간 조절 통지 — 채팅창 안 시스템 라인으로 표시(누가 몇 초 조절했는지).
@@ -209,37 +207,24 @@ export function DayPhase({ match, players, events, myPlayer, gameJwt, phaseEndsA
         />
       </div>
 
-      {isDead ? (
-        <DockableChatPanel matchId={match.id} title="관전 · 영혼 채팅" defaultOpen>
-          <MatchChat
-            matchId={match.id}
-            gameJwt={gameJwt}
-            myPlayer={myPlayer}
-            players={players}
-            channels={["town", "dead"]}
-            placeholder="영혼끼리 대화..."
-            emptyHint="영혼들과 대화하세요 (산 자에겐 보이지 않습니다)"
-            systemNotices={timeNotices}
-          />
-          <div className="border-t border-white/5 pt-3 text-sm text-white/55">
-            당신은 사망했습니다. 산 자들의 토론은 읽을 수만 있습니다.
-          </div>
-          <SpectatorFeed events={events} players={players} />
-        </DockableChatPanel>
-      ) : (
-        <DockableChatPanel matchId={match.id} title="마을 채팅" defaultOpen>
-          <MatchChat
-            matchId={match.id}
-            gameJwt={gameJwt}
-            myPlayer={myPlayer}
-            players={players}
-            channels={["town", "dead"]}
-            placeholder="마을 사람들과 대화..."
-            emptyHint="낮 동안 자유롭게 대화하세요"
-            systemNotices={timeNotices}
-          />
-        </DockableChatPanel>
-      )}
+      <TownChat
+        matchId={match.id}
+        gameJwt={gameJwt}
+        myPlayer={myPlayer}
+        players={players}
+        defaultOpen
+        systemNotices={timeNotices}
+        alivePlaceholder="마을 사람들과 대화..."
+        aliveEmptyHint="낮 동안 자유롭게 대화하세요"
+        deadExtra={
+          <>
+            <div className="border-t border-white/5 pt-3 text-sm text-white/55">
+              당신은 사망했습니다. 산 자들의 토론은 읽을 수만 있습니다.
+            </div>
+            <SpectatorFeed events={events} players={players} />
+          </>
+        }
+      />
     </div>
   );
 }

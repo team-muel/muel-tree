@@ -13,8 +13,7 @@ import { submitAction } from "@/lib/game/api";
 import { getGameSupabase } from "@/lib/game/client";
 import { PlayerToken } from "@/components/game/ui/PlayerToken";
 import { GameStage } from "@/components/game/ui/GameStage";
-import { DockableChatPanel } from "@/components/game/ui/DockableChatPanel";
-import { MatchChat } from "@/components/game/ui/MatchChat";
+import { TownChat } from "@/components/game/ui/TownChat";
 import { resolveMyStatusEffects } from "@/config/status-effects";
 
 type VerdictPhaseProps = {
@@ -192,35 +191,18 @@ export function VerdictPhase({ match, players, myPlayer, gameJwt, events = [] }:
         />
       </div>
 
-      {/* 최후의 반론 채팅 — 산 자는 변론/설득, 사망자는 읽기+영혼 채팅(RLS). */}
-      {myPlayer && !myPlayer.alive ? (
-        <DockableChatPanel matchId={match.id} title="관전 · 영혼 채팅" defaultOpen>
-          <MatchChat
-            matchId={match.id}
-            gameJwt={gameJwt}
-            myPlayer={myPlayer}
-            players={players}
-            channels={["town", "dead"]}
-            placeholder="영혼끼리 대화..."
-            emptyHint="영혼들과 대화하세요 (산 자에겐 보이지 않습니다)"
-          />
-        </DockableChatPanel>
-      ) : (
-        <DockableChatPanel matchId={match.id} title="마을 채팅" defaultOpen>
-          <MatchChat
-            matchId={match.id}
-            gameJwt={gameJwt}
-            myPlayer={myPlayer}
-            players={players}
-            channels={["town", "dead"]}
-            // 최후의 반론 — 발언은 처형 후보(지목된 본인)만. 나머지는 변론을 듣는다.
-            canSend={myPlayer?.userId === candidateUserId}
-            placeholder="결백을 호소하세요..."
-            disabledHint="최후의 반론 — 후보자만 발언할 수 있어요"
-            emptyHint="처형 전, 후보자의 최후의 반론을 듣는 중"
-          />
-        </DockableChatPanel>
-      )}
+      {/* 최후의 반론 채팅 — 산 자는 변론/설득(발언은 후보자만), 사망자는 읽기+영혼 채팅(RLS). */}
+      <TownChat
+        matchId={match.id}
+        gameJwt={gameJwt}
+        myPlayer={myPlayer}
+        players={players}
+        defaultOpen
+        alivePlaceholder="결백을 호소하세요..."
+        aliveEmptyHint="처형 전, 후보자의 최후의 반론을 듣는 중"
+        canSend={myPlayer?.userId === candidateUserId}
+        disabledHint="최후의 반론 — 후보자만 발언할 수 있어요"
+      />
     </div>
   );
 }
