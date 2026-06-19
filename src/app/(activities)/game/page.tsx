@@ -25,12 +25,11 @@ import { VotePhase } from "@/components/game/VotePhase";
 import { VerdictPhase } from "@/components/game/VerdictPhase";
 import { ResultPhase } from "@/components/game/ResultPhase";
 import { StatusDock } from "@/components/game/ui/StatusDock";
-import { NightSky } from "@/components/game/ui/NightSky";
+import { GameBackdrop } from "@/components/game/ui/GameBackdrop";
 import { PhaseSweep } from "@/components/game/ui/PhaseSweep";
 import { SuspicionPhase } from "@/components/game/SuspicionPhase";
 import { StatusBlock } from "@/components/game/ui/StatusBlock";
 import { LandingScreen } from "@/components/game/LandingScreen";
-import { IllustrationScene } from "@/components/game/ui/IllustrationScene";
 import { DisplayProvider } from "@/lib/game/display";
 
 const GAME_ACTIVITY = getActivity("gomdori-mafia")!;
@@ -567,19 +566,8 @@ function GameFrame({
     <main
       className={`relative flex h-full w-full overflow-y-auto px-4 pb-20 pt-5 text-white transition-colors duration-700 sm:px-6 ${bg}`}
     >
-      {/* 진입·로딩 키 아트 — 콘텐츠 뒤(DOM 앞순서) 풀블리드. dim = 로비용 저채도. */}
-      {keyArt ? (
-        <div aria-hidden="true" className="pointer-events-none fixed inset-0">
-          <IllustrationScene
-            id="night-muse"
-            priority
-            drift
-            quality={90}
-            sizes="100vw"
-            className={`h-full w-full ${keyArt === "dim" ? "opacity-30" : "opacity-85"}`}
-          />
-        </div>
-      ) : null}
+      {/* 앰비언트 배경(키아트 + 별)은 GameBackdrop 단일 출처 — /game/preview 작업대와 공유. */}
+      <GameBackdrop status={status} keyArt={keyArt} />
       {/* 로비는 독을 띄우지 않는다 — 화면 자체가 상태("대기 중")를 말하고 있어
           정보 중복인 데다, 모바일에서 시트 peek 과 하단 자리를 다퉜다. */}
       {status !== "lobby" && !hideStatusDock ? (
@@ -593,10 +581,6 @@ function GameFrame({
           myAvatarUrl={myAvatarUrl}
           dayAdjust={dayAdjust}
         />
-      ) : null}
-      {status === "night" || status === "night_suspect" ? <NightSky /> : null}
-      {status === "role_assign" || status === "ended" || status === "lobby" || status === "landing" ? (
-        <NightSky subtle />
       ) : null}
       {/* 래퍼에 z 금지: z 를 주면 스태킹 컨텍스트가 생겨 내부 fixed 레이어
           (시트/창 z-40)가 독(z-30) 아래로 깔린다 — 독이 시트 peek 을 덮던 버그.

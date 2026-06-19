@@ -25,6 +25,7 @@ import { VerdictPhase } from "@/components/game/VerdictPhase";
 import { ResultPhase } from "@/components/game/ResultPhase";
 import { LandingScreen } from "@/components/game/LandingScreen";
 import { GameStage } from "@/components/game/ui/GameStage";
+import { GameBackdrop } from "@/components/game/ui/GameBackdrop";
 import { GOMDORI_RULES } from "@/config/gomdori-rules";
 import { PHASE_TONES } from "@/config/design-tokens";
 import { roleMeta } from "@/config/gomdori-roles";
@@ -251,20 +252,25 @@ function PreviewSection({
           tone?.bg ?? "bg-[#070712]"
         } ${tone?.mood === "light" ? "text-[#2b2118]" : "text-white"}`}
       >
-        <div className="flex-1">{children}</div>
-        {showDock ? (
-          <StatusDock
-            status={toneKey}
-            dayNumber={hideRole ? undefined : 2}
-            phaseEndsAt={toneKey === "day" ? new Date(Date.now() + 90_000).toISOString() : null}
-            myRole={hideRole ? undefined : me.role ?? undefined}
-            myFaction={me.faction ?? undefined}
-            myName={me.displayName}
-            myAvatarUrl={me.avatarUrl}
-            dayAdjust={toneKey === "day" && me.alive ? { matchId: "preview", gameJwt: "preview" } : null}
-            inline
-          />
-        ) : null}
+        {/* 실게임 GameFrame 과 같은 앰비언트 배경(별·키아트) — 단일 출처 GameBackdrop. */}
+        <GameBackdrop status={toneKey} keyArt={toneKey === "lobby" ? "dim" : false} embedded />
+        {/* 콘텐츠·독은 absolute 배경 위로(z-10). */}
+        <div className="relative z-10 flex flex-1 flex-col">
+          <div className="flex-1">{children}</div>
+          {showDock ? (
+            <StatusDock
+              status={toneKey}
+              dayNumber={hideRole ? undefined : 2}
+              phaseEndsAt={toneKey === "day" ? new Date(Date.now() + 90_000).toISOString() : null}
+              myRole={hideRole ? undefined : me.role ?? undefined}
+              myFaction={me.faction ?? undefined}
+              myName={me.displayName}
+              myAvatarUrl={me.avatarUrl}
+              dayAdjust={toneKey === "day" && me.alive ? { matchId: "preview", gameJwt: "preview" } : null}
+              inline
+            />
+          ) : null}
+        </div>
       </div>
     </section>
   );
