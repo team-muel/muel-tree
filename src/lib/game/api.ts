@@ -33,7 +33,7 @@ function gameApiErrorMessage(name: string, status: number, text: string): string
 async function postJson<TReq, TRes>(
   name: string,
   body: TReq,
-  options: { gameJwt?: string } = {},
+  options: { gameJwt?: string; keepalive?: boolean } = {},
 ): Promise<TRes> {
   const headers: Record<string, string> = {
     "content-type": "application/json",
@@ -46,6 +46,9 @@ async function postJson<TReq, TRes>(
     method: "POST",
     headers,
     body: JSON.stringify(body),
+    // keepalive: 페이지 unload(Activity 종료) 중에도 요청이 살아남게 한다.
+    // 일반 fetch 는 unload 시 취소돼 leave 신호가 누락된다.
+    keepalive: options.keepalive ?? false,
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
@@ -238,11 +241,12 @@ export async function removeAi(
 export async function leaveMatch(
   matchId: string,
   gameJwt: string,
+  options: { keepalive?: boolean } = {},
 ): Promise<{ success: boolean }> {
   return postJson<{ matchId: string }, { success: boolean }>(
     "match-leave",
     { matchId },
-    { gameJwt },
+    { gameJwt, keepalive: options.keepalive },
   );
 }
 
