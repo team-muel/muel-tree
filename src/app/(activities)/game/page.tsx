@@ -289,7 +289,9 @@ function GameShell({ session }: { session: ActivitySession }) {
   useEffect(() => {
     if (!gameJwt || !matchId) return;
     const leave = () => {
-      void leaveMatch(matchId, gameJwt).catch(() => {});
+      // keepalive 로 보내 unload 중에도 leave 신호가 도달하게 한다. 도달 못 해도
+      // 서버 presence GC(reconcileLobbyPresence, TTL 90s)가 유령을 정리한다.
+      void leaveMatch(matchId, gameJwt, { keepalive: true }).catch(() => {});
     };
     window.addEventListener("pagehide", leave);
     return () => window.removeEventListener("pagehide", leave);
