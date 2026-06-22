@@ -169,13 +169,13 @@ export function MatchChat({
   const mineBubble = accent === "circle"
     ? "bg-rose-500/30 text-rose-50 ring-1 ring-rose-300/25"
     : "bg-amber-500/25 text-amber-50 ring-1 ring-amber-300/25";
-  const theirBubble = "bg-white/15 text-white ring-1 ring-white/15";
+  const theirBubble = "bg-white/20 text-white ring-1 ring-white/20";
 
   return (
     <div className="flex h-72 flex-col">
       <div className="flex-1 space-y-3 overflow-y-auto pr-1">
         {chats.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-sm text-white/20">{emptyHint}</div>
+          <div className="flex h-full items-center justify-center text-sm text-white/45">{emptyHint}</div>
         ) : (
           chats.map((chat) => {
             const isMe = chat.sender_user_id === myPlayer?.userId;
@@ -205,9 +205,9 @@ export function MatchChat({
               <div key={chat.id} className="flex items-start gap-2">
                 <ChatAvatar player={senderPlayer} onClick={senderPlayer ? () => setInspectId(chat.sender_user_id) : undefined} />
                 <div className="min-w-0 max-w-[85%]">
-                  <div className="mb-1 flex items-center gap-1 pl-0.5 text-[0.625rem] text-white/50">
+                  <div className="mb-1 flex items-center gap-1 pl-0.5 text-[0.625rem] font-semibold text-white/80">
                     {sender}
-                    {isGhost ? <span className="rounded-full bg-white/10 px-1.5 text-[0.5625rem] text-white/45">영혼</span> : null}
+                    {isGhost ? <span className="rounded-full bg-white/15 px-1.5 text-[0.5625rem] font-medium text-white/70">영혼</span> : null}
                   </div>
                   {bubble}
                 </div>
