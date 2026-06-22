@@ -14,7 +14,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const SIZE = 56;
+const SIZE = 62;
 
 function fmt(ms: number): string {
   if (ms <= 0) return "0:00";
@@ -173,10 +173,11 @@ export function StageTimerOrb({ endsAt }: { endsAt?: string | null }) {
       onPointerCancel={onPointerUp}
       aria-label={`남은 시간 ${label} — 차고 놀 수 있어요`}
       style={{ width: SIZE, height: SIZE }}
-      className="absolute left-0 top-0 z-20 flex cursor-grab touch-none select-none items-center justify-center rounded-full border border-white/25 bg-white/15 text-white shadow-[0_4px_18px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.4)] backdrop-blur-md transition-transform active:scale-95 active:cursor-grabbing"
+      className="absolute left-0 top-0 z-20 flex cursor-grab touch-none select-none items-center justify-center rounded-full border border-amber-300/40 bg-slate-950/90 text-amber-50 shadow-[0_4px_18px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.25)] transition-transform active:scale-95 active:cursor-grabbing"
     >
-      <span aria-hidden="true" className="absolute inset-0 rounded-full bg-gradient-to-b from-white/25 to-transparent" />
-      <span className="relative font-mono text-xs font-semibold tabular-nums drop-shadow">{label}</span>
+      {/* 가독성: 반투명 흰 오브는 밝은 무대 위에서 흰 텍스트가 안 읽혔다. 솔리드 다크 + 큰 고대비 텍스트. */}
+      <span aria-hidden="true" className="absolute inset-0 rounded-full bg-gradient-to-b from-white/10 to-transparent" />
+      <span className="relative font-mono text-sm font-bold tabular-nums text-amber-50 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">{label}</span>
     </button>
   );
 }

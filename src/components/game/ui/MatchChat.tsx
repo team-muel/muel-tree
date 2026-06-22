@@ -72,8 +72,9 @@ export function MatchChat({
   gameJwt: string;
   myPlayer: PlayerSummary | null;
   players: PlayerSummary[];
-  /** 채팅창 안에 표시할 시스템 통지(예: 토론 시간 조절) — 가운데 정렬 회색 라인. */
-  systemNotices?: Array<{ id: string; text: string }>;
+  /** 채팅창 안에 표시할 시스템 통지(예: 토론 시간 조절) — 가운데 정렬 회색 라인.
+   *  createdAt 이 있으면 채팅과 시간순으로 섞여 표시된다(없으면 맨 아래로 폴백). */
+  systemNotices?: Array<{ id: string; text: string; createdAt?: string }>;
   placeholder?: string;
   emptyHint?: string;
   /** false 면 입력창을 잠근다(예: 발화 불가 페이즈). */
@@ -171,57 +172,71 @@ export function MatchChat({
     : "bg-amber-500/25 text-amber-50 ring-1 ring-amber-300/25";
   const theirBubble = "bg-white/20 text-white ring-1 ring-white/20";
 
+  const renderChatRow = (chat: ChatRow): React.ReactNode => {
+    const isMe = chat.sender_user_id === myPlayer?.userId;
+    const senderPlayer = players.find((p) => p.userId === chat.sender_user_id);
+    const sender = senderPlayer?.displayName || "알 수 없음";
+    const isGhost = chat.channel === "dead";
+    const bubble = (
+      <div
+        className={`max-w-full break-words rounded-lg px-3 py-2 text-sm shadow-sm ${
+          isMe
+            ? `rounded-tr-sm ${isGhost ? "bg-violet-500/30 text-violet-50 ring-1 ring-violet-300/25" : mineBubble}`
+            : `rounded-tl-sm ${isGhost ? "bg-violet-500/20 text-violet-100 ring-1 ring-violet-400/25" : theirBubble}`
+        }`}
+      >
+        {chat.message}
+      </div>
+    );
+    if (isMe) {
+      return (
+        <div key={chat.id} className="flex flex-col items-end">
+          <div className="max-w-[85%]">{bubble}</div>
+        </div>
+      );
+    }
+    // 남이 친 메시지: 로비 아바타 토큰처럼 프로필 사진을 왼쪽에 둬 누가 쳤는지 바로 보이게.
+    return (
+      <div key={chat.id} className="flex items-start gap-2">
+        <ChatAvatar player={senderPlayer} onClick={senderPlayer ? () => setInspectId(chat.sender_user_id) : undefined} />
+        <div className="min-w-0 max-w-[85%]">
+          <div className="mb-1 flex items-center gap-1 pl-0.5 text-[0.625rem] font-semibold text-white/80">
+            {sender}
+            {isGhost ? <span className="rounded-full bg-white/15 px-1.5 text-[0.5625rem] font-medium text-white/70">영혼</span> : null}
+          </div>
+          {bubble}
+        </div>
+      </div>
+    );
+  };
+
+  const renderNoticeRow = (n: { id: string; text: string }): React.ReactNode => (
+    <div key={n.id} className="flex items-center gap-2 py-0.5 text-[0.625rem] text-white/45">
+      <span className="h-px flex-1 bg-white/10" />
+      <span className="shrink-0">{n.text}</span>
+      <span className="h-px flex-1 bg-white/10" />
+    </div>
+  );
+
+  // 채팅 + 시스템 통지(시간 조절 등)를 created_at 기준 시간순으로 병합. 통지가 더 이상 하단에
+  // 고정되지 않으므로 "누가 언제 시간을 단축했는지"가 대화 흐름 속 제자리에 남는다(#5).
+  const timeline = [
+    ...chats.map((c) => ({ key: `c-${c.id}`, ts: c.created_at ? Date.parse(c.created_at) : 0, node: renderChatRow(c) })),
+    ...(systemNotices ?? []).map((n) => ({
+      key: `n-${n.id}`,
+      ts: n.createdAt ? Date.parse(n.createdAt) : Number.MAX_SAFE_INTEGER,
+      node: renderNoticeRow(n),
+    })),
+  ].sort((a, b) => a.ts - b.ts);
+
   return (
     <div className="flex h-72 flex-col">
       <div className="flex-1 space-y-3 overflow-y-auto pr-1">
-        {chats.length === 0 ? (
+        {timeline.length === 0 ? (
           <div className="flex h-full items-center justify-center text-sm text-white/45">{emptyHint}</div>
         ) : (
-          chats.map((chat) => {
-            const isMe = chat.sender_user_id === myPlayer?.userId;
-            const senderPlayer = players.find((p) => p.userId === chat.sender_user_id);
-            const sender = senderPlayer?.displayName || "알 수 없음";
-            const isGhost = chat.channel === "dead";
-            const bubble = (
-              <div
-                className={`max-w-full break-words rounded-lg px-3 py-2 text-sm shadow-sm ${
-                  isMe
-                    ? `rounded-tr-sm ${isGhost ? "bg-violet-500/30 text-violet-50 ring-1 ring-violet-300/25" : mineBubble}`
-                    : `rounded-tl-sm ${isGhost ? "bg-violet-500/20 text-violet-100 ring-1 ring-violet-400/25" : theirBubble}`
-                }`}
-              >
-                {chat.message}
-              </div>
-            );
-            if (isMe) {
-              return (
-                <div key={chat.id} className="flex flex-col items-end">
-                  <div className="max-w-[85%]">{bubble}</div>
-                </div>
-              );
-            }
-            // 남이 친 메시지: 로비 아바타 토큰처럼 프로필 사진을 왼쪽에 둬 누가 쳤는지 바로 보이게.
-            return (
-              <div key={chat.id} className="flex items-start gap-2">
-                <ChatAvatar player={senderPlayer} onClick={senderPlayer ? () => setInspectId(chat.sender_user_id) : undefined} />
-                <div className="min-w-0 max-w-[85%]">
-                  <div className="mb-1 flex items-center gap-1 pl-0.5 text-[0.625rem] font-semibold text-white/80">
-                    {sender}
-                    {isGhost ? <span className="rounded-full bg-white/15 px-1.5 text-[0.5625rem] font-medium text-white/70">영혼</span> : null}
-                  </div>
-                  {bubble}
-                </div>
-              </div>
-            );
-          })
+          timeline.map((it) => it.node)
         )}
-        {(systemNotices ?? []).map((n) => (
-          <div key={n.id} className="flex items-center gap-2 py-0.5 text-[0.625rem] text-white/40">
-            <span className="h-px flex-1 bg-white/10" />
-            <span className="shrink-0">{n.text}</span>
-            <span className="h-px flex-1 bg-white/10" />
-          </div>
-        ))}
         <div ref={endRef} />
       </div>
       <div className="border-t border-white/5 pt-3">

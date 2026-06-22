@@ -19,7 +19,7 @@ import { useState, useEffect } from "react";
 type DayPhaseProps = {
   match: MatchSummary;
   players: PlayerSummary[];
-  events: Array<{ id: string; event_type: string; phase_id?: string; payload?: Record<string, unknown> }>;
+  events: Array<{ id: string; event_type: string; phase_id?: string; created_at?: string; payload?: Record<string, unknown> }>;
   myPlayer: PlayerSummary | null;
   gameJwt: string;
   /** 토론 페이즈 종료 시각 — 무대 위 차고 노는 타이머 오브에 쓰인다. */
@@ -110,7 +110,7 @@ export function DayPhase({ match, players, events, myPlayer, gameJwt, phaseEndsA
       const by = nameOf(String(e.payload?.by ?? "")) ?? "누군가";
       const dir = e.payload?.direction === "cut" ? "단축" : "연장";
       const sec = Math.abs(Number(e.payload?.delta_sec ?? 0));
-      return { id: e.id, text: `${by}님이 토론 시간을 ${sec}초 ${dir}` };
+      return { id: e.id, text: `${by}님이 토론 시간을 ${sec}초 ${dir}`, createdAt: e.created_at };
     });
 
   const stagePlayers = players.map((p) => {
