@@ -469,6 +469,18 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
     (p) => p.userId !== myPlayer?.userId && p.faction === "demon" && p.role,
   );
 
+  // #4 접선 로그(당사자=회로 보유자에게만 — '악마의 속삭임' 채팅 안에 표시): 누구와 접선했는지
+  // 채팅 로그로 남긴다. createdAt=매치 생성 시각이라 채팅 맨 위(접선 안내)로 정렬된다.
+  const contactNotices = circleChat
+    ? players
+        .filter((p) => p.userId !== myPlayer?.userId && p.faction === "demon" && p.role)
+        .map((a) => ({
+          id: `contact-${a.userId}`,
+          text: `🤝 ${a.displayName}(${roleMeta(a.role)?.label ?? a.role})님과 접선했습니다`,
+          createdAt: match.createdAt,
+        }))
+    : [];
+
   const nightProfilePanel = role ? (
     <div className="space-y-4">
       {/* 평소엔 아래 "밤 능력" 상호작용 카드가 능력을 담당(같은 문자열 2회 반복 방지).
@@ -503,15 +515,9 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
               {GOMDORI_RULES.firstNight.silentMessage}
             </p>
           </div>
-          <div className="h-1 w-full max-w-[180px] overflow-hidden rounded-full bg-white/10">
-            <div
-              className="h-full bg-indigo-400"
-              style={{
-                animation: "first-night-fade 8s linear forwards",
-                width: "100%",
-              }}
-            />
-          </div>
+          {/* 진행바 제거(2026-06-22): 마운트 기준 8s 애니메이션이라 프로필을 닫았다 열면 매번
+              0부터 다시 줄어 의미가 없었다. 실제 남은 시간은 하단 독의 PhaseTimer(서버 권위)가
+              보여준다 — 단일 출처로 일원화. */}
         </div>
       ) : (
         <>
@@ -691,6 +697,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
             accent="circle"
             placeholder="악마끼리 속삭임..."
             emptyHint="대화를 시작하세요"
+            systemNotices={contactNotices}
           />
         </BottomSheet>
       ) : null}

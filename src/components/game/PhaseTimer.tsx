@@ -34,7 +34,10 @@ export function PhaseTimer({
   // 만료(left<=0): 서버 크론이 곧 전환을 수행한다. 정지로 보이지 않게 펄스 점 + "곧 전환 중"
   // 으로 살아있음을 보인다(타이머가 0에서 멈춘 듯한 "멈췄나?" 오해 방지).
   const transitioning = left <= 0;
-  const display = transitioning ? "곧 전환 중" : mm > 0 ? `${mm}:${String(ss).padStart(2, "0")}` : `${ss}초`;
+  // 만료 후엔 서버 크론이 전환을 수행할 때까지 잠깐 대기한다. 정지로 보이지 않게 경과 초를
+  // 함께 보여 "처리 중 · 곧 끝남"을 시각화한다(멈춘 듯한 오해 방지, #3).
+  const overdueSec = transitioning ? Math.max(0, Math.floor((now - target) / 1000)) : 0;
+  const display = transitioning ? `전환 중… ${overdueSec}s` : mm > 0 ? `${mm}:${String(ss).padStart(2, "0")}` : `${ss}초`;
   const urgent = left > 0 && left <= 10;
 
   return (
