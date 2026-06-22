@@ -103,7 +103,9 @@ export function DockableChatPanel({
       className={`fixed z-40 w-[min(92vw,28rem)] ${defaultPosCls}`}
       style={style}
     >
-      <div className="rounded-xl border border-white/10 bg-slate-950/92 shadow-2xl backdrop-blur">
+      {/* 불투명 솔리드 배경: 이전 bg-slate-950/92 는 밝은 낮 키아트 위에서 비쳐 배경이
+          씻겨 보이고(가독성↓) 흰 텍스트가 안 읽혔다. 솔리드로 깔아 대비를 보장한다. */}
+      <div className="rounded-xl border border-white/15 bg-[#0c0c14] shadow-2xl">
         <div
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
