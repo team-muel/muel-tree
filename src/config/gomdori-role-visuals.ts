@@ -58,7 +58,6 @@ export const ROLE_VISUALS: Record<string, RoleVisual> = {
   demon: { symbol: "hornedBrand", ...rose, motif: "코셰이 + 루시퍼 — 낙인을 찍는 옛 신" },
   phantom: { symbol: "eclipse", ...rose, motif: "침묵의 밤 — 빛을 가리는 고리" },
   malen: { symbol: "twinSouls", ...rose, motif: "악령 마야 — 나란한 두 혼불" },
-  besto: { symbol: "splitMask", ...rose, motif: "두 번째 자아 — 갈라진 가면" },
 
   // --- 조력자 풀 ---
   gain: { symbol: "veiledEye", ...violet, motif: "진실을 가리는 암흑 — 가려진 눈" },
@@ -80,6 +79,7 @@ export const ROLE_VISUALS: Record<string, RoleVisual> = {
 
   // --- 중립 ---
   pasua: { symbol: "haloSun", hueDark: "text-white/80", hueLight: "text-[#5c4d3c]", glow: "shadow-[0_0_28px_rgba(255,255,255,0.22)]", motif: "구원자 — 후광" },
+  rosanne: { symbol: "splitMask", hueDark: "text-white/70", hueLight: "text-[#5c4d3c]", glow: "shadow-[0_0_26px_rgba(255,255,255,0.18)]", motif: "백일몽 — 세헤라자드의 끝나지 않는 꿈" },
   converted: { symbol: "spiral", hueDark: "text-white/60", hueLight: "text-[#8a7a64]", glow: "shadow-[0_0_24px_rgba(255,255,255,0.14)]", motif: "전향 — 안으로 감기는 길" },
 };
 

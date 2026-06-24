@@ -98,7 +98,7 @@ function renderPhasePreview(
             payload: {
               role: "demon",
               faction: "demon",
-              pendingSelection: { kind: "demon", pool: ["demon", "phantom", "malen", "besto"] },
+              pendingSelection: { kind: "demon", pool: ["demon", "phantom", "malen"] },
             },
           }]}
           matchId="preview"

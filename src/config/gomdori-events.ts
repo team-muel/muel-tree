@@ -179,11 +179,8 @@ export const GOMDORI_EVENT_COPY: Record<string, GomdoriEventCopy> = {
     audience: "personal", tone: "warn", icon: "🎖️",
     line: () => "명예 실추 — 동료를 벤 대가로 다음 밤 당신의 행동이 막힙니다.",
   },
-  // 가인 약간의 위선 — 대상의 다음 능력 한 밤 연기.
-  hypocrisy_delayed: {
-    audience: "personal", tone: "warn", icon: "⏳",
-    line: () => "약간의 위선에 걸렸습니다 — 당신의 다음 능력이 한 밤 미뤄집니다.",
-  },
+  // 가인 약간의 위선(원문) — 그 밤 능력은 'silenced'(봉인)로 통지된다. 강화 점화
+  // (hypocrisy_seal_armed)는 가인 내부 상태라 화면 노출 없음(레지스트리에 없으면 숨김).
   // 세이카 초신성 흡수 — 대상의 부여 효과를 세이카가 대신 받아 정화.
   absorbed: {
     audience: "personal", tone: "good", icon: "✨",
