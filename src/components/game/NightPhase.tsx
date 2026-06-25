@@ -94,8 +94,13 @@ function buildAbilities(role: string | null | undefined, myUserId: string | null
       prompt: extra.prompt,
       confirm: true,
       self: extra.self, // 미즐렛 고급 와인 = 무대상(전원)
-      // 탈락자 대상(헬렌 자유로운 새)은 죽은 자만, 그 외 보조(수면/와인)는 생존자.
-      eligible: extra.targetDead ? (p) => !p.alive : aliveNotMe,
+      // 탈락자 대상(헬렌 자유로운 새)은 죽은 자만, 임의 탈락자 허용(미즐렛 쿠키)은 생존자+탈락자,
+      // 그 외 보조(수면/와인)는 생존자.
+      eligible: extra.targetDead
+        ? (p) => !p.alive
+        : extra.allowDeadTarget
+          ? (p) => p.userId !== myUserId
+          : aliveNotMe,
       emptyNote: extra.targetDead ? "아직 되살릴 탈락자가 없습니다." : undefined,
     }));
     return [revive, ...extras];
