@@ -30,6 +30,7 @@ import { GOMDORI_RULES } from "@/config/gomdori-rules";
 import { PHASE_TONES } from "@/config/design-tokens";
 import { roleMeta } from "@/config/gomdori-roles";
 import { StatusDock } from "@/components/game/ui/StatusDock";
+import { DesignInventory } from "@/components/game/preview/DesignInventory";
 import { DisplayProvider } from "@/lib/game/display";
 import type { PlayerSummary } from "@/lib/game/api";
 import {
@@ -97,7 +98,7 @@ function renderPhasePreview(
             payload: {
               role: "demon",
               faction: "demon",
-              pendingSelection: { kind: "demon", pool: ["demon", "phantom", "malen", "besto"] },
+              pendingSelection: { kind: "demon", pool: ["demon", "phantom", "malen"] },
             },
           }]}
           matchId="preview"
@@ -248,7 +249,7 @@ function PreviewSection({
         </div>
       </div>
       <div
-        className={`relative flex h-[560px] flex-col overflow-auto ${interactive ? "" : "pointer-events-none"} ${
+        className={`relative flex h-[560px] transform-gpu flex-col overflow-auto ${interactive ? "" : "pointer-events-none"} ${
           tone?.bg ?? "bg-[#070712]"
         } ${tone?.mood === "light" ? "text-[#2b2118]" : "text-white"}`}
       >
@@ -352,6 +353,8 @@ export default function GamePreviewPage() {
         </header>
 
         <div className="mx-auto max-w-6xl space-y-10 px-6 py-10">
+          <DesignInventory />
+
           {/* 00 — Feign 최소구조: 토큰이 무대를 배회. 탭=정체추측 시트 시연. */}
           <PreviewSection
             index={0}

@@ -88,7 +88,7 @@ export function MatchChat({
   const [chats, setChats] = useState<ChatRow[]>([]);
   const [message, setMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const endRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   // 실시간 채널 토픽은 인스턴스마다 고유해야 한다. supabase client 는 토픽 이름으로
   // 채널을 식별·재사용하므로, 같은 matchId 의 패널이 둘 이상(낮 마을 + 영혼 채팅,
   // 프리뷰 다중 마운트) 동시에 뜨면 두 번째가 이미 subscribe() 된 채널에 .on() 을
@@ -144,7 +144,9 @@ export function MatchChat({
   }, [matchId, gameJwt]);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [chats]);
 
   const handleSend = async (e: React.FormEvent) => {
@@ -231,13 +233,12 @@ export function MatchChat({
 
   return (
     <div className="flex h-72 flex-col">
-      <div className="flex-1 space-y-3 overflow-y-auto pr-1">
+      <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto pr-1">
         {timeline.length === 0 ? (
           <div className="flex h-full items-center justify-center text-sm text-white/45">{emptyHint}</div>
         ) : (
           timeline.map((it) => it.node)
         )}
-        <div ref={endRef} />
       </div>
       <div className="border-t border-white/5 pt-3">
         {error ? <p role="alert" className="mb-2 text-xs text-rose-300">{error}</p> : null}
