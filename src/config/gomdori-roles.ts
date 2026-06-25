@@ -24,6 +24,7 @@ export interface GomdoriNightAction {
   kind?: "kill"; // 처치형(악마 처치/악몽/혼령 방출 등) — demon 블록 처치-UI 판정
   self?: boolean; // 자기 대상(변신/일식) — 대상 그리드 없이 버튼만, target=null 제출
   targetDead?: boolean; // 탈락자 대상(헬렌 자유로운 새 등 추가 부활) — 무대에 죽은 자만 노출
+  allowDeadTarget?: boolean; // 생존자 OR 탈락자 모두 대상 가능(미즐렛 쿠키 — 탈락자 직접 지정 허용)
   maxTargets?: number; // 멀티타깃 지정 수(아서 잔불이 꺼지기 전에=3). 미지정/1=단일 대상.
   // 동적 상한(팬텀 어둠이 내린 도시=매 아침 +1). UI 상한 = maxTargets + maxTargetsPerDay*(dayNumber-1).
   // dayNumber 기반 하한 근사 — 추가 밤(일식·침묵의 밤)으로 실제 상한이 더 커질 수 있으나 백엔드가
@@ -135,8 +136,8 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     title: "백호의 소환자",
     faction: "angel",
     reveal: "수호신 백호의 소환자. 백호 소환으로 천사팀 카운트를 늘리고, 강한 의지로 대상을 관찰해 백호의 거친 포효를 충전합니다.",
-    passive: "수호신 백호: 1회 소환으로 천사팀 카운트 +3을 영구 획득(생존 무관). 거친 포효: 강한 의지 2회 누적 시 즉시 자동 발동 — 천사팀 카운트 -1, 그 밤 지목한 대상 중 2명에게 백호 발톱(다음 아침 투표가치 3 이상 얻으면 소멸).",
-    abilitySummary: "백호 소환(1회): 천사팀 카운트 +3. 강한 의지: 한 명을 관찰하고 강한 의지 +1(같은 대상 연속 지목 불가). 관찰 대상이 그 밤 탈락하면 강한 의지 +2 추가. 그날의 저항(1회, 첫 밤 불가): 백호 한 마리 추가 소환 — 천사팀 카운트 +1 + 강한 의지 +1.",
+    passive: "수호신 백호: 1회 소환으로 천사팀 카운트 +3을 영구 획득(생존 무관). 거친 포효: 강한 의지 2회 누적 시 2명을 직접 지목해 백호 발톱을 새깁니다 — 천사팀 카운트 -1, 강한 의지 2 소비(지목 대상은 다음 아침 투표가치 3 이상 얻으면 소멸). 지목하지 않으면 그 밤 강한 의지 대상 중 최대 2명을 자동으로 할퀴는 폴백이 유지됩니다.",
+    abilitySummary: "백호 소환(1회): 천사팀 카운트 +3. 강한 의지: 한 명을 관찰하고 강한 의지 +1(같은 대상 연속 지목 불가). 관찰 대상이 그 밤 탈락하면 강한 의지 +2 추가. 거친 포효: 강한 의지 2회 누적 시 2명을 지목해 백호 발톱. 그날의 저항(1회, 첫 밤 불가): 백호 한 마리 추가 소환 — 천사팀 카운트 +1 + 강한 의지 +1.",
     night: {
       actionType: "rainer_summon",
       label: "백호 소환",
@@ -145,6 +146,7 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     },
     extraNights: [
       { actionType: "rainer_resolve", label: "강한 의지", prompt: "관찰할 대상을 고르세요(같은 대상 연속 지목 불가). 강한 의지 +1, 관찰 대상이 그 밤 탈락하면 추가 +2.", excludeSelf: true },
+      { actionType: "rainer_roar", label: "거친 포효", prompt: "강한 의지 2회 누적 시 2명을 지목해 백호 발톱을 새깁니다(천사팀 카운트 -1, 강한 의지 2 소비). 발톱이 새겨진 대상은 다음 아침 투표가치 3 이상 얻으면 소멸합니다.", excludeSelf: true, maxTargets: 2 },
       { actionType: "rainer_resistance", label: "그날의 저항", prompt: "그날의 저항 — 백호 한 마리 추가 소환합니다. 천사팀 카운트 +1, 강한 의지 +1. (1회)", self: true },
     ],
   },
@@ -218,13 +220,13 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     faction: "neutral",
     reveal: "악마 진영에 속한 세헤라자드. 아침을 일곱 번 맞이하면 홀로 단독 승리합니다(악마와 함께 이길 수도, 혼자 이길 수도). 대신 토론은 짧아지고 무투에 참여할 수 없습니다.",
     passive: "백일몽: 아침을 일곱 번 맞이하면 즉시 단독 승리합니다. 증오: 지목한 대상의 투표가치를 1 낮추고, 투표가치가 0이 되면 즉시 처형합니다. 조망: 로잔느가 살아있는 동안 타인에게 능력을 적용한 플레이어는 그 밤 투표가치가 낮아집니다(1 미만으로는 내려가지 않음).",
-    abilitySummary: "증오: 지목 대상의 투표가치를 깎고 0이 되면 처형합니다. 만들어가는 미래: 대상에 원한을 새기고 로잔느의 아침을 한 번 더 끌어옵니다(르상티망). 라포르: 두 사람의 운명을 묶어 한쪽이 죽으면 다른 쪽도 죽습니다. 외현기억: 탈락자를 매 아침 되살려 그 날 끝에 처형합니다. 건너뛰기: 이번 밤의 다른 모든 효과를 취소합니다.",
+    abilitySummary: "증오: 지목 대상의 투표가치를 깎고 0이 되면 처형합니다. 만들어가는 미래: 대상에 원한을 새기고 로잔느의 아침을 한 번 더 끌어옵니다(르상티망). 라포르: 두 사람의 운명을 묶어 한쪽이 죽으면 다른 쪽도 죽습니다. 외현기억: 탈락자를 매 아침 되살려 그 날 끝에 처형합니다. 건너뛰기: 이번 밤의 다른 모든 효과와 통지를 전부 다음 밤으로 넘깁니다(다음 밤 시작에 다시 발동).",
     night: { actionType: "rosanne_hatred", label: "증오", prompt: "투표가치를 깎을 대상을 고르세요. 0이 되면 즉시 처형됩니다.", excludeSelf: true },
     extraNights: [
       { actionType: "rosanne_resentment", label: "만들어가는 미래", prompt: "원한을 새길 대상을 고르세요(르상티망). 로잔느의 아침이 한 번 더 늘어납니다. ('만들어가는 미래' 충전 1 소비)", excludeSelf: true },
       { actionType: "rosanne_rapport", label: "라포르", prompt: "운명을 묶을 두 사람을 고르세요. 한쪽이 처형·탈락·소멸하면 다른 쪽도 같은 운명을 맞습니다. ('만들어가는 미래' 충전 1 소비)", excludeSelf: true },
       { actionType: "rosanne_manifest", label: "외현기억", prompt: "되살릴 탈락자를 고르세요. 매 아침 되살아나 그 날의 끝에 처형됩니다. 투표로 한 번 더 처형되면 효과가 사라집니다. ('만들어가는 미래' 충전 1 소비)", excludeSelf: true },
-      { actionType: "rosanne_skip", label: "건너뛰기", prompt: "이번 밤에 발동한 다른 모든 효과를 취소합니다. (1회, 대상 없음)", self: true },
+      { actionType: "rosanne_skip", label: "건너뛰기", prompt: "이번 밤에 발동한 다른 모든 효과와 통지를 전부 다음 밤으로 넘깁니다(다음 밤 시작에 다시 발동). (1회, 대상 없음)", self: true },
     ],
   },
   // --- 기본 로스터: 조력자 풀 (악마 회로 패시브) ---
@@ -307,8 +309,8 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     abilitySummary: "디저트 선물(부활): 탈락한 한 명을 되살립니다(1회). 쿠키: 보호 + 보유자가 탈락해도 그 밤 능력을 발동합니다. 푸딩: 보호 + 단일 대상 능력을 봉인·지목 무시하고 발동합니다('무시 불가'). 고급 와인(1회): 전원 정화 + 디저트 미제공자 투표가치 -1 + 디저트 보유자 전원과 와인 회식 채팅.",
     night: { actionType: "mizlet_revive", label: "디저트 선물(부활)", prompt: "디저트로 되살릴 탈락자를 고르세요. (1회)" },
     extraNights: [
-      { actionType: "mizlet_cookie", label: "디저트 선물(쿠키)", prompt: "쿠키를 줄 생존자를 고르세요. 그 밤 보호받고, 쿠키 보유자는 탈락해도 그 밤 능력이 발동됩니다. 미즐렛과의 다과회 채팅 회로가 열립니다." },
-      { actionType: "mizlet_pudding", label: "디저트 선물(푸딩)", prompt: "푸딩을 줄 생존자를 고르세요. 그 밤 보호받고, 푸딩 보유자가 단일 대상 능력을 쓰면 봉인·지목을 무시하고 발동합니다('무시 불가')." },
+      { actionType: "mizlet_cookie", label: "디저트 선물(쿠키)", prompt: "쿠키를 줄 대상을 고르세요(탈락자도 가능). 그 밤 보호받고, 쿠키 보유자는 탈락해도 그 밤 능력이 발동됩니다. 이미 탈락한 대상은 가장 가까운 밤 활동에 참여합니다. 미즐렛과의 다과회 채팅 회로가 열립니다.", allowDeadTarget: true },
+      { actionType: "mizlet_pudding", label: "디저트 선물(푸딩)", prompt: "푸딩을 줄 생존자를 고르세요. 그 밤 보호받고, 푸딩 보유자가 단일 대상 능력을 쓰면 봉인·지목을 무시하고 발동합니다('무시 불가'). 처형으로 탈락하면 탈락 시점이 밤으로 조정됩니다." },
       { actionType: "mizlet_wine", label: "고급 와인", prompt: "고급 와인 — 전원의 부정 효과를 씻어내고 디저트 보유자 전원과 와인 회식 채팅을 엽니다. 디저트를 받지 못한 사람은 투표가치 -1. (1회, 대상 없음)", self: true },
     ],
   },
@@ -422,7 +424,7 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
   ],
   rainer: [
     { kind: "패시브", name: "수호신 백호", text: "백호 소환 시 천사팀 카운트 +3을 얻고, 탈락 뒤에도 사후 지속 +3을 남깁니다. 1회성입니다.", actionType: "rainer_summon", status: "live" },
-    { kind: "패시브", name: "거친 포효", text: "'강한 의지'를 2회 받으면 즉시 자동 발동합니다 — 천사팀 카운트 -1, 그 밤 지목한 대상 중 2명에게 백호 발톱을 새깁니다. 발톱이 새겨진 대상은 다음 아침 투표가치를 3 이상 얻으면 소멸합니다.", status: "live" },
+    { kind: "능력", name: "거친 포효", text: "'강한 의지'를 2회 모으면(willCount≥2) 2명을 직접 지목해 백호 발톱을 새깁니다 — 천사팀 카운트 -1, 강한 의지 2 소비. 발톱이 새겨진 대상은 다음 아침 투표가치를 3 이상 얻으면 소멸합니다. (지목하지 않으면 그 밤 강한 의지 대상 중 최대 2명을 자동으로 할퀴는 폴백이 유지됩니다.)", actionType: "rainer_roar", status: "live" },
     { kind: "능력", name: "강한 의지", text: "대상을 관찰하고 강한 의지 +1을 얻습니다(같은 대상 연속 지목 불가). 관찰 대상이 그 밤 탈락하면 강한 의지 +2가 추가됩니다.", actionType: "rainer_resolve", status: "live" },
     { kind: "능력2", name: "그날의 저항", text: "백호 한 마리를 추가 소환합니다 — 천사팀 카운트 +1 + 강한 의지 +1. 1회성이며 첫 밤에는 발동되지 않습니다.", actionType: "rainer_resistance", status: "live" },
   ],
@@ -498,7 +500,7 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
     { kind: "능력", name: "만들어가는 미래", text: "원한을 새깁니다(르상티망). 대상에 원한 표식을 남기고 로잔느의 아침을 한 번 더 끌어옵니다('만들어가는 미래' 충전 1 소비).", actionType: "rosanne_resentment", status: "live" },
     { kind: "능력", name: "라포르", text: "두 사람의 운명을 묶습니다. 한쪽이 처형·탈락·소멸하면 다른 쪽도 같은 운명을 맞습니다('만들어가는 미래' 충전 1 소비).", actionType: "rosanne_rapport", status: "live" },
     { kind: "능력", name: "외현기억", text: "탈락자 한 명을 지목해 매 아침 되살리고 그 날의 끝에 다시 처형합니다. 투표로 한 번 더 처형되면 효과가 사라지고 다시 지목할 수 없습니다('만들어가는 미래' 충전 1 소비).", actionType: "rosanne_manifest", status: "live" },
-    { kind: "능력2", name: "건너뛰기", text: "이번 밤에 발동한 다른 모든 효과를 취소합니다(1회성, 최우선). 원문의 '다음 밤으로 미룸' 진짜 이월과 조력자 패배 판정은 후속입니다.", actionType: "rosanne_skip", status: "partial" },
+    { kind: "능력2", name: "건너뛰기", text: "이번 밤에 발동한 다른 모든 효과와 통지를 전부 다음 밤으로 넘겨버립니다(1회성, 최우선). 미뤄진 액션은 다음 밤 시작에 그대로 다시 발동됩니다. 게임 종료 시까지 건너뛰기를 남긴 채 승리하면 조력자가 패배로 판정됩니다.", actionType: "rosanne_skip", status: "live" },
   ],
   gain: [
     { kind: "패시브", name: "진실을 가리는 암흑", text: "악마와 접선·대화하고, 악마가 처형 또는 탈락할 때 1회 없던 일로 만듭니다. 세 번째 밤 종료 시 보호막이 자동 만료됩니다(가인 생존 여부 무관).", status: "live" },
