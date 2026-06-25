@@ -214,11 +214,14 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     roster: "neutral",
     faction: "neutral",
     reveal: "꿈을 길게 끄는 독립 솔로(중립). 아침을 일곱 번 맞이하면 홀로 승리합니다. 대신 토론은 짧아지고 무투에 참여할 수 없습니다.",
-    passive: "백일몽: 아침을 일곱 번 맞이하면 즉시 단독 승리합니다. 증오: 지목한 대상의 투표가치를 1 낮추고, 투표가치가 0이 되면 즉시 처형합니다.",
-    abilitySummary: "증오: 지목 대상의 투표가치를 깎고 0이 되면 처형합니다. 만들어가는 미래: 대상에 원한을 새기고 로잔느의 아침을 한 번 더 끌어옵니다(르상티망).",
+    passive: "백일몽: 아침을 일곱 번 맞이하면 즉시 단독 승리합니다. 증오: 지목한 대상의 투표가치를 1 낮추고, 투표가치가 0이 되면 즉시 처형합니다. 조망: 로잔느가 살아있는 동안 타인에게 능력을 적용한 플레이어는 그 밤 투표가치가 낮아집니다(1 미만으로는 내려가지 않음).",
+    abilitySummary: "증오: 지목 대상의 투표가치를 깎고 0이 되면 처형합니다. 만들어가는 미래: 대상에 원한을 새기고 로잔느의 아침을 한 번 더 끌어옵니다(르상티망). 라포르: 두 사람의 운명을 묶어 한쪽이 죽으면 다른 쪽도 죽습니다. 외현기억: 탈락자를 매 아침 되살려 그 날 끝에 처형합니다. 건너뛰기: 이번 밤의 다른 모든 효과를 취소합니다.",
     night: { actionType: "rosanne_hatred", label: "증오", prompt: "투표가치를 깎을 대상을 고르세요. 0이 되면 즉시 처형됩니다.", excludeSelf: true },
     extraNights: [
       { actionType: "rosanne_resentment", label: "만들어가는 미래", prompt: "원한을 새길 대상을 고르세요(르상티망). 로잔느의 아침이 한 번 더 늘어납니다. ('만들어가는 미래' 충전 1 소비)", excludeSelf: true },
+      { actionType: "rosanne_rapport", label: "라포르", prompt: "운명을 묶을 두 사람을 고르세요. 한쪽이 처형·탈락·소멸하면 다른 쪽도 같은 운명을 맞습니다. ('만들어가는 미래' 충전 1 소비)", excludeSelf: true },
+      { actionType: "rosanne_manifest", label: "외현기억", prompt: "되살릴 탈락자를 고르세요. 매 아침 되살아나 그 날의 끝에 처형됩니다. 투표로 한 번 더 처형되면 효과가 사라집니다. ('만들어가는 미래' 충전 1 소비)", excludeSelf: true },
+      { actionType: "rosanne_skip", label: "건너뛰기", prompt: "이번 밤에 발동한 다른 모든 효과를 취소합니다. (1회, 대상 없음)", self: true },
     ],
   },
   // --- 기본 로스터: 조력자 풀 (악마 회로 패시브) ---
@@ -482,8 +485,11 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
   rosanne: [
     { kind: "패시브", name: "백일몽", text: "아침을 일곱 번 맞이하면 즉시 단독 승리합니다. 대신 토론은 1분으로 짧아지고 무투에 참여할 수 없습니다.", status: "live" },
     { kind: "특수 패시브", name: "증오", text: "로잔느가 지목한 대상의 투표가치를 1 낮추고, 투표가치가 0이 되면 그 대상을 즉시 처형합니다.", actionType: "rosanne_hatred", status: "live" },
+    { kind: "특수 패시브", name: "조망", text: "로잔느가 살아있는 동안, 타인에게 능력을 적용한 플레이어는 그 밤 투표가치가 1 낮아집니다(지정한 타인 수만큼 추가로 낮아지며, 이 효과로 1 미만으로는 내려가지 않습니다).", status: "live" },
     { kind: "능력", name: "만들어가는 미래", text: "원한을 새깁니다(르상티망). 대상에 원한 표식을 남기고 로잔느의 아침을 한 번 더 끌어옵니다('만들어가는 미래' 충전 1 소비).", actionType: "rosanne_resentment", status: "live" },
-    { kind: "능력2", name: "건너뛰기", text: "이번 밤의 모든 효과와 통지를 다음 밤으로 미룹니다. 1회성입니다.", status: "planned" },
+    { kind: "능력", name: "라포르", text: "두 사람의 운명을 묶습니다. 한쪽이 처형·탈락·소멸하면 다른 쪽도 같은 운명을 맞습니다('만들어가는 미래' 충전 1 소비).", actionType: "rosanne_rapport", status: "live" },
+    { kind: "능력", name: "외현기억", text: "탈락자 한 명을 지목해 매 아침 되살리고 그 날의 끝에 다시 처형합니다. 투표로 한 번 더 처형되면 효과가 사라지고 다시 지목할 수 없습니다('만들어가는 미래' 충전 1 소비).", actionType: "rosanne_manifest", status: "live" },
+    { kind: "능력2", name: "건너뛰기", text: "이번 밤에 발동한 다른 모든 효과를 취소합니다(1회성, 최우선). 원문의 '다음 밤으로 미룸' 진짜 이월과 조력자 패배 판정은 후속입니다.", actionType: "rosanne_skip", status: "partial" },
   ],
   gain: [
     { kind: "패시브", name: "진실을 가리는 암흑", text: "악마와 접선·대화하고, 악마가 처형 또는 탈락할 때 1회 없던 일로 만듭니다. 세 번째 밤 종료 시 보호막이 자동 만료됩니다(가인 생존 여부 무관).", status: "live" },
