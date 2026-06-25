@@ -135,7 +135,7 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     title: "백호의 소환자",
     faction: "angel",
     reveal: "수호신 백호의 소환자. 백호 소환으로 천사팀 카운트를 늘리고, 강한 의지로 대상을 관찰해 백호의 거친 포효를 충전합니다.",
-    passive: "수호신 백호: 1회 소환으로 천사팀 카운트 +3을 영구 획득(생존 무관). 강한 의지 2회 누적 시 거친 포효 발동 토대(거친 포효 자동 발동은 후속).",
+    passive: "수호신 백호: 1회 소환으로 천사팀 카운트 +3을 영구 획득(생존 무관). 거친 포효: 강한 의지 2회 누적 시 즉시 자동 발동 — 천사팀 카운트 -1, 그 밤 지목한 대상 중 2명에게 백호 발톱(다음 아침 투표가치 3 이상 얻으면 소멸).",
     abilitySummary: "백호 소환(1회): 천사팀 카운트 +3. 강한 의지: 한 명을 관찰하고 강한 의지 +1(같은 대상 연속 지목 불가). 관찰 대상이 그 밤 탈락하면 강한 의지 +2 추가. 그날의 저항(1회, 첫 밤 불가): 백호 한 마리 추가 소환 — 천사팀 카운트 +1 + 강한 의지 +1.",
     night: {
       actionType: "rainer_summon",
@@ -152,14 +152,17 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     label: "로마즈",
     title: "용의자 색출 경찰",
     faction: "angel",
-    reveal: "정의로운 경찰. 매일 밤 용의자를 지목해 다음 투표에서 그 대상의 무게를 키웁니다.",
-    abilitySummary: "용의자 색출: 대상이 다음 투표와 의심 집계에서 더 많은 압박을 받게 합니다.",
+    reveal: "정의로운 경찰. 매일 밤 용의자를 지목해 압박을 키우고, 조사장으로 악마를 색출해 신념으로 처단합니다.",
+    abilitySummary: "용의자 색출: 대상을 용의자로 지목하고 조사장을 모읍니다(조사장 보유 시 악마 여부 통지, 3장이면 악마팀 무조건 구금). 신념(1회): 용의자였던 대상 1명을 탈락시킵니다(천사팀이면 봉인).",
     night: {
       actionType: "romaz_suspect",
       label: "용의자 색출",
-      prompt: "용의자로 지목할 대상을 고르세요. 다음 투표에서 그 대상의 투표·의심 가치가 올라갑니다.",
+      prompt: "용의자로 지목할 대상을 고르세요. 투표·의심 가치가 오르고 조사장 1장을 얻습니다(조사장 보유 시 악마 여부 통지, 3장이면 악마팀 무조건 구금).",
       excludeSelf: true,
     },
+    extraNights: [
+      { actionType: "romaz_conviction", label: "신념", prompt: "신념 — 용의자로 지목됐던 대상 1명을 탈락시킵니다(무시 불가). 천사팀이면 신념이 봉인됩니다. (1회)", excludeSelf: true },
+    ],
   },
   gain: {
     label: "가인",
@@ -211,9 +214,9 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
   rosanne: {
     label: "로잔느",
     title: "백일몽 / 세헤라자드",
-    roster: "neutral",
+    roster: "demon",
     faction: "neutral",
-    reveal: "꿈을 길게 끄는 독립 솔로(중립). 아침을 일곱 번 맞이하면 홀로 승리합니다. 대신 토론은 짧아지고 무투에 참여할 수 없습니다.",
+    reveal: "악마 진영에 속한 세헤라자드. 아침을 일곱 번 맞이하면 홀로 단독 승리합니다(악마와 함께 이길 수도, 혼자 이길 수도). 대신 토론은 짧아지고 무투에 참여할 수 없습니다.",
     passive: "백일몽: 아침을 일곱 번 맞이하면 즉시 단독 승리합니다. 증오: 지목한 대상의 투표가치를 1 낮추고, 투표가치가 0이 되면 즉시 처형합니다. 조망: 로잔느가 살아있는 동안 타인에게 능력을 적용한 플레이어는 그 밤 투표가치가 낮아집니다(1 미만으로는 내려가지 않음).",
     abilitySummary: "증오: 지목 대상의 투표가치를 깎고 0이 되면 처형합니다. 만들어가는 미래: 대상에 원한을 새기고 로잔느의 아침을 한 번 더 끌어옵니다(르상티망). 라포르: 두 사람의 운명을 묶어 한쪽이 죽으면 다른 쪽도 죽습니다. 외현기억: 탈락자를 매 아침 되살려 그 날 끝에 처형합니다. 건너뛰기: 이번 밤의 다른 모든 효과를 취소합니다.",
     night: { actionType: "rosanne_hatred", label: "증오", prompt: "투표가치를 깎을 대상을 고르세요. 0이 되면 즉시 처형됩니다.", excludeSelf: true },
@@ -326,8 +329,8 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     title: "명예의 군인",
     faction: "angel",
     reveal: "명예의 군인. 살아있는 한 천사팀 카운트를 더하고, 매일 밤 투쟁으로 한 명의 소속 카운트를 키웁니다.",
-    passive: "군인의 사명/명예: 생존 중 천사팀 카운트를 보강하고 악마 효과 제거 흐름을 갖습니다. v1은 카운트 보너스로 축약됩니다.",
-    abilitySummary: "투쟁: 대상의 소속 카운트를 더합니다. 용맹함(1회): 자기 부정 효과를 모두 씻고 명예(천사팀 카운트 +1)를 세웁니다.",
+    passive: "명예: 살아있는 한 천사팀 카운트 +5와 투표가치 +5를 갖습니다(사탄의 마 -1 을 뚫는 표 경로). 군인의 사명: 투쟁 2회로 충전된 대상은 악마 효과 1회를 제거합니다.",
+    abilitySummary: "투쟁: 대상의 소속 카운트를 더합니다. 용맹함(1회): 자기 부정 효과를 모두 씻고 전원에게 투쟁을 발동합니다.",
     night: { actionType: "uno_struggle", label: "투쟁", prompt: "소속 카운트를 더해줄 대상을 고르세요.", excludeSelf: true },
     extraNights: [
       { actionType: "uno_valor", label: "용맹함", prompt: "용맹함 — 자기 부정 효과를 씻고 명예를 세웁니다. (1회, 대상 없음)", self: true },
@@ -412,10 +415,13 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
 // 출처: muel-bot/src/gomdoriCodex.ts (vault Universes/BoW/Characters/* 기반).
 export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]> = {
   romaz: [
-    { kind: "능력", name: "용의자 색출", text: "대상에게 +5 투표가치 / +10 의심가치를 받는 표로 가산합니다. 다음 집계에 반영됩니다.", actionType: "romaz_suspect", status: "live" },
+    { kind: "패시브", name: "정의로운 경찰", text: "용의자로 지목한 대상은 +5 투표가치 / +10 의심가치를 받는 표로 가산합니다.", status: "live" },
+    { kind: "능력", name: "용의자 색출", text: "대상을 하루 '용의자'로 지목하고 조사장 1장을 얻습니다. 조사장을 가진 채 색출하면 용의자가 악마인지 통지받습니다. 조사장 3장이면 용의자가 악마팀일 때 조건을 무시하고 구금(능력·효과 차단)합니다.", actionType: "romaz_suspect", status: "live" },
+    { kind: "능력2", name: "신념", text: "용의자로 지목됐던 대상 중 1명을 탈락시킵니다(무시 불가). 이 탈락자가 천사팀이면 신념이 봉인되고 이후 구금할 수 없게 됩니다. 1회성입니다.", actionType: "romaz_conviction", status: "live" },
   ],
   rainer: [
     { kind: "패시브", name: "수호신 백호", text: "백호 소환 시 천사팀 카운트 +3을 얻고, 탈락 뒤에도 사후 지속 +3을 남깁니다. 1회성입니다.", actionType: "rainer_summon", status: "live" },
+    { kind: "패시브", name: "거친 포효", text: "'강한 의지'를 2회 받으면 즉시 자동 발동합니다 — 천사팀 카운트 -1, 그 밤 지목한 대상 중 2명에게 백호 발톱을 새깁니다. 발톱이 새겨진 대상은 다음 아침 투표가치를 3 이상 얻으면 소멸합니다.", status: "live" },
     { kind: "능력", name: "강한 의지", text: "대상을 관찰하고 강한 의지 +1을 얻습니다(같은 대상 연속 지목 불가). 관찰 대상이 그 밤 탈락하면 강한 의지 +2가 추가됩니다.", actionType: "rainer_resolve", status: "live" },
     { kind: "능력2", name: "그날의 저항", text: "백호 한 마리를 추가 소환합니다 — 천사팀 카운트 +1 + 강한 의지 +1. 1회성이며 첫 밤에는 발동되지 않습니다.", actionType: "rainer_resistance", status: "live" },
   ],
@@ -442,8 +448,9 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
     { kind: "능력2", name: "자유로운 새", text: "탈락자 한 명을 추가로 되살립니다. 1회성입니다.", actionType: "helen_freebird", status: "live" },
   ],
   uno: [
+    { kind: "패시브", name: "명예", text: "우노는 살아있는 한 천사팀 카운트 +5와 행사 투표가치 +5를 갖습니다. 이 투표가치는 사탄의 마(-1)를 뚫고 살아남아, 악마가 투표를 독점해도 우노만은 표를 행사할 수 있습니다.", status: "live" },
     { kind: "패시브", name: "군인의 사명", text: "투쟁 2회로 충전된 대상은 악마 효과 1회를 제거합니다.", status: "live" },
-    { kind: "능력", name: "투쟁", text: "대상 소속 카운트 +1과 사명 충전 +1을 부여합니다. 우노는 명예로 천사팀 카운트 +1과 투표가치 +10을 갖습니다 — 이 투표가치는 사탄의 마(-1)를 뚫고 살아남아, 악마가 투표를 독점해도 우노만은 표를 행사할 수 있습니다.", actionType: "uno_struggle", status: "live" },
+    { kind: "능력", name: "투쟁", text: "대상 소속 카운트 +1과 사명 충전 +1을 부여합니다.", actionType: "uno_struggle", status: "live" },
     { kind: "능력2", name: "용맹함", text: "자신을 정화하고 전원에게 투쟁을 발동합니다. 우노가 투표한 대상은 사망 기록과 소속이 공개·처형되고, 천사를 죽이면 우노가 다음 밤 봉인됩니다. 1회성입니다.", actionType: "uno_valor", status: "live" },
   ],
   arthur: [
