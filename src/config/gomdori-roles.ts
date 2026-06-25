@@ -304,10 +304,11 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     faction: "angel",
     reveal: "행복을 파는 가게의 주인. 디저트로 위로하고, 와인으로 정화하며, 어둠이 깊어지면 다수를 부활시킵니다.",
     passive: "행복을 파는 가게: 탈락자가 생존자보다 많아지면 가장 최근 탈락 2명을 복귀시키고 미즐렛은 탈락합니다(소멸·부활불가 무시, 1회). 디저트를 준 대상과는 다과회 채팅 회로가 열리고, 고급 와인 발동 시 디저트 보유자 전원이 미즐렛과 회식 채팅(현재 backend 이벤트 신호 — Discord plumbing 후속).",
-    abilitySummary: "디저트 선물(부활): 탈락한 한 명을 되살립니다(1회). 디저트 선물(버프): 생존자를 보호하고 다과회 채팅 회로를 엽니다. 고급 와인(1회): 전원 정화 + 디저트 미제공자 투표가치 -1 + 디저트 보유자 전원과 와인 회식 채팅.",
+    abilitySummary: "디저트 선물(부활): 탈락한 한 명을 되살립니다(1회). 쿠키: 보호 + 보유자가 탈락해도 그 밤 능력을 발동합니다. 푸딩: 보호 + 단일 대상 능력을 봉인·지목 무시하고 발동합니다('무시 불가'). 고급 와인(1회): 전원 정화 + 디저트 미제공자 투표가치 -1 + 디저트 보유자 전원과 와인 회식 채팅.",
     night: { actionType: "mizlet_revive", label: "디저트 선물(부활)", prompt: "디저트로 되살릴 탈락자를 고르세요. (1회)" },
     extraNights: [
-      { actionType: "mizlet_dessert", label: "디저트 선물", prompt: "디저트를 줄 생존자를 고르세요. 그 밤 보호받고 미즐렛과의 다과회 채팅 회로가 열립니다." },
+      { actionType: "mizlet_cookie", label: "디저트 선물(쿠키)", prompt: "쿠키를 줄 생존자를 고르세요. 그 밤 보호받고, 쿠키 보유자는 탈락해도 그 밤 능력이 발동됩니다. 미즐렛과의 다과회 채팅 회로가 열립니다." },
+      { actionType: "mizlet_pudding", label: "디저트 선물(푸딩)", prompt: "푸딩을 줄 생존자를 고르세요. 그 밤 보호받고, 푸딩 보유자가 단일 대상 능력을 쓰면 봉인·지목을 무시하고 발동합니다('무시 불가')." },
       { actionType: "mizlet_wine", label: "고급 와인", prompt: "고급 와인 — 전원의 부정 효과를 씻어내고 디저트 보유자 전원과 와인 회식 채팅을 엽니다. 디저트를 받지 못한 사람은 투표가치 -1. (1회, 대상 없음)", self: true },
     ],
   },
@@ -438,7 +439,8 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
   mizlet: [
     { kind: "패시브", name: "행복을 파는 가게", text: "탈락자가 생존자보다 많아지면 가장 최근 탈락 2명을 복귀(소멸·부활불가 무시)시키고 미즐렛은 탈락합니다. 1회성 역전 패시브입니다.", status: "live" },
     { kind: "능력", name: "디저트 선물(부활)", text: "탈락한 한 명을 디저트로 되살립니다. 1회성입니다.", actionType: "mizlet_revive", status: "live" },
-    { kind: "능력", name: "디저트 선물", text: "대상에게 디저트(보호 + remembered 풍 다과회 회로)를 부여하고 미즐렛과의 채팅 회로를 엽니다(현재 backend 이벤트 신호).", actionType: "mizlet_dessert", status: "live" },
+    { kind: "능력", name: "디저트 선물(쿠키)", text: "대상에게 쿠키(보호 + cookie 표식)를 부여하고 미즐렛과의 채팅 회로를 엽니다. 쿠키 보유자는 그 밤 탈락해도 그 밤 능력이 발동됩니다.", actionType: "mizlet_cookie", status: "live" },
+    { kind: "능력", name: "디저트 선물(푸딩)", text: "대상에게 푸딩(보호 + pudding 표식)을 부여합니다. 푸딩 보유자의 단일 대상 능력은 봉인·지목을 무시하고 발동합니다('무시 불가').", actionType: "mizlet_pudding", status: "live" },
     { kind: "능력2", name: "고급 와인", text: "전원의 부정 효과를 제거하고 디저트 보유자 전원과 와인 회식 채팅을 엽니다. 디저트를 받지 못한 대상은 투표가치 -1. 1회성입니다.", actionType: "mizlet_wine", status: "live" },
   ],
   helen: [
