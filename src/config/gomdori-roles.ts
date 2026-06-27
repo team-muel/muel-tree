@@ -145,8 +145,8 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
       self: true,
     },
     extraNights: [
-      { actionType: "rainer_resolve", label: "강한 의지", prompt: "관찰할 대상을 고르세요(같은 대상 연속 지목 불가). 강한 의지 +1, 관찰 대상이 그 밤 탈락하면 추가 +2.", excludeSelf: true },
-      { actionType: "rainer_roar", label: "거친 포효", prompt: "강한 의지 2회 누적 시 2명을 지목해 백호 발톱을 새깁니다(천사팀 카운트 -1, 강한 의지 2 소비). 발톱이 새겨진 대상은 다음 아침 투표가치 3 이상 얻으면 소멸합니다.", excludeSelf: true, maxTargets: 2 },
+      { actionType: "rainer_resolve", label: "강한 의지", prompt: "관찰할 대상을 고르세요(같은 대상 연속 지목 불가). 강한 의지 +1, 관찰 대상이 그 밤 탈락하면 추가 +2. (그날의 저항 종료 시 지목 +1)", excludeSelf: true, maxTargets: 1, maxTargetsSelfBonus: true },
+      { actionType: "rainer_roar", label: "거친 포효", prompt: "강한 의지 2회 누적 시 2명을 지목해 백호 발톱을 새깁니다(천사팀 카운트 -1, 강한 의지 2 소비, 그날의 저항 중 +2명). 발톱이 새겨진 대상은 다음 아침 투표가치 3 이상 얻으면 소멸합니다.", excludeSelf: true, maxTargets: 2, maxTargetsSelfBonus: true },
       { actionType: "rainer_resistance", label: "그날의 저항", prompt: "그날의 저항 — 백호 한 마리 추가 소환합니다. 천사팀 카운트 +1, 강한 의지 +1. (1회)", self: true },
     ],
   },
@@ -348,7 +348,7 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     abilitySummary: "잔불이 꺼지기 전에: 대상에게 해오름을 부여해 결백/타락을 식별하고 잔불 대검을 충전합니다. 잔불 대검: 충전을 1 써서 결백자에겐 하루 무적, 타락자에겐 폭열(다시 베면 소멸). 결백/타락은 진영이 아니라 '부정 효과를 쓴 적 있는가'로 가립니다.",
     night: { actionType: "arthur_judge", label: "잔불이 꺼지기 전에", prompt: "해오름으로 식별할 대상을 고르세요(최대 3명). 결백/타락을 통지받고 잔불 대검이 1 충전됩니다. ", excludeSelf: true, maxTargets: 3 },
     extraNights: [
-      { actionType: "arthur_emberblade", label: "잔불 대검", prompt: "충전을 1 써서 한 명을 벱니다. 부정 효과를 쓴 적 있는 '타락자'면 폭열(다시 베면 소멸), 그렇지 않은 '결백자'면 하루 무적을 부여합니다. 충전이 없으면 발동되지 않습니다.", excludeSelf: true },
+      { actionType: "arthur_emberblade", label: "잔불 대검", prompt: "벨 대상을 고르세요(결백 천사 탈락 수만큼 여러 명 가능). 부정 효과를 쓴 적 있는 '타락자'면 폭열(다시 베면 소멸), 그렇지 않은 '결백자'면 하루 무적을 부여합니다. 충전이 없으면 발동되지 않습니다.", excludeSelf: true, maxTargets: 1, maxTargetsSelfBonus: true },
     ],
   },
   seika: {
