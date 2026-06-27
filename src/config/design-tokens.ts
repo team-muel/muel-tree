@@ -77,16 +77,18 @@ export const FACTION_COLORS = {
     gemDark: "text-rose-300",
     gemLight: "text-rose-700",
   },
-  // 조력자 = 악마 진영 → demon 과 동일 rose (별도 진영 색 아님).
+  // 조력자 = 진영은 악마(승리·팀 판정)지만 도감/엠블럼 표시색은 자기 색(violet).
+  // roster='helper' 로 키잉 → 조력자 4종(루나 포함)이 한 색으로 통일.
+  // (팀 UI 의 rose 톤은 RoleAssignPhase 가 FACTION_COLORS.demon 으로 따로 입힌다.)
   helper: {
-    primary: "text-rose-50",
-    accent: "text-rose-300",
-    bgSoft: "bg-rose-950/30",
-    border: "border-rose-400/20",
-    ring: "ring-rose-300/40",
-    glow: "shadow-[0_0_32px_rgba(251,113,133,0.30)]",
-    gemDark: "text-rose-300",
-    gemLight: "text-rose-700",
+    primary: "text-violet-50",
+    accent: "text-violet-300",
+    bgSoft: "bg-violet-950/30",
+    border: "border-violet-400/20",
+    ring: "ring-violet-300/40",
+    glow: "shadow-[0_0_32px_rgba(196,181,253,0.28)]",
+    gemDark: "text-violet-300",
+    gemLight: "text-violet-700",
   },
   // 중립 = 독자 진영, violet.
   neutral: {

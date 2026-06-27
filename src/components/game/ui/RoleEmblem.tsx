@@ -34,11 +34,13 @@ export function RoleEmblem({
 }) {
   const visual = roleVisual(role);
   const s = SIZES[size];
-  // 색은 진영 단일 출처(FACTION_COLORS)에서. 직업별 hue 를 손으로 박던 방식은
-  // 같은 진영 안에서 표류했다(조력자=악마팀인데 루나만 달빛색, 나머지는 violet).
-  // 심볼(모양)만 직업별로 유지하고, 색/광휘는 faction 으로 통일.
-  const faction = (roleMeta(role ?? undefined)?.faction ?? "neutral") as keyof typeof FACTION_COLORS;
-  const fc = FACTION_COLORS[faction] ?? FACTION_COLORS.neutral;
+  // 색은 진영 단일 출처(FACTION_COLORS)에서, 키는 roster 우선(없으면 faction).
+  // 직업별 hue 를 손으로 박던 방식은 같은 그룹 안에서 표류했다(조력자 루나만 달빛색).
+  // roster 로 키잉 → 천사 amber·악마 rose·조력자 violet·중립 violet 으로 그룹 통일,
+  // 직업 식별은 심볼(모양)이 담당.
+  const meta = roleMeta(role ?? undefined);
+  const colorKey = (meta?.roster ?? meta?.faction ?? "neutral") as keyof typeof FACTION_COLORS;
+  const fc = FACTION_COLORS[colorKey] ?? FACTION_COLORS.neutral;
   const hue = mood === "light" ? fc.gemLight : fc.gemDark;
   const ringBase =
     mood === "light"
