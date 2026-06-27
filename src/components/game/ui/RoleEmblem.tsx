@@ -9,7 +9,8 @@
 
 import { RoleSymbol } from "@/components/game/ui/RoleSymbol";
 import { roleVisual } from "@/config/gomdori-role-visuals";
-import type { Mood } from "@/config/design-tokens";
+import { FACTION_COLORS, type Mood } from "@/config/design-tokens";
+import { roleMeta } from "@/config/gomdori-roles";
 
 const SIZES = {
   sm: { ring: "h-9 w-9", icon: "h-5 w-5", img: 36 },
@@ -33,7 +34,12 @@ export function RoleEmblem({
 }) {
   const visual = roleVisual(role);
   const s = SIZES[size];
-  const hue = visual ? (mood === "light" ? visual.hueLight : visual.hueDark) : "text-white/50";
+  // 색은 진영 단일 출처(FACTION_COLORS)에서. 직업별 hue 를 손으로 박던 방식은
+  // 같은 진영 안에서 표류했다(조력자=악마팀인데 루나만 달빛색, 나머지는 violet).
+  // 심볼(모양)만 직업별로 유지하고, 색/광휘는 faction 으로 통일.
+  const faction = (roleMeta(role ?? undefined)?.faction ?? "neutral") as keyof typeof FACTION_COLORS;
+  const fc = FACTION_COLORS[faction] ?? FACTION_COLORS.neutral;
+  const hue = mood === "light" ? fc.gemLight : fc.gemDark;
   const ringBase =
     mood === "light"
       ? "border-[#2b2118]/15 bg-white/60"
@@ -42,7 +48,7 @@ export function RoleEmblem({
   return (
     <span
       className={`inline-flex shrink-0 items-center justify-center rounded-full border backdrop-blur-sm ${s.ring} ${ringBase} ${
-        glow && visual ? visual.glow : ""
+        glow ? fc.glow : ""
       } ${hue} ${className ?? ""}`}
     >
       {visual?.illustration ? (

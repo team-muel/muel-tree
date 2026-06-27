@@ -98,7 +98,8 @@ function renderPhasePreview(
             payload: {
               role: "demon",
               faction: "demon",
-              pendingSelection: { kind: "demon", pool: ["demon", "phantom", "malen"] },
+              // 악마 슬롯 변종 4종 — 백엔드 DEMON_KILLER_ROLES 와 동일(로잔느 포함).
+              pendingSelection: { kind: "demon", pool: ["demon", "phantom", "malen", "rosanne"] },
             },
           }]}
           matchId="preview"
