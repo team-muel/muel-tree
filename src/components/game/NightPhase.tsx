@@ -192,6 +192,8 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
   const dayIdx = Math.max(0, (dayNumber ?? 1) - 1);
   // 본인 동적 보너스(로건 부서진 펜던트 3+ → +2). 뷰 target_bonus(본인 전용)에서 온다.
   const selfTargetBonus = myPlayer?.targetBonus ?? 0;
+  // 소나타(루루): '능력 지정 +1 전원' — 전역 1일 보너스(모든 능력 maxTargets 에 가산).
+  const selfDayTargetBonus = myPlayer?.dayTargetBonus ?? 0;
   const dynMax = (m?: { maxTargets?: number; maxTargetsPerDay?: number; maxTargetsSelfBonus?: boolean }) =>
     m?.maxTargets ? m.maxTargets + (m.maxTargetsPerDay ?? 0) * dayIdx + (m.maxTargetsSelfBonus ? selfTargetBonus : 0) : undefined;
   const maxTargetsByAction: Record<string, number> = {};
@@ -200,7 +202,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
     const v = dynMax(ex);
     if (v) maxTargetsByAction[ex.actionType] = v;
   }
-  const maxTargetsFor = (actionType: string) => maxTargetsByAction[actionType] ?? 1;
+  const maxTargetsFor = (actionType: string) => (maxTargetsByAction[actionType] ?? 1) + selfDayTargetBonus;
 
   const myEffects = resolveMyStatusEffects(myPlayer?.userId, events ?? []);
   const isNightLocked = iAmSuspected || myEffects.includes("sealed");

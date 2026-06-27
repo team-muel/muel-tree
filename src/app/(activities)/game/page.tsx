@@ -687,5 +687,6 @@ function mapPlayerRow(row: Record<string, unknown>): PlayerSummary {
     isAi: row.is_ai === true,
     aiProvider: typeof row.ai_provider === "string" ? row.ai_provider : null,
     targetBonus: typeof row.target_bonus === "number" ? row.target_bonus : 0,
+    dayTargetBonus: typeof row.day_target_bonus === "number" ? row.day_target_bonus : 0,
   };
 }
