@@ -369,9 +369,8 @@ export function DesignInventory() {
                             <div className="text-[0.625rem] uppercase tracking-widest text-white/35">Visual</div>
                             <dl className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 rounded-md bg-white/[0.04] px-2 py-1.5 font-mono text-[0.625rem] text-white/45">
                               <dt>symbol</dt><dd>{row.visual?.symbol ?? "-"}</dd>
-                              <dt>hueDark</dt><dd>{row.visual?.hueDark ?? "-"}</dd>
-                              <dt>hueLight</dt><dd>{row.visual?.hueLight ?? "-"}</dd>
-                              <dt>glow</dt><dd className="break-all">{row.visual?.glow ?? "-"}</dd>
+                              <dt>색(진영)</dt><dd>{row.meta.faction} → {color.gemDark}</dd>
+                              <dt>모티프</dt><dd className="break-all">{row.visual?.motif ?? "-"}</dd>
                               <dt>illustration</dt><dd>{row.visual?.illustration ?? "slot-empty"}</dd>
                             </dl>
                           </div>

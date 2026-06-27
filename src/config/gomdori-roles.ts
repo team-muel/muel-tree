@@ -5,14 +5,14 @@
 export type GomdoriRoleId =
   // 레거시(미배정)
   | "citizen" | "doctor" | "police" | "helper"
-  // 악마 풀
-  | "demon" | "phantom" | "malen"
+  // 악마 풀 (슬롯 변종 — 백엔드 DEMON_KILLER_ROLES 와 동일)
+  | "demon" | "phantom" | "malen" | "rosanne"
   // 조력자 풀
   | "gain" | "luna" | "logen" | "ellen"
   // 천사 풀
   | "romaz" | "rainer" | "dordan" | "habreterus" | "mizlet" | "helen" | "uno" | "arthur" | "seika" | "luru"
   // 중립
-  | "pasua" | "rosanne" | "converted"
+  | "pasua" | "converted"
   // 게임 내 변환 산물(배정 풀 아님): 루나 타락(천사 → 악마팀)
   | "corrupted";
 
