@@ -130,6 +130,8 @@ export type PlayerSummary = {
    * 타인 행은 null(능력 한도는 비밀). NightPhase 가 능력 지정 한도에 더한다.
    */
   targetBonus?: number;
+  /** 소나타(루루) '능력 지정 +1 전원' — 전역 1일 보너스(뷰 day_target_bonus). 모든 능력 한도에 가산. */
+  dayTargetBonus?: number;
 };
 
 export async function resolveMatch(
