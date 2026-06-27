@@ -188,10 +188,25 @@ export const GOMDORI_EVENT_COPY: Record<string, GomdoriEventCopy> = {
   },
 
   // ── T2/T0/T3 신규 ───────────────────────────────────────────
-  // 도르단 잠입 수사 — 관찰 대상이 그 밤 탈락 → 불심검문(그 밤 부정효과 무시).
+  // 도르단 잠입 수사 — 관찰 대상이 그 밤 탈락하거나 누군가를 탈락시킴 → 불심검문(그 밤 부정효과 무시).
   stakeout_triggered: {
     audience: "personal", tone: "good", icon: "🕵️",
-    line: () => "불심검문 발동 — 관찰하던 대상이 탈락해 그 밤 부정 효과를 모두 무시했습니다.",
+    line: () => "불심검문 발동 — 관찰하던 대상이 탈락(또는 누군가를 탈락)시켜 그 밤 부정 효과를 모두 무시했습니다.",
+  },
+  // 도르단 단서 수집 — 조사 대상이 그 밤 능력을 발동했는지(행동 관찰) 통지.
+  dordan_observation: {
+    audience: "personal", tone: "info", icon: "🔍",
+    line: (p, n) =>
+      `조사: ${n(p.target_user_id)} 님은 그 밤 ${p.acted ? "능력을 발동했습니다" : "별다른 행동이 없었습니다"}.`,
+  },
+  // 도르단 침착한 탐정 — 탈락 밤, 범인(투표 지목)이 그 밤 지정한 대상을 통지.
+  culprit_target_revealed: {
+    audience: "personal", tone: "info", icon: "🕵️",
+    line: (p, n) => {
+      const ids = Array.isArray(p.target_user_ids) ? p.target_user_ids : [];
+      if (ids.length === 0) return null;
+      return `침착한 탐정: 범인 ${n(p.culprit_user_id)} 님이 그 밤 ${ids.map(n).join(", ")} 님을 지목했습니다.`;
+    },
   },
   // 하브레터스 상호추리 — 적중/빗나감.
   deduce_hit: {
