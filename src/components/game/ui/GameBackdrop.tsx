@@ -6,6 +6,9 @@
  * NightSky·키아트가 빠져 인게임과 어긋났던 드리프트를 차단한다.
  *
  * - status 별 NightSky: 밤 계열은 달+별, 그 외 어둠 무드(역할공개·종료·로비·랜딩)는 옅은 별.
+ * - status 별 DayGlow: 낮 무드(아침·투표)는 위쪽 햇빛 블룸 — NightSky 달빛의 낮 짝.
+ *   밤은 달이 위에서 빛을 주는데 낮이 평면 그라디언트면 "밤만 질감 풍부"한 정합 간극이
+ *   생긴다 → 낮에도 상단 광원을 줘 양쪽이 "위에서 빛을 받는 한 무대"로 읽히게.
  * - keyArt: 진입·로딩·로비의 풀블리드 night-muse (dim = 로비용 저채도).
  * - embedded: 작업대처럼 박스 안에 끼울 때 키아트를 fixed 대신 absolute 로 (박스 기준).
  *
@@ -18,6 +21,11 @@ import { IllustrationScene } from "@/components/game/ui/IllustrationScene";
 // 실게임 GameFrame 의 status 분기와 1:1 — 변경 시 양쪽이 자동 정합.
 const STARRY_FULL = new Set(["night", "night_suspect"]);
 const STARRY_SUBTLE = new Set(["role_assign", "ended", "lobby", "landing"]);
+// 낮 무드 — 상단 햇빛 블룸(달빛의 낮 짝). 투표는 더 따뜻한 황금빛.
+const SUN_GLOW: Record<string, string> = {
+  day: "radial-gradient(115% 75% at 50% -12%, rgba(255,251,238,0.55), rgba(255,251,238,0) 56%)",
+  vote: "radial-gradient(115% 75% at 50% -12%, rgba(255,244,214,0.5), rgba(255,244,214,0) 56%)",
+};
 
 export function GameBackdrop({
   status,
@@ -50,6 +58,13 @@ export function GameBackdrop({
       ) : null}
       {status && STARRY_FULL.has(status) ? <NightSky /> : null}
       {status && STARRY_SUBTLE.has(status) ? <NightSky subtle /> : null}
+      {status && SUN_GLOW[status] ? (
+        <div
+          aria-hidden="true"
+          className={`pointer-events-none ${embedded ? "absolute" : "fixed"} inset-0`}
+          style={{ background: SUN_GLOW[status] }}
+        />
+      ) : null}
     </>
   );
 }

@@ -101,9 +101,11 @@ export function PlayerToken({
   const light = mood === "light";
   const ink = light ? "text-[#2b2118]" : "text-white";
   const inkFaint = light ? "text-[#8a7a64]" : "text-white/40";
+  // 무대 위 "서 있는" 깊이(B, 2026-06-27): 평평한 유리원 → 위에서 빛 받는 가장자리(border-t)+바닥
+  // 그림자(grounding). 광휘(glow)가 아니라 입체감 — 의미-순간 글로우 원칙(GLOW)은 selected 에만 유지.
   const tokenBase = light
-    ? "border-[#2b2118]/15 bg-white/65"
-    : "border-white/15 bg-white/[0.06]";
+    ? "border-[#2b2118]/15 border-t-[#2b2118]/25 bg-white/70 shadow-[0_6px_16px_rgba(80,60,20,0.14)]"
+    : "border-white/15 border-t-white/30 bg-white/[0.08] shadow-[0_6px_16px_rgba(0,0,0,0.45)]";
   const cardBase = light
     ? "border-[#2b2118]/10 bg-white/45 hover:bg-white/65"
     : "border-white/10 bg-black/20 hover:bg-white/[0.06]";
