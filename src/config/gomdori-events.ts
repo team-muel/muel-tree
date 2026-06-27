@@ -213,6 +213,11 @@ export const GOMDORI_EVENT_COPY: Record<string, GomdoriEventCopy> = {
     audience: "personal", tone: "info", icon: "💤",
     line: () => "황금빛 수면 — 투표가치를 모두 소모해 헬렌과 접선했습니다. 깨어나면 투표가치가 회복됩니다.",
   },
+  // 미즐렛 고급 와인 — 우선적용으로 그 밤 부정 행동이 무효화된 대상에게 통지.
+  wine_nullified: {
+    audience: "personal", tone: "warn", icon: "🍷",
+    line: () => "고급 와인 — 우선적용에 막혀 그 밤 당신의 행동이 무효화되었습니다.",
+  },
   // 하브레터스 상호추리 — 적중/빗나감.
   deduce_hit: {
     audience: "personal", tone: "good", icon: "🎯",
