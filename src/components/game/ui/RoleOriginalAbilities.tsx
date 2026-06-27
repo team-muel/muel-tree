@@ -2,27 +2,12 @@
 
 import type { GomdoriOriginalAbility, GomdoriOriginalAbilityKind } from "@/config/gomdori-roles";
 
-// 구현상태 배지 — 원본(로컬 캐논) 대비 인게임 반영도. 미지정이면 배지 없음(원본 텍스트만).
-const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
-  live: { label: "게임 반영", cls: "border-emerald-300/30 bg-emerald-400/10 text-emerald-200" },
-  partial: { label: "부분 반영", cls: "border-amber-300/30 bg-amber-400/10 text-amber-200" },
-  planned: { label: "예정", cls: "border-white/15 bg-white/[0.04] text-white/40" },
-};
-
 // 패시브는 "사용하는 능력"이 아니다 — 능력(사용)과 시각 위계를 분리한다(로컬 캐논 구조).
+// ※ 구현상태 배지(게임반영/부분반영/예정)는 플레이어 표면에서 제거(2026-06-27, 사용자 결정 반복
+//   확정): 플레이어는 캐논 텍스트만 본다. 구현상태·드리프트 메타는 디자이너 도구(preview
+//   DesignInventory) 전용. 여기에 status 배지를 다시 붙이지 말 것 — 재발 방지 테스트 가드 있음.
 const PASSIVE_KINDS: GomdoriOriginalAbilityKind[] = ["패시브", "특수 패시브"];
 const isPassiveKind = (kind: GomdoriOriginalAbilityKind): boolean => PASSIVE_KINDS.includes(kind);
-
-function StatusBadge({ status }: { status?: GomdoriOriginalAbility["status"] }) {
-  if (!status || !STATUS_BADGE[status]) return null;
-  return (
-    <span
-      className={`ml-auto shrink-0 self-center rounded-full border px-1.5 py-0.5 text-[0.5rem] font-semibold uppercase tracking-wider ${STATUS_BADGE[status].cls}`}
-    >
-      {STATUS_BADGE[status].label}
-    </span>
-  );
-}
 
 /**
  * 직업 능력 표시 — 로컬 캐논 구조(패시브 / 능력 / 능력2)를 그대로 위계화한다.
@@ -75,7 +60,6 @@ export function RoleOriginalAbilities({
                   <span className={compact ? "text-xs font-semibold text-white/80" : "text-sm font-semibold text-white/85"}>
                     {ability.name}
                   </span>
-                  <StatusBadge status={ability.status} />
                 </div>
                 <p className={compact ? "mt-1 text-[0.6875rem] leading-4 text-white/55" : "mt-1 text-xs leading-5 text-white/60"}>
                   {ability.text}
@@ -101,7 +85,6 @@ export function RoleOriginalAbilities({
                     {ability.name}
                   </span>
                   {ability.actionType ? <span className={subHeadClass}>· 밤에 발동</span> : null}
-                  <StatusBadge status={ability.status} />
                 </div>
                 <p className={compact ? "mt-1 text-[0.6875rem] leading-4 text-white/45" : "mt-1 text-xs leading-5 text-white/50"}>
                   {ability.text}
