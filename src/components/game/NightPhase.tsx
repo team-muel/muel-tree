@@ -203,6 +203,16 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
     if (v) maxTargetsByAction[ex.actionType] = v;
   }
   const maxTargetsFor = (actionType: string) => (maxTargetsByAction[actionType] ?? 1) + selfDayTargetBonus;
+  // C — 동적 타깃수 피드백: 현재 상한이 능력 '기본'보다 늘었으면 그 차이를 드러낸다.
+  // 기본 = manifest maxTargets(없으면 1). 보너스 = 일자성장 + 본인강화(펜던트) + 소나타 등.
+  // 직업/숫자 하드코딩 없이 일반 도출 — 늘어난 사실 자체를 무대에서 읽히게.
+  const baseMaxByAction: Record<string, number> = {};
+  if (nightMeta?.night?.maxTargets) baseMaxByAction[nightMeta.night.actionType] = nightMeta.night.maxTargets;
+  for (const ex of nightMeta?.extraNights ?? []) {
+    if (ex.maxTargets) baseMaxByAction[ex.actionType] = ex.maxTargets;
+  }
+  const baseMaxFor = (actionType: string) => baseMaxByAction[actionType] ?? 1;
+  const targetBonusFor = (actionType: string) => Math.max(0, maxTargetsFor(actionType) - baseMaxFor(actionType));
 
   const myEffects = resolveMyStatusEffects(myPlayer?.userId, events ?? []);
   const isNightLocked = iAmSuspected || myEffects.includes("sealed");
@@ -586,6 +596,14 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
             <div className="rounded-xl border border-amber-300/20 bg-amber-400/[0.05] p-3 text-xs text-white/70">
               <div className="mb-2">
                 선택한 대상 {(multiSelected[current.actionType] ?? []).length} / {maxTargetsFor(current.actionType)}
+                {targetBonusFor(current.actionType) > 0 ? (
+                  <span
+                    className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-400/15 px-2 py-0.5 align-middle text-[0.625rem] font-semibold text-amber-200 motion-safe:animate-in motion-safe:fade-in"
+                    title={`기본 ${baseMaxFor(current.actionType)}명 + 보너스 ${targetBonusFor(current.actionType)}명 (능력 강화로 이 밤 더 지목)`}
+                  >
+                    오늘 밤 +{targetBonusFor(current.actionType)}
+                  </span>
+                ) : null}
                 {(multiSelected[current.actionType] ?? []).length ? (
                   <span className="ml-1 font-semibold text-amber-200">
                     {(multiSelected[current.actionType] ?? [])
