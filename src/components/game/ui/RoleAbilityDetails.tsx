@@ -23,9 +23,9 @@ export function cleanRoleReveal(role: string): string {
 
 /**
  * 직업 능력 단일 표시(2026-06-15) — "원본 능력표"와 "현재 게임 액션"으로 갈라져 서로
- * 엇갈리던 두 목록을 하나로 합쳤다. 원본 능력표가 단일 출처이고, 각 능력에 구현상태
- * 배지(게임 반영/부분/예정)가 붙는다. 엔진 심화가 배치별로 상태를 'live'로 올리며,
- * 전부 live 가 되면 별도 액션 층은 필요 없어진다. 실제 밤 상호작용은 NightPhase 카드가 담당.
+ * 엇갈리던 두 목록을 하나로 합쳤다. 원본(캐논) 능력표가 단일 출처. 플레이어 표면은 캐논
+ * 텍스트만 — 구현상태 배지는 제거(2026-06-27): 구현상태·드리프트 메타는 디자이너 도구
+ * (preview DesignInventory)에만. 실제 밤 상호작용은 NightPhase 카드가 담당.
  */
 export function RoleAbilityDetails({
   role,
