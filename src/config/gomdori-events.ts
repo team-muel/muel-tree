@@ -208,6 +208,11 @@ export const GOMDORI_EVENT_COPY: Record<string, GomdoriEventCopy> = {
       return `침착한 탐정: 범인 ${n(p.culprit_user_id)} 님이 그 밤 ${ids.map(n).join(", ")} 님을 지목했습니다.`;
     },
   },
+  // 헬렌 황금빛 수면 — 수면 대상이 투표가치를 모두 소모해 헬렌과 접선(깨어나면 회복).
+  vote_value_consumed: {
+    audience: "personal", tone: "info", icon: "💤",
+    line: () => "황금빛 수면 — 투표가치를 모두 소모해 헬렌과 접선했습니다. 깨어나면 투표가치가 회복됩니다.",
+  },
   // 하브레터스 상호추리 — 적중/빗나감.
   deduce_hit: {
     audience: "personal", tone: "good", icon: "🎯",
