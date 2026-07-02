@@ -47,6 +47,7 @@ const PHASE_ROWS = [
   { key: "lobby", label: "로비", detail: "참가자가 모여 매치를 시작", duration: null },
   { key: "role_assign", label: "직업 배정", detail: GOMDORI_RULES.phases.roleAssign.detail, duration: PACE_BASE_DURATIONS.roleAssign },
   { key: "night_suspect", label: "의심", detail: GOMDORI_RULES.phases.nightSuspect.detail, duration: PACE_BASE_DURATIONS.nightSuspect },
+  { key: "night_deduce", label: "추리", detail: GOMDORI_RULES.phases.nightDeduce.detail, duration: PACE_BASE_DURATIONS.nightDeduce },
   { key: "night", label: "밤", detail: GOMDORI_RULES.phases.night.detail, duration: PACE_BASE_DURATIONS.night },
   { key: "night_resolve", label: "밤 정리", detail: GOMDORI_RULES.phases.nightResolve.detail, duration: PACE_BASE_DURATIONS.nightResolve },
   { key: "day", label: "아침", detail: GOMDORI_RULES.phases.day.detail, duration: PACE_BASE_DURATIONS.day },

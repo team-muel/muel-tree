@@ -136,6 +136,12 @@ export const PHASE_TONES = {
     accent: "text-indigo-300/80",
     mood: "dark",
   },
+  // 상호추리(하브레터스<->악마) 전용 페이즈 - 의심과 같은 깊은 밤 톤.
+  night_deduce: {
+    bg: "bg-gradient-to-b from-[#080816] via-[#0b0a1c] to-[#06060f]",
+    accent: "text-indigo-300/80",
+    mood: "dark",
+  },
   night_resolve: {
     bg: "bg-gradient-to-b from-[#0a0a14] to-[#07070f]",
     accent: "text-white/40",

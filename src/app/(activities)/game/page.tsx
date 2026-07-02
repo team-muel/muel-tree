@@ -19,6 +19,7 @@ import { clearGameSupabase, getGameSupabase } from "@/lib/game/client";
 import { LobbyPhase } from "@/components/game/LobbyPhase";
 import { RoleAssignPhase } from "@/components/game/RoleAssignPhase";
 import { NightPhase } from "@/components/game/NightPhase";
+import { DeducePhase } from "@/components/game/DeducePhase";
 import { DayPhase } from "@/components/game/DayPhase";
 import { VotePhase } from "@/components/game/VotePhase";
 import { VerdictPhase } from "@/components/game/VerdictPhase";
@@ -459,6 +460,14 @@ function GameShell({ session }: { session: ActivitySession }) {
     return (
       <GameFrame status="night_suspect" phaseEndsAt={phaseEndsAt} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} myName={myPlayer?.displayName} myAvatarUrl={myPlayer?.avatarUrl} dayNumber={currentPhase?.phaseNumber}>
         <SuspicionPhase match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} events={events} />
+      </GameFrame>
+    );
+  }
+
+  if (match.status === "night_deduce") {
+    return (
+      <GameFrame status="night_deduce" phaseEndsAt={phaseEndsAt} myRole={myPlayer?.role ?? undefined} myFaction={myPlayer?.faction ?? undefined} myName={myPlayer?.displayName} myAvatarUrl={myPlayer?.avatarUrl} dayNumber={currentPhase?.phaseNumber}>
+        <DeducePhase match={match} players={players} myPlayer={myPlayer} gameJwt={gameJwt} events={events} />
       </GameFrame>
     );
   }

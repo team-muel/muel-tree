@@ -18,6 +18,7 @@ import { useState } from "react";
 import { LobbyPhase } from "@/components/game/LobbyPhase";
 import { RoleAssignPhase } from "@/components/game/RoleAssignPhase";
 import { NightPhase } from "@/components/game/NightPhase";
+import { DeducePhase } from "@/components/game/DeducePhase";
 import { SuspicionPhase } from "@/components/game/SuspicionPhase";
 import { DayPhase } from "@/components/game/DayPhase";
 import { VotePhase } from "@/components/game/VotePhase";
@@ -155,6 +156,15 @@ function renderPhasePreview(
           gameJwt="preview"
         />
       );
+    case "night_deduce":
+      return (
+        <DeducePhase
+          match={{ ...MOCK_MATCH, status: "night_deduce" }}
+          players={players}
+          myPlayer={me}
+          gameJwt="preview"
+        />
+      );
     case "day":
       return (
         <DayPhase
@@ -221,6 +231,11 @@ const PREVIEW_STEPS: Array<{ key: string; label: string; detail: string }> = (()
         key: "night_suspect",
         label: "의심",
         detail: "의심 투표 — 최다 의심자는 그 밤 능력 불가 (internal)",
+      });
+      steps.push({
+        key: "night_deduce",
+        label: "추리",
+        detail: "하브레터스↔악마 상호추리 — 하브 생존 시에만 끼어드는 페이즈 (internal)",
       });
     }
   }
