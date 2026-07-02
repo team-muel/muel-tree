@@ -3,7 +3,7 @@
 /**
  * DayPhase — 아침. 무대(GameStage)가 화면의 주인공 (Feign 구조).
  * 공표 배너만 위에 얹고, "자유 토론 시간" 상태는 하단 StatusDock(GameFrame)이 표시.
- * 사망자는 하단 시트로 관전 피드를 본다.
+ * 사망자는 영혼 채팅에서 진행 기록을 함께 본다.
  */
 
 import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
@@ -204,7 +204,7 @@ export function DayPhase({ match, players, events, myPlayer, gameJwt, phaseEndsA
         />
       </div>
 
-      {/* 공개 이벤트는 채팅 흐름으로 흡수(2026-07-02) — 별도 관전 피드 카드 대신
+      {/* 공개 이벤트는 채팅 흐름으로 흡수(2026-07-02) — 별도 진행 기록 카드 대신
           채팅이 진행 기록을 겸한다(칩 없는 시스템 라인). */}
       <TownChat
         matchId={match.id}

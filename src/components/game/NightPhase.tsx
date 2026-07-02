@@ -18,12 +18,12 @@ import { GOMDORI_RULES } from "@/config/gomdori-rules";
 import { GLOW } from "@/config/design-tokens";
 import { roleMeta, isDemonTeamRole, roleOriginalAbilities } from "@/config/gomdori-roles";
 import { resolveMyStatusEffects } from "@/config/status-effects";
-import { SpectatorFeed } from "@/components/game/ui/SpectatorFeed";
 import { GameStage } from "@/components/game/ui/GameStage";
 import { BottomSheet } from "@/components/game/ui/BottomSheet";
 import { MyRolePanel } from "@/components/game/ui/MyRolePanel";
 import { StatusDock } from "@/components/game/ui/StatusDock";
 import { MatchChat } from "@/components/game/ui/MatchChat";
+import { TownChat } from "@/components/game/ui/TownChat";
 
 type NightPhaseProps = {
   match: MatchSummary;
@@ -715,10 +715,16 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
           movable
           myEffects={myEffects}
         />
-        <BottomSheet title="관전 피드">
-          <p className="text-sm text-white/55">당신은 사망했습니다. 다른 플레이어들의 행동을 지켜보세요.</p>
-          <SpectatorFeed events={events} players={players} />
-        </BottomSheet>
+        <TownChat
+          matchId={match.id}
+          gameJwt={gameJwt}
+          myPlayer={myPlayer}
+          players={players}
+          events={events}
+          defaultOpen={false}
+          alivePlaceholder="밤의 단서를 남기세요..."
+          aliveEmptyHint="아직 밤 이야기가 없습니다."
+        />
         {nightDock}
       </div>
     );
