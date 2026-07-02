@@ -15,6 +15,7 @@ const SWEEP_COPY: Record<string, { label: string; sub?: string; tone: "night" | 
   role_assign: { label: "직업 배정", sub: "운명이 내려옵니다", tone: "night" },
   night: { label: "밤이 되었습니다", sub: "도시가 잠듭니다", tone: "night" },
   night_suspect: { label: "밤이 되었습니다", sub: "서로를 의심하는 시간", tone: "night" },
+  night_deduce: { label: "깊은 밤", sub: "서로의 정체를 가늠합니다", tone: "night" },
   night_resolve: { label: "밤이 깊어갑니다", tone: "night" },
   day: { label: "아침이 밝았습니다", sub: "간밤의 일을 확인하세요", tone: "dawn" },
   vote: { label: "투표", sub: "한 명을 지목합니다", tone: "ember" },

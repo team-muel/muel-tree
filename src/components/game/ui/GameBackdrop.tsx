@@ -19,7 +19,7 @@ import { NightSky } from "@/components/game/ui/NightSky";
 import { IllustrationScene } from "@/components/game/ui/IllustrationScene";
 
 // 실게임 GameFrame 의 status 분기와 1:1 — 변경 시 양쪽이 자동 정합.
-const STARRY_FULL = new Set(["night", "night_suspect"]);
+const STARRY_FULL = new Set(["night", "night_suspect", "night_deduce"]);
 const STARRY_SUBTLE = new Set(["role_assign", "ended", "lobby", "landing"]);
 // 낮 무드 — 상단 햇빛 블룸(달빛의 낮 짝). 투표는 더 따뜻한 황금빛.
 const SUN_GLOW: Record<string, string> = {

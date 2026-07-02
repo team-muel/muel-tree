@@ -77,6 +77,7 @@ const STATE_LINE: Record<string, { label: string; line: string }> = {
   role_assign: { label: "준비 시간", line: "정체를 확인하고 변종을 선택하세요" },
   night: { label: "밤", line: "능력의 시간 — 조용히 움직이세요" },
   night_suspect: { label: "의심", line: "의심 투표 — 최다 의심자는 능력 봉인" },
+  night_deduce: { label: "추리", line: "서로의 정체를 가늠하는 시간" },
   night_resolve: { label: "밤 정리", line: "밤의 결과를 정리하는 중" },
   day: { label: "아침", line: "자유 토론 시간 — 음성으로 추리하세요" },
   vote: { label: "투표", line: "무대 위 인물을 지목하세요" },

@@ -123,7 +123,7 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     extraNights: [
       { actionType: "daeakma_brand", label: "메피스토 낙인", prompt: "낙인을 찍을 대상을 고르세요. 그 직업이 삭제되고 다른 정체로 비밀리에 재배정됩니다.", excludeSelf: true },
       { actionType: "daeakma_dominion", label: "압도적 존재감", prompt: "압도적 존재감 — 이번 밤 전원의 능력을 봉인합니다. (1회, 대상 없음)", self: true },
-      { actionType: "demon_deduce", label: "역추리", prompt: "삶이 있는 곳으로 — 하브레터스로 의심되는 대상을 지목합니다. 적중하면 하브레터스가 다음 처치로 탈락하며 치료 효과를 무시합니다.", excludeSelf: true },
+      // 역추리(상호추리)는 전용 추리 페이즈(night_deduce, DeducePhase)에서 제출한다.
     ],
   },
   helper: {
@@ -300,9 +300,7 @@ export const GOMDORI_ROLES: Record<string, GomdoriRoleMeta> = {
     passive: "임종 선언/소명: 그 라운드 누군가 탈락하면 자기 투표가치 -1 + 천사팀 카운트 +1 + 부정효과 정화 + 소명 3일 쿨다운(생명의 언약 성공 시 -1일). 삶이 있는 곳으로: 매 밤 양방향 추리 — 하브 적중 시 그 밤 악마 효과 면역, 악마 적중 시 다음 처치(치료 무시)로 하브 탈락.",
     abilitySummary: "치료하기: 오늘 밤 공격으로부터 보호합니다. 성공 시 투표가치 +3 + 소명 쿨다운 -1. 삶이 있는 곳으로: 의심 가는 악마를 지목 — 적중하면 그 밤 악마 효과 면역.",
     night: { actionType: "doctor_heal", label: "치료하기", prompt: "오늘 밤 공격으로부터 보호할 사람을 고르세요. (자기 자신 포함) 성공 시 투표가치 +3 + 소명 쿨다운 -1." },
-    extraNights: [
-      { actionType: "habreterus_deduce", label: "삶이 있는 곳으로", prompt: "악마라 의심되는 대상을 지목하세요. 적중하면(악마 처치자) 그 밤 받은 부정 효과를 모두 무시합니다.", excludeSelf: true },
-    ],
+    // 삶이 있는 곳으로(상호추리)는 전용 추리 페이즈(night_deduce, DeducePhase)에서 제출한다.
   },
   mizlet: {
     label: "미즐렛",

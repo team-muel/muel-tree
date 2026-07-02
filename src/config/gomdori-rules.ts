@@ -18,6 +18,8 @@ export const GOMDORI_RULES = {
     // 30초 (2026-06-12, 8→30 — backend manifest 동기): 악마/조력자 변종 선택 창.
     roleAssign: { key: "role_assign", label: "준비 시간", detail: "비밀리에 역할 전달 · 악마/조력자는 변종 선택", durationSec: 12 },
     nightSuspect: { key: "night_suspect", label: "의심", detail: "의심 투표 — 최다 의심자는 그 밤 능력 불가", durationSec: 10 },
+    // 상호추리(하브레터스↔악마) 전용 — 하브 생존 시에만 끼어드는 시스템 구간(페이스 고정).
+    nightDeduce: { key: "night_deduce", label: "추리", detail: "하브레터스와 악마가 서로의 정체를 가늠", durationSec: 15 },
     night: { key: "night", label: "밤", detail: "악마와 능력자들이 밤 능력 행사", durationSec: 20 },
     nightResolve: { key: "night_resolve", label: "밤 정리", detail: "능력 결과 처리", durationSec: 3 },
     day: { key: "day", label: "아침", detail: "사건 공개와 토론", durationSec: 180 },
@@ -117,6 +119,7 @@ export type GomdoriRules = typeof GOMDORI_RULES;
 export type PhaseDurationKey =
   | "roleAssign"
   | "nightSuspect"
+  | "nightDeduce"
   | "night"
   | "nightResolve"
   | "day"
@@ -138,6 +141,7 @@ export const PACE_TUNABLE: readonly PhaseDurationKey[] =
 export const PACE_BASE_DURATIONS: PhaseDurations = {
   roleAssign: GOMDORI_RULES.phases.roleAssign.durationSec,
   nightSuspect: GOMDORI_RULES.phases.nightSuspect.durationSec,
+  nightDeduce: GOMDORI_RULES.phases.nightDeduce.durationSec,
   night: GOMDORI_RULES.phases.night.durationSec,
   nightResolve: GOMDORI_RULES.phases.nightResolve.durationSec,
   day: GOMDORI_RULES.phases.day.durationSec,
