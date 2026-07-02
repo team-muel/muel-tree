@@ -12,8 +12,7 @@ import { GLOW } from "@/config/design-tokens";
 import { resolveMyStatusEffects } from "@/config/status-effects";
 import { Button } from "@/components/game/ui/Button";
 import { GameStage } from "@/components/game/ui/GameStage";
-import { BottomSheet } from "@/components/game/ui/BottomSheet";
-import { SpectatorFeed } from "@/components/game/ui/SpectatorFeed";
+import { TownChat } from "@/components/game/ui/TownChat";
 
 type SuspicionPhaseProps = {
   match: MatchSummary;
@@ -100,10 +99,16 @@ export function SuspicionPhase({ match, players, myPlayer, gameJwt, events = [] 
     return (
       <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center py-5 pb-24">
         <GameStage players={players} myUserId={myPlayer?.userId} mood="dark" inspectable matchId={match.id} movable />
-        <BottomSheet title="관전 피드">
-          <p className="text-sm text-white/55">사망하여 의심 투표에 참여할 수 없습니다.</p>
-          <SpectatorFeed events={events} players={players} />
-        </BottomSheet>
+        <TownChat
+          matchId={match.id}
+          gameJwt={gameJwt}
+          myPlayer={myPlayer}
+          players={players}
+          events={events}
+          defaultOpen={false}
+          alivePlaceholder="의심할 대상을 이야기하세요..."
+          aliveEmptyHint="아직 의심 이야기가 없습니다."
+        />
       </div>
     );
   }

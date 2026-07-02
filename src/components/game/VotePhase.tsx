@@ -13,8 +13,7 @@ import { GLOW } from "@/config/design-tokens";
 import { resolveMyStatusEffects } from "@/config/status-effects";
 import { Button } from "@/components/game/ui/Button";
 import { GameStage } from "@/components/game/ui/GameStage";
-import { BottomSheet } from "@/components/game/ui/BottomSheet";
-import { SpectatorFeed } from "@/components/game/ui/SpectatorFeed";
+import { TownChat } from "@/components/game/ui/TownChat";
 
 type VotePhaseProps = {
   match: MatchSummary;
@@ -98,10 +97,16 @@ export function VotePhase({ match, players, myPlayer, gameJwt, events = [] }: Vo
     return (
       <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center py-5 pb-24">
         <GameStage players={players} myUserId={myPlayer?.userId} mood="light" inspectable matchId={match.id} movable />
-        <BottomSheet title="관전 피드">
-          <p className="text-sm text-white/55">당신은 사망하여 투표권이 없습니다. 투표를 지켜보세요.</p>
-          <SpectatorFeed events={events} players={players} />
-        </BottomSheet>
+        <TownChat
+          matchId={match.id}
+          gameJwt={gameJwt}
+          myPlayer={myPlayer}
+          players={players}
+          events={events}
+          defaultOpen={false}
+          alivePlaceholder="투표 전 의견을 나누세요..."
+          aliveEmptyHint="아직 투표 이야기가 없습니다."
+        />
       </div>
     );
   }

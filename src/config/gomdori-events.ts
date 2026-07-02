@@ -1,10 +1,10 @@
 // Gomdori match_events → 화면 카피의 single source of truth (2026-06-12).
 //
 // 구조 원칙:
-// - 컴포넌트(SpectatorFeed/DayPhase 등)는 이벤트 타입별 switch 를 갖지 않는다.
+// - 컴포넌트(TownChat/DayPhase 등)는 이벤트 타입별 switch 를 갖지 않는다.
 //   카피·톤·노출 대상은 전부 이 레지스트리가 결정 — 항목을 빼면 그 이벤트는
 //   화면에서 사라진다 (밸런스 튜닝 지점이 코드 한 곳).
-// - audience "public"  = 공개 이벤트 (관전 피드·진행 기록).
+// - audience "public"  = 공개 이벤트 (영혼 채팅·진행 기록).
 //   audience "personal" = 백엔드가 당사자 recipient 의 private 으로 보낸 이벤트
 //   (muel-bot#127) — RLS 가 본인에게만 내려주므로, 내 피드에 있으면 곧 내 것.
 // - "필요할지 모르는" 당사자 정보(봉인·매료 등)는 일단 모두 노출한다 — 빼고

@@ -18,8 +18,7 @@ import { submitAction } from "@/lib/game/api";
 import { GLOW } from "@/config/design-tokens";
 import { roleMeta } from "@/config/gomdori-roles";
 import { GameStage } from "@/components/game/ui/GameStage";
-import { BottomSheet } from "@/components/game/ui/BottomSheet";
-import { SpectatorFeed } from "@/components/game/ui/SpectatorFeed";
+import { TownChat } from "@/components/game/ui/TownChat";
 
 type DeducePhaseProps = {
   match: MatchSummary;
@@ -73,15 +72,21 @@ export function DeducePhase({ match, players, myPlayer, gameJwt, events = [] }: 
   };
 
   if (!action) {
-    // 관전/비관여자 — 무대는 유지하되 조용한 대기. 사망자는 관전 피드 제공.
+    // 관전/비관여자 — 무대는 유지하되 조용한 대기. 사망자는 영혼 채팅으로 진행을 본다.
     return (
       <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center py-5 pb-24">
         <GameStage players={players} myUserId={myPlayer?.userId} mood="dark" inspectable matchId={match.id} movable={Boolean(myPlayer?.alive)} />
         {myPlayer && !myPlayer.alive ? (
-          <BottomSheet title="관전 피드">
-            <p className="text-sm text-white/55">누군가 서로의 정체를 가늠하는 시간입니다.</p>
-            <SpectatorFeed events={events} players={players} />
-          </BottomSheet>
+          <TownChat
+            matchId={match.id}
+            gameJwt={gameJwt}
+            myPlayer={myPlayer}
+            players={players}
+            events={events}
+            defaultOpen={false}
+            alivePlaceholder="정체 추리 중입니다..."
+            aliveEmptyHint="아직 추리 이야기가 없습니다."
+          />
         ) : (
           <p className="mx-auto mt-6 max-w-md text-center text-sm text-indigo-100/45">
             깊은 밤 — 누군가 서로의 정체를 가늠하고 있습니다. 잠시 후 밤이 이어집니다.

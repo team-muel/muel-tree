@@ -6,7 +6,7 @@
  * 이전엔 DayPhase·VerdictPhase 가 각각 `DockableChatPanel + MatchChat` 조합과
  * 생존/사망 분기를 통째로 복붙해 두 벌이 있었다(드리프트 위험). 그 합성을 한 곳으로
  * 모은다 — 사망 모드 카피("영혼끼리…")는 동일하므로 내장하고, 페이즈마다 다른 것
- * (생존 카피·발언 권한·시스템 알림·사망 부가 노드)만 props 로 받는다.
+ * (생존 카피·발언 권한·시스템 알림·사망 부가 안내)만 props 로 받는다.
  *
  * 채널은 항상 ["town","dead"] (마을 공용 + 영혼). 도크 위치·접힘은 DockableChatPanel
  * 이 matchId 범위 localStorage 로 유지.
@@ -42,7 +42,7 @@ type TownChatProps = {
   canSend?: boolean;
   /** canSend=false 일 때 안내문. */
   disabledHint?: string;
-  /** 사망 모드에서 채팅 아래에 덧붙일 노드 (예: 관전 안내 + SpectatorFeed). */
+  /** 사망 모드에서 채팅 아래에 덧붙일 노드 (예: 관전 안내). */
   deadExtra?: React.ReactNode;
 };
 
