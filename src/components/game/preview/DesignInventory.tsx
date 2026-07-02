@@ -6,6 +6,7 @@ import { GOMDORI_EVENT_COPY, type GomdoriEventCopy } from "@/config/gomdori-even
 import { ILLUSTRATIONS } from "@/config/illustrations";
 import { roleVisual } from "@/config/gomdori-role-visuals";
 import {
+  ASSIGNABLE_ROLE_IDS,
   GOMDORI_ORIGINAL_ABILITIES,
   GOMDORI_ROLES,
   roleArchetype,
@@ -13,6 +14,10 @@ import {
   type GomdoriNightAction,
   type GomdoriOriginalAbility,
 } from "@/config/gomdori-roles";
+
+// 디자인 테이블 대상 — 배정 풀 + 게임 내 변환 산물. 레거시(시민·의사·경찰·구 조력자)는
+// 실게임에서 쓰이지 않으므로 제외한다(도감 RoleCodex 와 같은 규칙).
+const DESIGN_ROLE_IDS = [...ASSIGNABLE_ROLE_IDS, "converted", "corrupted"];
 import { formatDuration, GOMDORI_RULES, PACE_BASE_DURATIONS } from "@/config/gomdori-rules";
 import { STATUS_EFFECTS } from "@/config/status-effects";
 import { RoleEmblem } from "@/components/game/ui/RoleEmblem";
@@ -172,7 +177,7 @@ export function DesignInventory() {
 
   const roleRows = useMemo(
     () =>
-      Object.keys(GOMDORI_ROLES).map((roleId) => {
+      DESIGN_ROLE_IDS.map((roleId) => {
         const meta = GOMDORI_ROLES[roleId];
         const visual = roleVisual(roleId);
         const abilities = roleOriginalAbilities(roleId);

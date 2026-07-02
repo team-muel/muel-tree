@@ -28,7 +28,7 @@ import { GameStage } from "@/components/game/ui/GameStage";
 import { GameFrameBase } from "@/components/game/ui/GameFrameBase";
 import { GOMDORI_RULES } from "@/config/gomdori-rules";
 import { PHASE_TONES } from "@/config/design-tokens";
-import { roleMeta } from "@/config/gomdori-roles";
+import { ASSIGNABLE_ROLE_IDS, GOMDORI_ROLES, roleMeta } from "@/config/gomdori-roles";
 import { DesignInventory } from "@/components/game/preview/DesignInventory";
 import { DisplayProvider } from "@/lib/game/display";
 import type { PlayerSummary } from "@/lib/game/api";
@@ -43,18 +43,30 @@ import {
 /** 배포 갱신 식별용 빌드 스탬프 — Vercel 커밋 SHA (로컬은 "local"). */
 const BUILD_STAMP = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "local";
 
-/** 시점 전환용 — 각기 다른 밤 UI 를 가진 대표 직업들. */
-const ROLE_OPTIONS: Array<{ id: string; label: string }> = [
-  { id: "citizen", label: "시민 (밤 취침)" },
-  { id: "demon", label: "대악마 (처치·낙인·채팅)" },
-  { id: "gain", label: "가인 (악마 채팅만)" },
-  { id: "habreterus", label: "하브레터스 (치료)" },
-  { id: "dordan", label: "도르단 (조사)" },
-  { id: "romaz", label: "로마즈 (용의자 색출)" },
-  { id: "mizlet", label: "미즐렛 (부활)" },
-  { id: "seika", label: "세이카 (봉인)" },
-  { id: "pasua", label: "파스아 (포교·중립)" },
-];
+/**
+ * 시점 전환용 — 배정 풀 *전 직업*, 진영별 분류 (2026-07-02).
+ * 이전엔 대표 9직업 하드코딩이라 악마 변종(팬텀·말렌·로잔느) 등 나머지 로스터의
+ * 인게임 환경을 볼 수 없었다 — 매니페스트(ASSIGNABLE_ROLE_IDS) 단일출처로 도출.
+ */
+const ROLE_GROUPS: Array<{ label: string; roles: Array<{ id: string; label: string }> }> = (() => {
+  const groups: Record<string, Array<{ id: string; label: string }>> = {
+    angel: [], demon: [], helper: [], neutral: [],
+  };
+  for (const id of ASSIGNABLE_ROLE_IDS) {
+    const meta = GOMDORI_ROLES[id];
+    const key = meta.roster ?? meta.faction;
+    (groups[key] ?? groups.neutral).push({
+      id,
+      label: meta.title ? `${meta.label} — ${meta.title}` : meta.label,
+    });
+  }
+  return [
+    { label: "천사", roles: groups.angel },
+    { label: "악마", roles: groups.demon },
+    { label: "조력자", roles: groups.helper },
+    { label: "중립", roles: groups.neutral },
+  ].filter((g) => g.roles.length > 0);
+})();
 
 function renderPhasePreview(
   key: string,
@@ -313,10 +325,14 @@ export default function GamePreviewPage() {
                   onChange={(e) => setRole(e.target.value)}
                   className="rounded-md border border-white/12 bg-black/40 px-2 py-1 text-sm text-white focus:border-white/30 focus:outline-none"
                 >
-                  {ROLE_OPTIONS.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.label}
-                    </option>
+                  {ROLE_GROUPS.map((group) => (
+                    <optgroup key={group.label} label={group.label}>
+                      {group.roles.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.label}
+                        </option>
+                      ))}
+                    </optgroup>
                   ))}
                 </select>
               </label>
