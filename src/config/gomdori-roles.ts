@@ -505,13 +505,13 @@ export const GOMDORI_ORIGINAL_ABILITIES: Record<string, GomdoriOriginalAbility[]
   ],
   logen: [
     { kind: "패시브", name: "부서진 펜던트", text: "시작 시 악마와 접선합니다. 악마팀에 지워지지 않는 펜던트 효과를 남기고, 펜던트가 3개 이상 쌓이면 대상 수 보너스를 얻습니다.", status: "live" },
-    { kind: "능력", name: "네 안에 없는 것", text: "대상의 가장 가까운 밤 능력 효과가 소멸한다는 통지와 펜던트를 적용합니다.", actionType: "logen_nullify", status: "live" },
+    { kind: "능력", name: "네 안에 없는 것", text: "대상에게 '가장 가까운 밤에 발동시키는 능력의 효과가 소멸한다'를 통지하고 펜던트를 적용합니다(이미 적용된 대상이면 펜던트를 부숴버립니다). 펜던트 — 능력을 발동시킨 다음 밤에는 능력을 발동할 수 없고, 둘 이상에게 적용되면 악마팀이 부서진 펜던트 효과를 잃습니다.", actionType: "logen_nullify", status: "partial" },
     { kind: "능력2", name: "전부 괜찮을 거야", text: "펜던트(또는 부서진 펜던트)가 적용된 자는 그 밤 무적이 되고, 적용되지 않은 자는 파멸 1중첩을 받습니다. 파멸 2중첩이 되면 소멸합니다. 1회성입니다.", actionType: "logen_allwell", status: "live" },
   ],
   ellen: [
     { kind: "패시브", name: "박해자 / 해체된 퍼즐", text: "홀수날에만, 엘런이 직전에 투표한 대상의 받는-투표가치를 올려 처형대로 밀어냅니다. 같은 대상을 다시 박해하면 +3/+6/+9로 누진됩니다. 누군가 자아를 되찾으면 박해는 자해 박해로 영구 전환됩니다.", actionType: "ellen_persecute", status: "live" },
     { kind: "능력", name: "비치지 않는 자아", text: "대상(타인)의 자아를 망가뜨려 2밤 동안 투표·의심·능력 가치를 모두 상실시킵니다. 자아는 투표가치 최고 carrier에게 이전되며, 대상이 carrier를 투표하면 다음 아침 회복됩니다. 한 번 망가진 대상은 재차 해체할 수 없습니다.", actionType: "ellen_shatter", status: "live" },
-    { kind: "능력2", name: "혼탁해진 정의", text: "대상의 다음 밤 능력 발동을 봉인합니다. 이미 박해에 찍힌 대상이라면 그 대상을 탈락시킵니다. 2회 제한입니다.", actionType: "ellen_chaos", status: "live" },
+    { kind: "능력2", name: "혼탁해진 정의", text: "대상이 다음 날 동안 받는 투표·의심·능력을 소멸시키고, 자아를 잃은 중이라면 자아를 영원히 찾을 수 없게 만듭니다. 박해자 효과를 받는 대상이라면 탈락시킵니다. 2회 제한입니다.", actionType: "ellen_chaos", status: "partial" },
   ],
   pasua: [
     { kind: "패시브", name: "구원자", text: "시작 전 파스아 존재를 전원에게 통지합니다. 파스아 팀(교주 본인 + 전향자)이 4명 이상이면 즉시 승리합니다.", status: "live" },

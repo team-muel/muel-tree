@@ -16,7 +16,7 @@ import { submitAction } from "@/lib/game/api";
 import { getGameSupabase } from "@/lib/game/client";
 import { GOMDORI_RULES } from "@/config/gomdori-rules";
 import { GLOW } from "@/config/design-tokens";
-import { roleMeta, isDemonTeamRole } from "@/config/gomdori-roles";
+import { roleMeta, isDemonTeamRole, roleOriginalAbilities } from "@/config/gomdori-roles";
 import { resolveMyStatusEffects } from "@/config/status-effects";
 import { SpectatorFeed } from "@/components/game/ui/SpectatorFeed";
 import { GameStage } from "@/components/game/ui/GameStage";
@@ -241,6 +241,27 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
 
   const [chatOpen, setChatOpen] = useState(false);
   const [circleUnread, setCircleUnread] = useState(0);
+
+  // 하룻밤 1택(원문 "이변이 없으면 하룻밤에 능력 하나") — 서버 규칙(match-action
+  // one_ability_per_night)을 선제 반영해 다른 카드의 버튼을 잠근다. 카드 단위는 도감
+  // (GOMDORI_ORIGINAL_ABILITIES actionTypes 묶음) 그대로: 같은 카드 분기·재제출(대상
+  // 교체)은 열어두고, 패시브/특수 패시브 카드(낙인·어둠이 내린 도시 등)는 1택 밖.
+  const abilityCardOf = (actionType: string) =>
+    roleOriginalAbilities(role).find(
+      (c) => c.actionType === actionType || c.actionTypes?.includes(actionType),
+    ) ?? null;
+  const isPassiveCardKind = (kind?: string) => kind === "패시브" || kind === "특수 패시브";
+  const lockedCard =
+    Object.entries(doneMap)
+      .filter(([, done]) => done)
+      .map(([t]) => abilityCardOf(t))
+      .find((c) => c && !isPassiveCardKind(c.kind)) ?? null;
+  const isCardLocked = (actionType: string) => {
+    if (!lockedCard) return false;
+    const c = abilityCardOf(actionType);
+    if (!c || isPassiveCardKind(c.kind)) return false;
+    return c !== lockedCard;
+  };
 
   useEffect(() => {
     if (!match.id || !gameJwt) return;
@@ -554,23 +575,28 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
                 {abilities.map((ability) => {
                   const isSelected = ability.actionType === currentType;
                   const isDone = doneMap[ability.actionType];
+                  const cardLocked = isCardLocked(ability.actionType);
                   return (
                     <button
                       key={ability.actionType}
                       type="button"
-                      disabled={busy || isNightLocked}
+                      disabled={busy || isNightLocked || cardLocked}
                       onClick={() => selectAbility(ability)}
                       className={`relative w-full rounded-xl border p-3 text-left transition ${
                         isSelected
                           ? "border-rose-400/50 bg-rose-400/10 text-rose-100"
                           : "border-white/10 bg-white/[0.02] text-white/70 hover:bg-white/[0.06]"
-                      } ${busy || isNightLocked ? "opacity-45 cursor-not-allowed" : ""}`}
+                      } ${busy || isNightLocked || cardLocked ? "opacity-45 cursor-not-allowed" : ""}`}
                     >
                       <div className="flex items-center justify-between gap-3">
                         <span className="text-xs font-semibold">{ability.label}</span>
                         {isNightLocked ? (
                           <span className="shrink-0 text-[0.625rem] font-semibold text-rose-300">
                             🔒 잠김
+                          </span>
+                        ) : cardLocked ? (
+                          <span className="shrink-0 text-[0.625rem] font-semibold text-white/40">
+                            다음 밤에
                           </span>
                         ) : isDone ? (
                           <span className="shrink-0 text-[0.625rem] font-semibold text-emerald-300">
@@ -590,6 +616,11 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
                 })}
               </div>
             )}
+            {lockedCard ? (
+              <p className="mt-2 text-[0.6875rem] leading-4 text-white/40">
+                이변이 없으면 하룻밤에 능력은 하나 — 이번 밤은 {lockedCard.name}을(를) 선택했습니다. 대상 교체는 가능합니다.
+              </p>
+            ) : null}
           </div>
 
           {current && maxTargetsFor(current.actionType) > 1 ? (
@@ -617,7 +648,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
               </div>
               <button
                 type="button"
-                disabled={busy || isNightLocked || (multiSelected[current.actionType] ?? []).length === 0}
+                disabled={busy || isNightLocked || isCardLocked(current.actionType) || (multiSelected[current.actionType] ?? []).length === 0}
                 onClick={() => void handleSubmitMulti(current, multiSelected[current.actionType] ?? [])}
                 className="w-full rounded-lg border border-amber-300/40 bg-amber-400/10 px-3 py-2 text-xs font-semibold text-amber-100 transition hover:bg-amber-400/20 disabled:cursor-not-allowed disabled:opacity-40"
               >
