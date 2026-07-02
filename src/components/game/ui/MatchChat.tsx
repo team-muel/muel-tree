@@ -204,7 +204,7 @@ export function MatchChat({
         <div className="min-w-0 max-w-[85%]">
           <div className="mb-1 flex items-center gap-1 pl-0.5 text-[0.625rem] font-semibold text-white/80">
             {sender}
-            {isGhost ? <span className="rounded-full bg-white/15 px-1.5 text-[0.5625rem] font-medium text-white/70">영혼</span> : null}
+            {isGhost ? <span className="text-[0.5625rem] font-medium text-white/50">· 영혼</span> : null}
           </div>
           {bubble}
         </div>
