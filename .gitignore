@@ -39,3 +39,6 @@ next-env.d.ts
 .vercel
 
 .env*.local
+
+# 로컬 dev 로그
+.dev.log

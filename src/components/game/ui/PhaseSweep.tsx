@@ -28,7 +28,21 @@ const TONE_BG: Record<"night" | "dawn" | "ember", string> = {
   ember: "bg-[radial-gradient(ellipse_at_center,rgba(76,5,25,0.9),rgba(12,3,7,0.95))]",
 };
 
-export function PhaseSweep({ status }: { status: string }) {
+export function PhaseSweep({
+  status,
+  embedded = false,
+  demoTrigger,
+}: {
+  status: string;
+  /** 박스 안 임베드(작업대) — fixed 대신 absolute 로 (GameBackdrop 과 같은 규칙). */
+  embedded?: boolean;
+  /**
+   * 전환막 재생 트리거(작업대 전용) — 스윕은 status *변경*에만 발화하므로 status 가
+   * 고정인 preview 박스에선 이 값이 바뀔 때 현재 status 로 1회 재생한다.
+   * 실게임은 전달하지 않는다(동작 불변).
+   */
+  demoTrigger?: number;
+}) {
   const prev = useRef<string | null>(null);
   const [sweep, setSweep] = useState<{ key: number; status: string } | null>(null);
 
@@ -43,6 +57,14 @@ export function PhaseSweep({ status }: { status: string }) {
     setSweep({ key: Date.now(), status });
   }, [status]);
 
+  useEffect(() => {
+    if (!demoTrigger) return; // 0/undefined = 재생 안 함
+    if (!SWEEP_COPY[status]) return;
+    setSweep({ key: Date.now(), status });
+    // status 는 재생 시점의 값만 쓰면 된다 — trigger 에만 반응.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [demoTrigger]);
+
   if (!sweep) return null;
   const copy = SWEEP_COPY[sweep.status];
   if (!copy) return null;
@@ -52,7 +74,7 @@ export function PhaseSweep({ status }: { status: string }) {
       key={sweep.key}
       aria-hidden="true"
       onAnimationEnd={() => setSweep(null)}
-      className={`gomdori-phase-sweep pointer-events-none fixed inset-0 z-50 flex items-center justify-center ${TONE_BG[copy.tone]}`}
+      className={`gomdori-phase-sweep pointer-events-none ${embedded ? "absolute" : "fixed"} inset-0 z-50 flex items-center justify-center ${TONE_BG[copy.tone]}`}
     >
       <div className="gomdori-sweep-label text-center">
         <div className="text-3xl font-bold tracking-[0.18em] text-white/90 sm:text-4xl">{copy.label}</div>
