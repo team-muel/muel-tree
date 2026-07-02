@@ -629,7 +629,7 @@ export function NightPhase({ match, players, myPlayer, gameJwt, events, phaseEnd
                 선택한 대상 {(multiSelected[current.actionType] ?? []).length} / {maxTargetsFor(current.actionType)}
                 {targetBonusFor(current.actionType) > 0 ? (
                   <span
-                    className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-400/15 px-2 py-0.5 align-middle text-[0.625rem] font-semibold text-amber-200 motion-safe:animate-in motion-safe:fade-in"
+                    className="ml-2 text-[0.625rem] font-semibold text-amber-200 motion-safe:animate-in motion-safe:fade-in"
                     title={`기본 ${baseMaxFor(current.actionType)}명 + 보너스 ${targetBonusFor(current.actionType)}명 (능력 강화로 이 밤 더 지목)`}
                   >
                     오늘 밤 +{targetBonusFor(current.actionType)}

@@ -12,7 +12,6 @@ import { MOOD } from "@/config/design-tokens";
 import { eventLines } from "@/config/gomdori-events";
 import { resolveMyStatusEffects } from "@/config/status-effects";
 import { GameStage } from "@/components/game/ui/GameStage";
-import { SpectatorFeed } from "@/components/game/ui/SpectatorFeed";
 import { TownChat } from "@/components/game/ui/TownChat";
 import { useState, useEffect } from "react";
 
@@ -191,9 +190,7 @@ export function DayPhase({ match, players, events, myPlayer, gameJwt, phaseEndsA
       <div className="flex flex-1 flex-col justify-center">
         <div className={`mb-2 mt-6 flex items-center justify-between px-1 text-xs ${ink.faint}`}>
           <span>마을 주민</span>
-          <span className={`rounded-full px-2.5 py-0.5 ${ink.chip}`}>
-            생존 {players.filter((p) => p.alive).length}명
-          </span>
+          <span>생존 {players.filter((p) => p.alive).length}명</span>
         </div>
         <GameStage
           players={stagePlayers}
@@ -207,6 +204,8 @@ export function DayPhase({ match, players, events, myPlayer, gameJwt, phaseEndsA
         />
       </div>
 
+      {/* 공개 이벤트는 채팅 흐름으로 흡수(2026-07-02) — 별도 관전 피드 카드 대신
+          채팅이 진행 기록을 겸한다(칩 없는 시스템 라인). */}
       <TownChat
         matchId={match.id}
         gameJwt={gameJwt}
@@ -214,15 +213,13 @@ export function DayPhase({ match, players, events, myPlayer, gameJwt, phaseEndsA
         players={players}
         defaultOpen
         systemNotices={timeNotices}
+        events={events}
         alivePlaceholder="마을 사람들과 대화..."
         aliveEmptyHint="낮 동안 자유롭게 대화하세요"
         deadExtra={
-          <>
-            <div className="border-t border-white/5 pt-3 text-sm text-white/55">
-              당신은 사망했습니다. 산 자들의 토론은 읽을 수만 있습니다.
-            </div>
-            <SpectatorFeed events={events} players={players} />
-          </>
+          <div className="border-t border-white/5 pt-3 text-sm text-white/55">
+            당신은 사망했습니다. 산 자들의 토론은 읽을 수만 있습니다.
+          </div>
         }
       />
     </div>

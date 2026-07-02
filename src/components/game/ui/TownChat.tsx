@@ -13,6 +13,7 @@
  */
 
 import type { PlayerSummary } from "@/lib/game/api";
+import { eventLines } from "@/config/gomdori-events";
 import { DockableChatPanel } from "@/components/game/ui/DockableChatPanel";
 import { MatchChat } from "@/components/game/ui/MatchChat";
 
@@ -25,7 +26,14 @@ type TownChatProps = {
   players: PlayerSummary[];
   defaultOpen?: boolean;
   /** 시간 조절 등 시스템 공지 (DayPhase 가 전달). */
-  systemNotices?: Array<{ id: string; text: string }>;
+  systemNotices?: Array<{ id: string; text: string; createdAt?: string }>;
+  /**
+   * 공개 이벤트 흡수(2026-07-02): match_events 를 넘기면 public 이벤트가 채팅 흐름 속
+   * 시스템 라인(아이콘 + 한 줄, 칩·배지 없음)으로 시간순 병합된다 — 별도 이벤트
+   * 피드/카드 대신 채팅이 진행 기록을 겸한다. personal 이벤트는 여기 넣지 않는다
+   * (당사자 비밀 통지 — 공개 채팅에 노출 금지, DayPhase '어젯밤, 당신에게' 전용).
+   */
+  events?: Array<{ id: string; event_type: string; created_at?: string; payload?: Record<string, unknown> }>;
   /** 생존 모드 입력창 placeholder (페이즈별). */
   alivePlaceholder: string;
   /** 생존 모드 빈 채팅 안내 (페이즈별). */
@@ -50,8 +58,21 @@ export function TownChat({
   canSend = true,
   disabledHint,
   deadExtra,
+  events,
 }: TownChatProps) {
   const dead = !!myPlayer && !myPlayer.alive;
+
+  // 공개 이벤트 → 시스템 라인. 카피는 gomdori-events 단일 출처, 시간순 병합은 MatchChat.
+  const nameOf = (id: unknown) =>
+    players.find((p) => p.userId === id)?.displayName ?? "누군가";
+  const eventNotices = events
+    ? eventLines(events, "public", nameOf).map((l) => ({
+        id: `ev-${l.id}`,
+        text: `${l.icon} ${l.text}`,
+        createdAt: events.find((e) => e.id === l.id)?.created_at,
+      }))
+    : [];
+  const mergedNotices = [...(systemNotices ?? []), ...eventNotices];
 
   if (dead) {
     return (
@@ -64,7 +85,7 @@ export function TownChat({
           channels={TOWN_CHANNELS}
           placeholder="영혼끼리 대화..."
           emptyHint="영혼들과 대화하세요 (산 자에겐 보이지 않습니다)"
-          systemNotices={systemNotices}
+          systemNotices={mergedNotices}
         />
         {deadExtra}
       </DockableChatPanel>

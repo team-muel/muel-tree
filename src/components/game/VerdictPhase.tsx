@@ -198,6 +198,7 @@ export function VerdictPhase({ match, players, myPlayer, gameJwt, events = [] }:
         myPlayer={myPlayer}
         players={players}
         defaultOpen
+        events={events}
         alivePlaceholder="결백을 호소하세요..."
         aliveEmptyHint="처형 전, 후보자의 최후의 반론을 듣는 중"
         canSend={myPlayer?.userId === candidateUserId}
