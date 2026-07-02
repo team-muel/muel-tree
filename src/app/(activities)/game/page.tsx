@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { ActivityLayout, type ActivitySession } from "@/components/ActivityLayout";
 import { getActivity } from "@/config/activities";
 import { GOMDORI_RULES } from "@/config/gomdori-rules";
-import { PHASE_TONES } from "@/config/design-tokens";
 import {
   authExchange,
   createMatch,
@@ -24,9 +23,7 @@ import { DayPhase } from "@/components/game/DayPhase";
 import { VotePhase } from "@/components/game/VotePhase";
 import { VerdictPhase } from "@/components/game/VerdictPhase";
 import { ResultPhase } from "@/components/game/ResultPhase";
-import { StatusDock } from "@/components/game/ui/StatusDock";
-import { GameBackdrop } from "@/components/game/ui/GameBackdrop";
-import { PhaseSweep } from "@/components/game/ui/PhaseSweep";
+import { GameFrameBase } from "@/components/game/ui/GameFrameBase";
 import { SuspicionPhase } from "@/components/game/SuspicionPhase";
 import { StatusBlock } from "@/components/game/ui/StatusBlock";
 import { LandingScreen } from "@/components/game/LandingScreen";
@@ -525,6 +522,11 @@ function GameShell({ session }: { session: ActivitySession }) {
 }
 
 
+/**
+ * GameFrame — GameFrameBase(단일 출처)의 실게임 어댑터.
+ * 프레임 규칙(톤 배경·GameBackdrop·독 노출·PhaseSweep·콘텐츠 래퍼)은 전부
+ * GameFrameBase 에 있다 — /game/preview 작업대와 같은 코드를 공유해 드리프트 차단.
+ */
 function GameFrame({
   children,
   status,
@@ -549,53 +551,17 @@ function GameFrame({
   hideStatusDock?: boolean;
   /** 아침(토론) 페이즈에서 살아있는 본인의 시간 조절 — 하단 독 타이머 곁에 노출. */
   dayAdjust?: { matchId: string; gameJwt: string } | null;
-  /**
-   * 진입·로딩 계열 화면의 풀블리드 키 아트(night-muse) 배경 (2026-06-12).
-   * object-cover + focal 로 어떤 종횡비에서도 시선점이 살고, quality 90 으로
-   * 화질을 보존한다. edge fade-b 가 기본 배경색(#11131a)으로 침잠해 이음새 없음.
-   * "dim" = 콘텐츠가 주인공인 화면(로비)용 저채도 배경 — 가독성 우선.
-   */
   keyArt?: boolean | "dim";
 }) {
-  const tone = status ? PHASE_TONES[status as keyof typeof PHASE_TONES] : undefined;
-  const bg = tone?.bg ?? "bg-[#11131a]";
-
-  // h-full + overflow-y-auto: ActivityLayout 루트가 overflow-hidden 이라
-  // 내용이 뷰포트보다 길면 그대로 잘렸다(스크롤 불가 — 작은 디스플레이에서 치명).
-  // 내부 래퍼 m-auto = 짧으면 중앙 정렬, 길면 위에서부터 스크롤 (flex 중앙정렬의
-  // overflow 클리핑을 피하는 표준 패턴).
   return (
-    <main
-      className={`relative flex h-full w-full overflow-y-auto px-4 pb-20 pt-5 text-white transition-colors duration-700 sm:px-6 ${bg}`}
+    <GameFrameBase
+      status={status}
+      keyArt={keyArt}
+      hideDock={hideStatusDock}
+      dock={{ dayNumber, phaseEndsAt, myRole, myFaction, myName, myAvatarUrl, dayAdjust }}
     >
-      {/* 앰비언트 배경(키아트 + 별)은 GameBackdrop 단일 출처 — /game/preview 작업대와 공유. */}
-      <GameBackdrop status={status} keyArt={keyArt} />
-      {/* 로비는 독을 띄우지 않는다 — 화면 자체가 상태("대기 중")를 말하고 있어
-          정보 중복인 데다, 모바일에서 시트 peek 과 하단 자리를 다퉜다. */}
-      {status !== "lobby" && !hideStatusDock ? (
-        <StatusDock
-          status={status}
-          dayNumber={dayNumber}
-          phaseEndsAt={phaseEndsAt ?? null}
-          myRole={myRole}
-          myFaction={myFaction}
-          myName={myName}
-          myAvatarUrl={myAvatarUrl}
-          dayAdjust={dayAdjust}
-        />
-      ) : null}
-      {/* 래퍼에 z 금지: z 를 주면 스태킹 컨텍스트가 생겨 내부 fixed 레이어
-          (시트/창 z-40)가 독(z-30) 아래로 깔린다 — 독이 시트 peek 을 덮던 버그.
-          NightSky 위 페인트는 DOM 순서(래퍼가 뒤)로 보장된다. */}
-      <div
-        key={status ?? "static"}
-        className="relative m-auto flex w-full justify-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500"
-      >
-        {children}
-      </div>
-      {/* 페이즈 전환막 — 밤이 내리고 아침이 걷히는 스윕 (Feign 전환 구조) */}
-      {status ? <PhaseSweep status={status} /> : null}
-    </main>
+      {children}
+    </GameFrameBase>
   );
 }
 

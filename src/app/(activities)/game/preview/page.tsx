@@ -25,11 +25,10 @@ import { VerdictPhase } from "@/components/game/VerdictPhase";
 import { ResultPhase } from "@/components/game/ResultPhase";
 import { LandingScreen } from "@/components/game/LandingScreen";
 import { GameStage } from "@/components/game/ui/GameStage";
-import { GameBackdrop } from "@/components/game/ui/GameBackdrop";
+import { GameFrameBase } from "@/components/game/ui/GameFrameBase";
 import { GOMDORI_RULES } from "@/config/gomdori-rules";
 import { PHASE_TONES } from "@/config/design-tokens";
 import { roleMeta } from "@/config/gomdori-roles";
-import { StatusDock } from "@/components/game/ui/StatusDock";
 import { DesignInventory } from "@/components/game/preview/DesignInventory";
 import { DisplayProvider } from "@/lib/game/display";
 import type { PlayerSummary } from "@/lib/game/api";
@@ -235,8 +234,10 @@ function PreviewSection({
 }) {
   const tone = PHASE_TONES[toneKey as keyof typeof PHASE_TONES];
   const moodLabel = tone?.mood === "light" ? "낮 무드" : "밤 무드";
-  const showDock = toneKey !== "lobby" && toneKey !== "night";
   const hideRole = toneKey === "role_assign";
+  // 전환막 재생 — 실게임에선 status 변경 때 자동 발화하지만 여기선 박스별 status 가
+  // 고정이라, 버튼으로 같은 연출을 재생해 검토한다(GameFrameBase → PhaseSweep demoTrigger).
+  const [sweepNonce, setSweepNonce] = useState(0);
   return (
     <section className="overflow-hidden rounded-lg border border-white/10 bg-black/30">
       <div className="border-b border-white/10 bg-white/[0.02] px-5 py-3">
@@ -244,36 +245,38 @@ function PreviewSection({
           <span className="font-mono text-xs text-white/35">{String(index).padStart(2, "0")}</span>
           <span className="font-medium text-white">{title}</span>
           <span className="text-xs text-white/40">— {detail}</span>
-          <span className="ml-auto rounded-full border border-white/15 px-2 py-0.5 text-[10px] uppercase tracking-wider text-white/45">
+          <button
+            type="button"
+            onClick={() => setSweepNonce((n) => n + 1)}
+            className="ml-auto rounded-full border border-white/15 px-2 py-0.5 text-[10px] uppercase tracking-wider text-white/45 transition-colors hover:bg-white/[0.06] hover:text-white/75"
+            title="페이즈 전환막(PhaseSweep) 재생"
+          >
+            전환막 ▶
+          </button>
+          <span className="rounded-full border border-white/15 px-2 py-0.5 text-[10px] uppercase tracking-wider text-white/45">
             {moodLabel}
           </span>
         </div>
       </div>
-      <div
-        className={`relative flex h-[560px] transform-gpu flex-col overflow-auto ${interactive ? "" : "pointer-events-none"} ${
-          tone?.bg ?? "bg-[#070712]"
-        } ${tone?.mood === "light" ? "text-[#2b2118]" : "text-white"}`}
+      {/* 프레임은 실게임과 같은 GameFrameBase(단일 출처) — 의도된 차이만 prop. */}
+      <GameFrameBase
+        status={toneKey}
+        keyArt={toneKey === "lobby" ? "dim" : false}
+        embedded
+        interactive={interactive}
+        sweepNonce={sweepNonce}
+        dock={{
+          dayNumber: hideRole ? undefined : 2,
+          phaseEndsAt: toneKey === "day" ? new Date(Date.now() + 90_000).toISOString() : null,
+          myRole: hideRole ? undefined : me.role ?? undefined,
+          myFaction: me.faction ?? undefined,
+          myName: me.displayName,
+          myAvatarUrl: me.avatarUrl,
+          dayAdjust: toneKey === "day" && me.alive ? { matchId: "preview", gameJwt: "preview" } : null,
+        }}
       >
-        {/* 실게임 GameFrame 과 같은 앰비언트 배경(별·키아트) — 단일 출처 GameBackdrop. */}
-        <GameBackdrop status={toneKey} keyArt={toneKey === "lobby" ? "dim" : false} embedded />
-        {/* 콘텐츠·독은 absolute 배경 위로(z-10). */}
-        <div className="relative z-10 flex flex-1 flex-col">
-          <div className="flex-1">{children}</div>
-          {showDock ? (
-            <StatusDock
-              status={toneKey}
-              dayNumber={hideRole ? undefined : 2}
-              phaseEndsAt={toneKey === "day" ? new Date(Date.now() + 90_000).toISOString() : null}
-              myRole={hideRole ? undefined : me.role ?? undefined}
-              myFaction={me.faction ?? undefined}
-              myName={me.displayName}
-              myAvatarUrl={me.avatarUrl}
-              dayAdjust={toneKey === "day" && me.alive ? { matchId: "preview", gameJwt: "preview" } : null}
-              inline
-            />
-          ) : null}
-        </div>
-      </div>
+        {children}
+      </GameFrameBase>
     </section>
   );
 }

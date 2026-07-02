@@ -4,7 +4,8 @@
 // (인게임 역할 패널)에 반복해서 되살아났다. 컴포넌트만 지우면 매니페스트가 메타를 계속 들고 와
 // 다시 렌더되기 때문. 이 가드가 lint 에 묶여 재발을 차단한다 — 플레이어는 캐논 순수 텍스트만,
 // 구현상태·드리프트 메타는 디자이너 도구(preview DesignInventory)에만.
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
 
 let failed = 0;
 const fail = (m) => { console.error("CANON-GUARD ✗ " + m); failed++; };
@@ -32,6 +33,39 @@ while ((m = FIELD.exec(roles))) {
     if (text.includes(tok)) {
       fail(`gomdori-roles.ts 플레이어 텍스트에 구현-메타 '${tok}' 금지: "${text.slice(0, 48)}…"`);
     }
+  }
+}
+
+// 3) 프레임 패리티 — 실게임·작업대 페이지는 프레임을 손으로 조립하지 않는다.
+//    프레임 규칙(GameBackdrop·StatusDock·PhaseSweep·독 노출)은 GameFrameBase 단일 출처.
+//    페이지가 이 셋을 직접 import 하기 시작하면 preview↔인게임 드리프트가 재발한다.
+for (const f of [
+  "src/app/(activities)/game/page.tsx",
+  "src/app/(activities)/game/preview/page.tsx",
+]) {
+  const src = readFileSync(f, "utf8");
+  if (!src.includes("GameFrameBase")) {
+    fail(`${f}: 프레임은 GameFrameBase(단일 출처)를 거쳐야 한다.`);
+  }
+  for (const direct of ["ui/GameBackdrop", "ui/PhaseSweep", "ui/StatusDock"]) {
+    if (src.includes(direct)) {
+      fail(`${f}: ${direct} 직접 import 금지 — GameFrameBase 를 통해서만 (preview↔인게임 패리티).`);
+    }
+  }
+}
+
+// 4) 구현상태 메타(AbilityBadge/ABILITY_STATUS)는 디자이너 도구(preview/) 전용 —
+//    플레이어 표면(components/game 의 preview/ 밖)으로 새어 나오면 안 된다.
+const walk = (dir) =>
+  readdirSync(dir).flatMap((name) => {
+    const p = join(dir, name);
+    if (statSync(p).isDirectory()) return name === "preview" ? [] : walk(p);
+    return /\.(ts|tsx)$/.test(name) ? [p] : [];
+  });
+for (const f of walk("src/components/game")) {
+  const src = readFileSync(f, "utf8");
+  if (/ABILITY_STATUS\b|AbilityBadge/.test(src)) {
+    fail(`${f}: 구현상태 메타(ABILITY_STATUS/AbilityBadge)는 preview/ 전용.`);
   }
 }
 
