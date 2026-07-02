@@ -104,7 +104,7 @@ export function TownChat({
         placeholder={alivePlaceholder}
         emptyHint={aliveEmptyHint}
         disabledHint={disabledHint}
-        systemNotices={systemNotices}
+        systemNotices={mergedNotices}
       />
     </DockableChatPanel>
   );
