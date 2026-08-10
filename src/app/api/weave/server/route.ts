@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAllowedOrigin, forbiddenOrigin, requireDiscordUser } from "@/lib/request-security";
-import { createServiceSupabaseClient } from "@/lib/muel-profile";
+import { getServerSupabase } from "@/lib/server-supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     return discordAuth.response;
   }
 
-  const supabase = createServiceSupabaseClient();
+  const supabase = getServerSupabase();
   const { data, error } = await supabase.rpc("weave_server_overview");
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

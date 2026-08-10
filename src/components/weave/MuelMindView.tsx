@@ -65,13 +65,10 @@ export function MuelMindView({ session }: { session: ActivitySession }) {
     setLoading(true);
     setError(null);
     try {
-      const [meRes, dreamRes] = await Promise.all([
-        appFetch("/api/weave/me", { headers: authHeader }),
-        appFetch("/api/dreams/me", { headers: authHeader }).catch(() => null),
-      ]);
+      const meRes = await appFetch("/api/weave/me", { headers: authHeader });
       const me = await meRes.json();
       if (!meRes.ok) throw new Error(me?.error ?? "불러오기 실패");
-      const dreams: Dream[] = dreamRes && dreamRes.ok ? (await dreamRes.json()).dreams ?? [] : [];
+      const dreams: Dream[] = Array.isArray(me.dreams) ? me.dreams : [];
       const dreamMems: Memory[] = dreams.map((d) => ({
         id: `dream:${d.id}`,
         kind: "dream",

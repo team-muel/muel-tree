@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAllowedOrigin, forbiddenOrigin, requireDiscordUser } from "@/lib/request-security";
-import { createServiceSupabaseClient } from "@/lib/muel-profile";
+import { getServerSupabase } from "@/lib/server-supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   }
 
   const uid = discordAuth.user.id;
-  const supabase = createServiceSupabaseClient();
+  const supabase = getServerSupabase();
 
   // 소유 확인 + 현재 신뢰도 취득 (본인 귀속 메모리 목록에서).
   const { data: mine, error: rpcErr } = await supabase.rpc("weave_user_memories", { uid });

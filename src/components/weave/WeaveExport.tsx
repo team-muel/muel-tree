@@ -58,18 +58,13 @@ export function WeaveExport({ session }: { session: ActivitySession }) {
     let alive = true;
     (async () => {
       try {
-        const [meRes, memoRes, rpRes] = await Promise.all([
-          appFetch("/api/weave/me", { headers: authHeader }),
-          appFetch("/api/weave/memo", { headers: authHeader }),
-          appFetch("/api/rolling/me", { headers: authHeader }),
-        ]);
-        const me = meRes.ok ? await meRes.json() : {};
-        const memo = memoRes.ok ? await memoRes.json() : {};
-        const rp = rpRes.ok ? await rpRes.json() : {};
+        const response = await appFetch("/api/weave/export", { headers: authHeader });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data?.error ?? "내보낼 기록을 불러오지 못했어요.");
         if (!alive) return;
-        setMemories(Array.isArray(me.memories) ? me.memories : []);
-        setMemos(Array.isArray(memo.memos) ? memo.memos : []);
-        setPapers(Array.isArray(rp.papers) ? rp.papers : []);
+        setMemories(Array.isArray(data.memories) ? data.memories : []);
+        setMemos(Array.isArray(data.memos) ? data.memos : []);
+        setPapers(Array.isArray(data.papers) ? data.papers : []);
       } catch (e) {
         if (alive) setError(e instanceof Error ? e.message : String(e));
       } finally {

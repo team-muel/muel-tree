@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAllowedOrigin, forbiddenOrigin, requireDiscordUser } from "@/lib/request-security";
-import { createServiceSupabaseClient } from "@/lib/muel-profile";
+import { getServerSupabase } from "@/lib/server-supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "1000자 이하로 적어주세요." }, { status: 400 });
   }
 
-  const supabase = createServiceSupabaseClient();
+  const supabase = getServerSupabase();
   const { data, error } = await supabase
     .from("muel_user_memos")
     .insert({ discord_user_id: discordAuth.user.id, content })
@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
     return discordAuth.response;
   }
 
-  const supabase = createServiceSupabaseClient();
+  const supabase = getServerSupabase();
   const { data, error } = await supabase
     .from("muel_user_memos")
     .select("id, content, created_at")

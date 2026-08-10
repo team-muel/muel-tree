@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAllowedOrigin, forbiddenOrigin, requireDiscordUser } from "@/lib/request-security";
-import { createServiceSupabaseClient } from "@/lib/muel-profile";
+import { getServerSupabase } from "@/lib/server-supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     return discordAuth.response;
   }
 
-  const supabase = createServiceSupabaseClient();
+  const supabase = getServerSupabase();
   const { data, error } = await supabase
     .from("muel_rolling_papers")
     .select("id, author_id, content, created_at")
