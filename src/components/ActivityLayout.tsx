@@ -27,22 +27,32 @@ export function ActivityLayout({ activity, children }: Props) {
   const [ready, setReady] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
   const [instanceParticipants, setInstanceParticipants] = useState<InstanceParticipant[]>([]);
-  const unsubParticipants = useRef<(() => void) | null>(null);
-
   useEffect(() => {
+    let disposed = false;
+    let unsubscribeParticipants: (() => void) | null = null;
+
     initDiscord(activity.slug)
       .then((session) => {
+        if (disposed) return;
+
         if (session?.accessToken) {
           accessToken.current = session.accessToken;
-          setHasDiscordAuth(true);
           activityContext.current = session.context;
+          setHasDiscordAuth(true);
+
           getInstanceParticipants(activity.slug)
-            .then(setInstanceParticipants)
+            .then((participants) => {
+              if (!disposed) setInstanceParticipants(participants);
+            })
             .catch(() => {});
-          unsubParticipants.current = subscribeInstanceParticipants(
+
+          unsubscribeParticipants = subscribeInstanceParticipants(
             activity.slug,
-            setInstanceParticipants,
+            (participants) => {
+              if (!disposed) setInstanceParticipants(participants);
+            },
           );
+
           appFetch("/api/service-events", {
             method: "POST",
             headers: {
@@ -63,12 +73,17 @@ export function ActivityLayout({ activity, children }: Props) {
         }
       })
       .catch((e) => {
-        setInitError(e instanceof Error ? e.message : "Discord 연결 실패");
+        if (!disposed) {
+          setInitError(e instanceof Error ? e.message : "Discord 연결 실패");
+        }
       })
-      .finally(() => setReady(true));
+      .finally(() => {
+        if (!disposed) setReady(true);
+      });
 
     return () => {
-      unsubParticipants.current?.();
+      disposed = true;
+      unsubscribeParticipants?.();
     };
   }, [activity.slug, activity.serviceSlug, activity.route]);
 

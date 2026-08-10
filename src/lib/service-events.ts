@@ -1,4 +1,5 @@
-import { createServiceSupabaseClient, upsertDiscordMuelProfile } from "@/lib/muel-profile";
+import { upsertDiscordMuelProfile } from "@/lib/muel-profile";
+import { getServerSupabase } from "@/lib/server-supabase";
 
 export type ActivityContext = {
   guildId?: string | null;
@@ -37,7 +38,7 @@ export function normalizeActivityContext(value: unknown): ActivityContext {
 }
 
 export async function logServiceEvent(input: ServiceEventInput): Promise<void> {
-  const supabase = createServiceSupabaseClient();
+  const supabase = getServerSupabase();
 
   const context = input.context ?? {};
   const profileId =

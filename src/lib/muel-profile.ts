@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type DiscordProfileIdentity = {
   id: string;
@@ -9,13 +9,6 @@ export type DiscordProfileIdentity = {
 function avatarUrl(user: DiscordProfileIdentity): string | null {
   if (!user.avatar) return null;
   return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
-}
-
-export function createServiceSupabaseClient(): SupabaseClient {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
 }
 
 export async function upsertDiscordMuelProfile(

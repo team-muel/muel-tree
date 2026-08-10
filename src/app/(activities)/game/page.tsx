@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { ActivityLayout, type ActivitySession } from "@/components/ActivityLayout";
 import { getActivity } from "@/config/activities";
 import { GOMDORI_RULES } from "@/config/gomdori-rules";
@@ -13,24 +14,51 @@ import {
   listMatches,
   sendHeartbeat,
   type MatchSummary,
-  type PlayerSummary,
 } from "@/lib/game/api";
-import { clearGameSupabase, getGameSupabase } from "@/lib/game/client";
-import { LobbyPhase } from "@/components/game/LobbyPhase";
-import { RoleAssignPhase } from "@/components/game/RoleAssignPhase";
-import { NightPhase } from "@/components/game/NightPhase";
-import { DeducePhase } from "@/components/game/DeducePhase";
-import { DayPhase } from "@/components/game/DayPhase";
-import { VotePhase } from "@/components/game/VotePhase";
-import { VerdictPhase } from "@/components/game/VerdictPhase";
-import { ResultPhase } from "@/components/game/ResultPhase";
+import { useMatchRealtime } from "@/lib/game/use-match-realtime";
 import { GameFrameBase } from "@/components/game/ui/GameFrameBase";
-import { SuspicionPhase } from "@/components/game/SuspicionPhase";
 import { StatusBlock } from "@/components/game/ui/StatusBlock";
 import { LandingScreen } from "@/components/game/LandingScreen";
 import { DisplayProvider } from "@/lib/game/display";
 
 const GAME_ACTIVITY = getActivity("gomdori-mafia")!;
+
+const LobbyPhase = dynamic(
+  () => import("@/components/game/LobbyPhase").then((module) => module.LobbyPhase),
+  { ssr: false },
+);
+const RoleAssignPhase = dynamic(
+  () => import("@/components/game/RoleAssignPhase").then((module) => module.RoleAssignPhase),
+  { ssr: false },
+);
+const NightPhase = dynamic(
+  () => import("@/components/game/NightPhase").then((module) => module.NightPhase),
+  { ssr: false },
+);
+const SuspicionPhase = dynamic(
+  () => import("@/components/game/SuspicionPhase").then((module) => module.SuspicionPhase),
+  { ssr: false },
+);
+const DeducePhase = dynamic(
+  () => import("@/components/game/DeducePhase").then((module) => module.DeducePhase),
+  { ssr: false },
+);
+const DayPhase = dynamic(
+  () => import("@/components/game/DayPhase").then((module) => module.DayPhase),
+  { ssr: false },
+);
+const VotePhase = dynamic(
+  () => import("@/components/game/VotePhase").then((module) => module.VotePhase),
+  { ssr: false },
+);
+const VerdictPhase = dynamic(
+  () => import("@/components/game/VerdictPhase").then((module) => module.VerdictPhase),
+  { ssr: false },
+);
+const ResultPhase = dynamic(
+  () => import("@/components/game/ResultPhase").then((module) => module.ResultPhase),
+  { ssr: false },
+);
 
 type BootState =
   | { status: "waiting" }
@@ -63,15 +91,12 @@ function GameShell({ session }: { session: ActivitySession }) {
   const [match, setMatch] = useState<MatchSummary | null>(null);
   const [openMatches, setOpenMatches] = useState<MatchSummary[]>([]);
   const [playerCounts, setPlayerCounts] = useState<Record<string, number>>({});
-  const [players, setPlayers] = useState<PlayerSummary[]>([]);
-  // phase_id: 같은 밤에 속한 이벤트 묶음 판별(개인 밤 피드백 — DayPhase)에 쓴다.
-  const [events, setEvents] = useState<Array<{ id: string; event_type: string; created_at: string; phase_id?: string; payload?: Record<string, unknown> }>>([]);
-  const [currentPhase, setCurrentPhase] = useState<{ phaseType: string; phaseNumber: number; expectedEndedAt: string | null; endedAt: string | null } | null>(null);
 
   const channelId = session.activityContext.channelId;
   const instanceId = session.activityContext.instanceId;
   const guildId = session.activityContext.guildId;
   const matchId = match?.id ?? null;
+  const { players, events, currentPhase } = useMatchRealtime({ gameJwt, matchId, setMatch });
   const myPlayer = players.find((player) => player.userId === userId) ?? null;
   const phaseEndsAt = currentPhase && !currentPhase.endedAt ? currentPhase.expectedEndedAt : null;
 
@@ -146,129 +171,6 @@ function GameShell({ session }: { session: ActivitySession }) {
     };
     // retryNonce: 오류 화면의 "다시 시도"가 부트 시퀀스를 처음부터 재실행한다.
   }, [channelId, guildId, instanceId, session.accessToken, session.hasDiscordAuth, retryNonce]);
-
-  // 매치가 바뀌거나(만들기/참가) 떠날 때 이전 매치의 잔여 상태를 비운다 —
-  // 새 방에 옛 플레이어·이벤트·페이즈가 남아 "새 방이 아니라 기존 요소가 잔류"하는
-  // 문제를 차단. matchId 가 고정인 페이즈 전환(lobby→night 등)에는 발화하지 않는다.
-  useEffect(() => {
-    setPlayers([]);
-    setEvents([]);
-    setCurrentPhase(null);
-  }, [matchId]);
-
-  useEffect(() => {
-    if (!gameJwt || !matchId) return;
-
-    let cancelled = false;
-    const supabase = getGameSupabase(gameJwt);
-
-    async function refreshPlayers() {
-      const { data, error } = await supabase
-        .schema("mafia")
-        .from("match_players_visible")
-        .select("*")
-        .eq("match_id", matchId)
-        .order("joined_at", { ascending: true });
-      if (!cancelled && !error) {
-        setPlayers((data ?? []).map(mapPlayerRow));
-      }
-    }
-
-    async function refreshMatch() {
-      const { data, error } = await supabase
-        .schema("mafia")
-        .from("matches")
-        .select("*")
-        .eq("id", matchId)
-        .maybeSingle();
-      if (!cancelled && !error && data) {
-        setMatch(mapMatchRow(data));
-      }
-    }
-
-    async function refreshEvents() {
-      const { data, error } = await supabase
-        .schema("mafia")
-        .from("match_events")
-        .select("*")
-        .eq("match_id", matchId)
-        .order("created_at", { ascending: false })
-        .limit(20);
-      if (!cancelled && !error) {
-        setEvents(data ?? []);
-      }
-    }
-
-    async function refreshPhase() {
-      const { data, error } = await supabase
-        .schema("mafia")
-        .from("match_phases")
-        .select("*")
-        .eq("match_id", matchId)
-        .is("ended_at", null)
-        .order("phase_number", { ascending: false })
-        .order("started_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (!cancelled && !error && data) {
-        setCurrentPhase({
-          phaseType: String(data.phase_type),
-          phaseNumber: Number(data.phase_number),
-          expectedEndedAt: typeof data.expected_ended_at === "string" ? data.expected_ended_at : null,
-          endedAt: typeof data.ended_at === "string" ? data.ended_at : null,
-        });
-      } else if (!cancelled && !error) {
-        setCurrentPhase(null);
-      }
-    }
-
-    const channel = supabase
-      .channel(`mafia-match-${matchId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "mafia", table: "matches", filter: `id=eq.${matchId}` },
-        () => {
-          refreshMatch();
-          refreshPhase();
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "mafia", table: "match_players", filter: `match_id=eq.${matchId}` },
-        () => {
-          refreshPlayers();
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "mafia", table: "match_events", filter: `match_id=eq.${matchId}` },
-        (payload) => {
-          const row = payload.new as { id: string; event_type: string; created_at: string; phase_id?: string; payload: Record<string, unknown> };
-          setEvents((current) => [row, ...current].slice(0, 20));
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "mafia", table: "match_phases", filter: `match_id=eq.${matchId}` },
-        () => {
-          refreshPhase();
-        },
-      )
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-          refreshMatch();
-          refreshPlayers();
-          refreshEvents();
-          refreshPhase();
-        }
-      });
-
-    return () => {
-      cancelled = true;
-      supabase.removeChannel(channel);
-      clearGameSupabase();
-    };
-  }, [gameJwt, matchId]);
 
   // 30초 주기 heartbeat 전송
   useEffect(() => {
@@ -619,49 +521,4 @@ function OutsideActivityBlock() {
       </div>
     </div>
   );
-}
-
-function mapMatchRow(row: Record<string, unknown>): MatchSummary {
-  return {
-    id: String(row.id),
-    status: String(row.status),
-    hostUserId: typeof row.host_user_id === "string" ? row.host_user_id : null,
-    contextType: String(row.context_type),
-    contextId: typeof row.context_id === "string" ? row.context_id : null,
-    maxPlayers: Number(row.max_players),
-    winner: typeof row.winner === "string" ? row.winner : null,
-    createdAt: String(row.created_at),
-    startedAt: typeof row.started_at === "string" ? row.started_at : null,
-    endedAt: typeof row.ended_at === "string" ? row.ended_at : null,
-    settings:
-      row.settings && typeof row.settings === "object" && !Array.isArray(row.settings)
-        ? (row.settings as Record<string, unknown>)
-        : {},
-    tableLabel: typeof row.table_label === "string" ? row.table_label : "",
-    engineState:
-      row.engine_state && typeof row.engine_state === "object" && !Array.isArray(row.engine_state)
-        ? (row.engine_state as Record<string, unknown>)
-        : null,
-  };
-}
-
-function mapPlayerRow(row: Record<string, unknown>): PlayerSummary {
-  return {
-    matchId: String(row.match_id),
-    userId: String(row.user_id),
-    displayName: String(row.display_name),
-    avatarUrl: typeof row.avatar_url === "string" ? row.avatar_url : null,
-    alive: Boolean(row.alive),
-    ready: Boolean(row.ready),
-    isHost: Boolean(row.is_host),
-    joinedAt: String(row.joined_at),
-    lastSeenAt: typeof row.last_seen_at === "string" ? row.last_seen_at : null,
-    role: typeof row.role === "string" ? row.role : null,
-    faction: typeof row.faction === "string" ? row.faction : null,
-    circleChat: row.circle_chat === true,
-    isAi: row.is_ai === true,
-    aiProvider: typeof row.ai_provider === "string" ? row.ai_provider : null,
-    targetBonus: typeof row.target_bonus === "number" ? row.target_bonus : 0,
-    dayTargetBonus: typeof row.day_target_bonus === "number" ? row.day_target_bonus : 0,
-  };
 }
