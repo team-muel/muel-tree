@@ -1,36 +1,27 @@
 name: CI
 
+# No `paths:` filter on purpose: `lint + build` is a required status check on
+# the default branch ruleset. A path filter would leave docs-only PRs without
+# a check result and block them from merging.
 on:
   pull_request:
-    paths:
-      - 'src/**'
-      - 'public/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'tsconfig.json'
-      - 'next.config.mjs'
-      - '.eslintrc.json'
-      - '.github/workflows/ci.yml'
   merge_group:
   push:
     branches:
       - main
       - master
 
+permissions:
+  contents: read
+
 jobs:
   lint-build:
     name: lint + build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run lint
-      - name: Build (placeholder public env; no secrets needed to compile)
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
-        run: npm run build
+    uses: team-muel/.github/.github/workflows/reusable-node-quality.yml@main
+    with:
+      node-version: '20'
+      package-manager: npm
+      install-command: npm ci
+      test-command: npm run lint
+      # Placeholder public env; no secrets are needed to compile.
+      build-command: NEXT_PUBLIC_SUPABASE_URL=https://placeholder.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=placeholder-anon-key npm run build
