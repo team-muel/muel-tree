@@ -11,6 +11,7 @@ on:
       - 'next.config.mjs'
       - '.eslintrc.json'
       - '.github/workflows/ci.yml'
+  merge_group:
   push:
     branches:
       - main
